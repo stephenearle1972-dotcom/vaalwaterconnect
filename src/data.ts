@@ -1,0 +1,132 @@
+import { Business, Sector } from './types';
+
+export const SECTORS: Sector[] = [
+  { id: 'home-services', name: 'Home Services', icon: '🏠' },
+  { id: 'automotive', name: 'Automotive', icon: '🚗' },
+  { id: 'health-wellness', name: 'Health & Wellness', icon: '🌿' },
+  { id: 'food-drinks', name: 'Food & Drinks', icon: '🍴' },
+  { id: 'shopping-retail', name: 'Shopping & Retail', icon: '🛍️' },
+  { id: 'professional-services', name: 'Professional Services', icon: '⚖️' },
+  { id: 'construction-industrial', name: 'Construction & Industrial', icon: '🏗️' },
+  { id: 'education-community', name: 'Education & Community', icon: '🎓' },
+  { id: 'tourism-hospitality', name: 'Tourism & Hospitality', icon: '🏨' },
+  { id: 'pets-animals', name: 'Pets & Animals', icon: '🐾' },
+  { id: 'wildlife-agriculture', name: 'Wildlife & Agriculture', icon: '🚜' },
+  { id: 'daily-activities', name: 'Daily activities', icon: '🚵' },
+];
+
+export const BUSINESSES: Business[] = [
+  // WILDLIFE & AGRICULTURE
+  {
+    id: '1',
+    name: 'Waterberg Game Reserve',
+    sectorId: 'wildlife-agriculture',
+    subcategory: 'Private Game Reserve',
+    description: 'Unrivaled Big Five encounters in the heart of Limpopo. Our reserve offers a pristine wilderness experience with luxury lodge accommodation and professional guided drives.',
+    phone: '+27 14 755 1234',
+    whatsapp: '+27 72 123 4567',
+    email: 'safari@waterbergwildlife.co.za',
+    website: 'https://example.com',
+    address: 'Portion 12, Farm Waterberg, Vaalwater',
+    lat: -24.200,
+    lng: 28.150,
+    imageUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=800',
+    tier: 'premium',
+    isFeatured: true,
+    reviews: [{ id: 'r1', userName: 'Johan V.', rating: 5, comment: 'Incredible lion sightings!', date: '2023-11-12' }]
+  },
+  {
+    id: '2',
+    name: 'Bushveld Agri-Supplies',
+    sectorId: 'wildlife-agriculture',
+    subcategory: 'Agricultural Feed',
+    description: 'Serving the agricultural backbone of Vaalwater. From borehole pumps to specialized game feed and high-tensile fencing materials.',
+    phone: '+27 14 755 2233',
+    whatsapp: '+27 82 222 3344',
+    email: 'sales@bushagri.co.za',
+    address: 'Main Street, Vaalwater',
+    lat: -24.295,
+    lng: 28.110,
+    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800',
+    tier: 'standard',
+  },
+
+  // DAILY ACTIVITIES
+  {
+    id: '23',
+    name: 'Waterberg Hiking Trails',
+    sectorId: 'daily-activities',
+    subcategory: 'Outdoor Adventure',
+    description: 'Discover the hidden beauty of the Waterberg on foot. We offer guided trails ranging from family-friendly walks to challenging mountain treks.',
+    phone: '+27 83 456 7890',
+    whatsapp: '+27 83 456 7890',
+    address: 'Berg View Farm, Vaalwater',
+    lat: -24.350,
+    lng: 28.050,
+    imageUrl: 'https://images.unsplash.com/photo-1551632432-c7d419d0a4fb?auto=format&fit=crop&q=80&w=800',
+    tier: 'standard',
+  },
+  {
+    id: '24',
+    name: 'Vaalwater Horse Riding',
+    sectorId: 'daily-activities',
+    subcategory: 'Equine Activities',
+    description: 'Experience the bush from a different perspective. Outrides for all skill levels through scenic farmland and wildlife corridors.',
+    phone: '+27 72 987 6543',
+    email: 'rides@vaalwaterhorses.co.za',
+    address: 'Equus Estate, Vaalwater',
+    lat: -24.310,
+    lng: 28.150,
+    imageUrl: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&q=80&w=800',
+    tier: 'standard',
+  },
+
+  // HEALTH & WELLNESS
+  {
+    id: '4',
+    name: 'Vaalwater General Practice',
+    sectorId: 'health-wellness',
+    subcategory: 'Medical Doctor',
+    description: 'Comprehensive medical services including family medicine, basic emergency care, and pharmacy links.',
+    phone: '+27 14 755 0011',
+    email: 'admin@vaalwatermed.co.za',
+    address: 'Medical Center, Vaalwater',
+    lat: -24.298,
+    lng: 28.115,
+    imageUrl: 'https://images.unsplash.com/photo-1581595221475-10ee5f164234?auto=format&fit=crop&q=80&w=800',
+    tier: 'standard',
+  },
+
+  // FOOD & DRINKS
+  {
+    id: '11',
+    name: 'The Stoep Cafe',
+    sectorId: 'food-drinks',
+    subcategory: 'Coffee Shop & Bistro',
+    description: 'The social hub of Vaalwater. Famous for our home-baked cakes, robust coffee, and traditional South African breakfasts.',
+    phone: '+27 14 755 3030',
+    address: 'Main Street, Vaalwater',
+    lat: -24.296,
+    lng: 28.112,
+    imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800',
+    tier: 'hospitality',
+    isFeatured: true,
+  },
+
+  // TOURISM & HOSPITALITY
+  {
+    id: '20',
+    name: 'Sunset Ridge Lodge',
+    sectorId: 'tourism-hospitality',
+    subcategory: 'Self-Catering Lodge',
+    description: 'Panoramic views and absolute tranquility. Luxury self-catering units nestled on the edge of the Waterberg escarpment.',
+    phone: '+27 14 755 5555',
+    whatsapp: '+27 72 000 1122',
+    address: 'Ridge Escarpment, Vaalwater',
+    lat: -24.250,
+    lng: 28.200,
+    imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=800',
+    tier: 'hospitality',
+    isFeatured: true,
+  }
+];

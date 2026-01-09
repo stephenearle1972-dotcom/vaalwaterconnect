@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #fdfbf7;
+  --color-forest: #2d4a3e;
+  --color-clay: #b87352;
+  --color-sand: #e8e2d6;
+  --color-text: #1a1c1a;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.font-serif {
+  font-family: 'Lora', serif;
+}
+
+.bg-forest { background-color: var(--color-forest); }
+.text-forest { color: var(--color-forest); }
+.border-forest { border-color: var(--color-forest); }
+.bg-sand { background-color: var(--color-sand); }
+.text-clay { color: var(--color-clay); }
+.text-sand { color: var(--color-sand); }
+.border-sand { border-color: var(--color-sand); }
+.border-clay { border-color: var(--color-clay); }
+.bg-clay { background-color: var(--color-clay); }
+
+.btn-primary {
+  background-color: var(--color-forest);
+  color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -10px rgba(45, 74, 62, 0.5);
+}
+
+.card-classy {
+  background: white;
+  border: 1px solid #e5e0d8;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-classy:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -20px rgba(45, 74, 62, 0.2);
+  border-color: var(--color-clay);
+}
+
+.hero-overlay {
+  background: linear-gradient(to bottom, rgba(45, 74, 62, 0.4), rgba(45, 74, 62, 0.85));
+}
+
+.animate-fade {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar for that premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-sand);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-clay);
+}
+
+/* Leaflet adjustment for premium feel */
+.leaflet-container {
+  border-radius: 2rem;
+  box-shadow: 0 20px 50px -10px rgba(0,0,0,0.1);
+}
