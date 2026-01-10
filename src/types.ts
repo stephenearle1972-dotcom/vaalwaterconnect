@@ -10,7 +10,8 @@ export type SectorId =
   | 'tourism-hospitality'
   | 'pets-animals'
   | 'wildlife-agriculture'
-  | 'daily-activities';
+  | 'daily-activities'
+  | 'emergency-services';
 
 export type Sector = {
   id: SectorId;

@@ -60,9 +60,14 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
           <p className="text-sm leading-relaxed max-w-sm text-sand/60 font-light">
             Hyperlocal excellence for the Waterberg district. Connecting our community with integrity and boutique visibility.
           </p>
-          <div className="mt-8">
+          <div className="mt-8 space-y-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-clay">Contact Us</p>
-            <p className="text-sm text-white">hello@vaalwaterconnect.co.za</p>
+            <a href="https://wa.me/27688986081" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white hover:text-[#25D366] transition-colors">
+              <span>📱</span> WhatsApp: 068 898 6081
+            </a>
+            <a href="mailto:stephenearle1972@gmail.com" className="flex items-center gap-2 text-sm text-white hover:text-clay transition-colors">
+              <span>✉️</span> stephenearle1972@gmail.com
+            </a>
           </div>
         </div>
         <div>
@@ -253,99 +258,161 @@ const MapView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({
 };
 
 const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) => {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   const tiers = [
-    { 
-      name: 'Monthly Standard', 
-      price: 'R 300', 
-      period: '/ month',
+    {
+      name: 'Free',
+      monthlyPrice: 'R0',
+      annualPrice: 'R0',
+      period: isAnnual ? '/ year' : '/ month',
       badge: null,
-      features: ['Basic directory listing', 'WhatsApp & Phone contact', 'Map pinpoint integration', 'Verified business check', 'Social media links'], 
+      features: [
+        'Basic listing (name, phone, address)',
+        'Visible in directory'
+      ],
+      icon: '🌱',
+      tierName: 'FREE'
+    },
+    {
+      name: 'Standard',
+      monthlyPrice: 'R199',
+      annualPrice: 'R1,999',
+      period: isAnnual ? '/ year' : '/ month',
+      badge: isAnnual ? '2 Months Free!' : null,
+      features: [
+        'Everything in Free',
+        'WhatsApp link',
+        'Email link',
+        'Website link',
+        'Map pin location',
+        'Up to 3 photos'
+      ],
       icon: '🌿',
-      action: 'Select Monthly'
+      tierName: 'STANDARD'
     },
-    { 
-      name: 'Annual Essential', 
-      price: 'R 2,500', 
-      period: '/ year',
-      badge: '2 Months Free!',
+    {
+      name: 'Premium',
+      monthlyPrice: 'R349',
+      annualPrice: 'R3,499',
+      period: isAnnual ? '/ year' : '/ month',
+      badge: isAnnual ? '2 Months Free!' : null,
       highlighted: true,
-      features: ['All Monthly features', 'Two months free included', 'Priority search placement', 'Custom gallery (up to 3 photos)', 'Featured in "Local Gems" list', 'Monthly "Specials" feature'], 
+      features: [
+        'Everything in Standard',
+        'Up to 10 photos',
+        'Featured in search results',
+        '1 Special offer per month',
+        'Social media links (Facebook, Instagram)'
+      ],
       icon: '🌳',
-      action: 'Get 2 Months Free'
+      tierName: 'PREMIUM'
     },
-    { 
-      name: 'Lodge & Enterprise', 
-      price: 'R 5,000', 
-      period: '/ year',
-      badge: 'Premium Visibility',
-      features: ['Full bespoke profile page', 'Booking link integration', 'Professional photography highlight', 'Unlimited search tags', 'Direct email inquiries', 'Unlimited "Specials" posts'], 
+    {
+      name: 'Enterprise / Lodge',
+      monthlyPrice: 'R599',
+      annualPrice: 'R5,999',
+      period: isAnnual ? '/ year' : '/ month',
+      badge: isAnnual ? '2 Months Free!' : 'Best for Lodges',
+      features: [
+        'Everything in Premium',
+        'Unlimited photos',
+        'Unlimited Specials posts',
+        'Custom profile page',
+        'Booking link integration',
+        'Priority support'
+      ],
       icon: '🏨',
-      action: 'Go Enterprise'
+      tierName: 'ENTERPRISE'
     },
   ];
 
+  const openWhatsApp = (tierName: string) => {
+    const message = encodeURIComponent(`Hi, I'm interested in the ${tierName} plan for my business.`);
+    window.open(`https://wa.me/27688986081?text=${message}`, '_blank');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="text-center mb-24">
+      <div className="text-center mb-16">
         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-clay mb-4 block">Our Partner Plans</span>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Simple Pricing.</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Elevate your business visibility in the Waterberg district. Choose the plan that fits your growth.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto mb-10">Elevate your business visibility in the Waterberg district. Choose the plan that fits your growth.</p>
+
+        <div className="inline-flex items-center bg-sand/50 rounded-full p-1.5 border border-sand">
+          <button
+            onClick={() => setIsAnnual(false)}
+            className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${!isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setIsAnnual(true)}
+            className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
+          >
+            Annual <span className="text-clay ml-1">(Save 2 months)</span>
+          </button>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 items-stretch">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {tiers.map((tier) => (
-          <div key={tier.name} className={`relative p-12 rounded-[3.5rem] card-classy flex flex-col h-full ${tier.highlighted ? 'border-clay shadow-3xl scale-105 z-10 bg-[#fdfbf7]' : 'bg-white'}`}>
+          <div key={tier.name} className={`relative p-8 rounded-[2.5rem] card-classy flex flex-col h-full ${tier.highlighted ? 'border-clay shadow-3xl scale-105 z-10 bg-[#fdfbf7]' : 'bg-white'}`}>
             {tier.badge && (
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-clay text-white px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-clay text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] shadow-lg whitespace-nowrap">
                 {tier.badge}
               </span>
             )}
-            
-            <div className="text-5xl mb-8 opacity-80">{tier.icon}</div>
-            <h3 className="text-3xl font-serif font-bold text-forest mb-2 italic tracking-tight">{tier.name}</h3>
-            
-            <div className="flex items-baseline gap-2 mb-10 border-b border-sand pb-8">
-              <span className="text-4xl font-black text-forest tracking-tighter">{tier.price}</span>
-              <span className="text-gray-400 font-bold text-sm uppercase tracking-widest">{tier.period}</span>
+
+            <div className="text-4xl mb-6 opacity-80">{tier.icon}</div>
+            <h3 className="text-2xl font-serif font-bold text-forest mb-2 italic tracking-tight">{tier.name}</h3>
+
+            <div className="flex items-baseline gap-2 mb-8 border-b border-sand pb-6">
+              <span className="text-3xl font-black text-forest tracking-tighter">{isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>
+              <span className="text-gray-400 font-bold text-xs uppercase tracking-widest">{tier.period}</span>
             </div>
 
-            <ul className="space-y-5 mb-12 flex-grow">
+            <ul className="space-y-4 mb-10 flex-grow">
               {tier.features.map(f => (
-                <li key={f} className="text-sm text-gray-600 flex items-start gap-4 leading-relaxed">
-                  <span className="text-clay font-bold mt-0.5">✓</span> 
+                <li key={f} className="text-sm text-gray-600 flex items-start gap-3 leading-relaxed">
+                  <span className="text-clay font-bold mt-0.5">✓</span>
                   {f}
                 </li>
               ))}
             </ul>
 
-            <button 
-              onClick={() => onNavigate('add-business')}
-              className={`w-full py-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all transform hover:scale-[1.02] active:scale-95 ${tier.highlighted ? 'bg-forest text-white shadow-2xl' : 'bg-sand text-forest border border-[#e5e0d8] hover:bg-forest hover:text-white'}`}
+            <button
+              onClick={() => openWhatsApp(tier.tierName)}
+              className={`w-full py-5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 ${tier.highlighted ? 'bg-[#25D366] text-white shadow-xl' : 'bg-[#25D366]/10 text-[#075e54] border border-[#25D366]/30 hover:bg-[#25D366] hover:text-white'}`}
             >
-              {tier.action}
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Contact Us
             </button>
           </div>
         ))}
       </div>
 
-      <div className="mt-24 bg-forest rounded-[3rem] p-16 text-center text-white shadow-2xl overflow-hidden relative">
+      <div className="mt-20 bg-forest rounded-[3rem] p-12 md:p-16 text-center text-white shadow-2xl overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-clay/10 rounded-full -ml-20 -mb-20 blur-3xl"></div>
-        
-        <h2 className="text-4xl font-serif font-bold italic mb-6 relative z-10">Limited Time: Two Months Free</h2>
+
+        <h2 className="text-3xl md:text-4xl font-serif font-bold italic mb-6 relative z-10">Ready to grow your business?</h2>
         <p className="text-sand/70 max-w-xl mx-auto mb-10 text-lg font-light relative z-10">
-          Subscribe to any annual plan today and save R 600 instantly. We are committed to supporting local businesses through affordable, high-quality digital visibility.
+          Get in touch via WhatsApp and we'll help you choose the perfect plan for your business needs.
         </p>
-        <button 
-          onClick={() => onNavigate('contact')}
-          className="bg-clay text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:bg-white hover:text-forest relative z-10"
+        <a
+          href="https://wa.me/27688986081?text=Hi%2C%20I%27m%20interested%20in%20listing%20my%20business%20on%20VaalwaterConnect."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:bg-white hover:text-[#075e54] relative z-10"
         >
-          Enquire About Plans
-        </button>
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Chat on WhatsApp
+        </a>
       </div>
 
       <p className="mt-12 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-        * All prices are billed annually except for the Monthly Standard plan.
+        * Annual plans include 2 months free (pay for 10, get 12).
       </p>
     </div>
   );
@@ -379,12 +446,19 @@ const AboutView: React.FC = () => (
   </div>
 );
 
+declare global {
+  interface Window {
+    cloudinary: any;
+  }
+}
+
 const AddBusinessView: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     businessName: '',
     sectorId: '',
-    tier: 'standard',
+    tier: 'free',
     phone: '',
     email: '',
     description: '',
@@ -392,11 +466,72 @@ const AddBusinessView: React.FC = () => {
     popiaConsent: false
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const openCloudinaryWidget = () => {
+    if (uploadedImages.length >= 3) {
+      alert('Maximum 3 photos allowed. Remove one to add another.');
+      return;
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: 'dkn6tnxao',
+        uploadPreset: 'vaalwater_unsigned',
+        sources: ['local', 'camera'],
+        multiple: true,
+        maxFiles: 3 - uploadedImages.length,
+        resourceType: 'image',
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000,
+        styles: {
+          palette: {
+            window: '#FDFBF7',
+            windowBorder: '#2d4a3e',
+            tabIcon: '#2d4a3e',
+            menuIcons: '#b87352',
+            textDark: '#2d4a3e',
+            textLight: '#FFFFFF',
+            link: '#b87352',
+            action: '#2d4a3e',
+            inactiveTabIcon: '#6b7280',
+            error: '#EF4444',
+            inProgress: '#b87352',
+            complete: '#2d4a3e',
+            sourceBg: '#FDFBF7'
+          }
+        }
+      },
+      (error: any, result: any) => {
+        if (!error && result && result.event === 'success') {
+          setUploadedImages(prev => [...prev, result.info.secure_url]);
+        }
+      }
+    );
+    widget.open();
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.popiaConsent) return;
-    console.log('Official Business Registration:', { ...formData, timestamp: new Date().toISOString() });
-    setSubmitted(true);
+
+    const form = e.target as HTMLFormElement;
+    const formDataToSend = new FormData(form);
+    formDataToSend.append('photos', uploadedImages.join(', '));
+
+    try {
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formDataToSend as any).toString()
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setSubmitted(true);
+    }
   };
 
   if (submitted) return (
@@ -404,7 +539,7 @@ const AddBusinessView: React.FC = () => {
       <div className="w-24 h-24 bg-forest/5 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">🏛️</div>
       <h1 className="text-6xl font-serif font-bold text-forest italic mb-6">Registration Received</h1>
       <p className="text-xl text-gray-500 font-light mb-12">Our team will review your application and contact you within 48 hours to finalize your listing and verification.</p>
-      <button onClick={() => setSubmitted(false)} className="text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Add Another Business</button>
+      <button onClick={() => { setSubmitted(false); setUploadedImages([]); }} className="text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Add Another Business</button>
     </div>
   );
 
@@ -414,15 +549,25 @@ const AddBusinessView: React.FC = () => {
         <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Partner Registration</h1>
         <p className="text-xl text-gray-500 font-light">Join the VaalwaterConnect registry and reach your local audience with professional clarity.</p>
       </div>
-      <form onSubmit={handleSubmit} className="bg-white p-12 md:p-20 rounded-[4rem] border border-[#e5e0d8] shadow-3xl space-y-10">
+      <form
+        name="business-application"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        onSubmit={handleSubmit}
+        className="bg-white p-12 md:p-20 rounded-[4rem] border border-[#e5e0d8] shadow-3xl space-y-10"
+      >
+        <input type="hidden" name="form-name" value="business-application" />
+        <input type="hidden" name="bot-field" />
+
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Name *</label>
-            <input required type="text" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
+            <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
           </div>
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector *</label>
-            <select required className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
+            <select required name="sector" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
               <option value="">Select a Sector</option>
               {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -431,24 +576,65 @@ const AddBusinessView: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan</label>
-            <select className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
-              <option value="monthly">Monthly Standard (R 300 p.m.)</option>
-              <option value="annual">Annual Essential (R 2,500 p.a.)</option>
-              <option value="lodge">Lodge & Large Enterprise (R 5,000 p.a.)</option>
+            <select name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
+              <option value="free">Free (R0)</option>
+              <option value="standard">Standard (R199/month)</option>
+              <option value="premium">Premium (R349/month)</option>
+              <option value="enterprise">Enterprise / Lodge (R599/month)</option>
             </select>
           </div>
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Email *</label>
-            <input required type="email" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+            <input required type="email" name="email" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-10">
+          <div className="space-y-4">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
+            <input type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+          </div>
+          <div className="space-y-4">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</label>
+            <input type="text" name="address" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Street, Town" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
           </div>
         </div>
         <div className="space-y-4">
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Description</label>
-          <textarea rows={4} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="What makes your business special?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+          <textarea name="description" rows={4} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="What makes your business special?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
         </div>
+
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Photos (up to 3)</label>
+          <div className="flex flex-wrap gap-4">
+            {uploadedImages.map((url, index) => (
+              <div key={index} className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-sand">
+                <img src={url} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold hover:bg-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {uploadedImages.length < 3 && (
+              <button
+                type="button"
+                onClick={openCloudinaryWidget}
+                className="w-32 h-32 rounded-2xl border-2 border-dashed border-sand hover:border-clay flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-clay transition-colors"
+              >
+                <span className="text-3xl">📷</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider">Add Photo</span>
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-gray-400">Click to upload photos of your business (max 5MB each)</p>
+        </div>
+
         <div className="pt-10 border-t border-[#e5e0d8]">
           <label className="flex items-center gap-4 cursor-pointer group">
-            <input required type="checkbox" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
+            <input required type="checkbox" name="popiaConsent" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
             <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">I confirm the above information is accurate and agree to the processing of my data according to POPIA.</span>
           </label>
         </div>
@@ -720,17 +906,24 @@ const RecommendView: React.FC = () => {
     popiaConsent: false
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.businessName || !formData.sectorId || !formData.popiaConsent) return;
-    const submissionData = { ...formData, timestamp: new Date().toISOString() };
-    console.log('Recommendation Submitted:', submissionData);
-    const subject = `Business Recommendation: ${formData.businessName}`;
-    const sectorName = SECTORS.find(s => s.id === formData.sectorId)?.name;
-    const body = `Recommendation Details:\n----------------------------\nBusiness: ${formData.businessName}\nSector: ${sectorName}\nPhone: ${formData.phone || 'N/A'}\nLink: ${formData.website || 'N/A'}\nReason: ${formData.reason}\nRecommender: ${formData.recommender || 'Anonymous'}`;
-    const mailto = `mailto:listings@vaalwaterconnect.co.za?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-    setSubmitted(true);
+
+    const form = e.target as HTMLFormElement;
+    const formDataToSend = new FormData(form);
+
+    try {
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formDataToSend as any).toString()
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setSubmitted(true);
+    }
   };
 
   if (submitted) return (
@@ -748,15 +941,25 @@ const RecommendView: React.FC = () => {
         <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Recommend a Gem</h1>
         <p className="text-xl text-gray-500 font-light">Know a master artisan or local shop that belongs on our map? Let us know.</p>
       </div>
-      <form onSubmit={handleSubmit} className="bg-white p-12 md:p-20 rounded-[4rem] border border-[#e5e0d8] shadow-3xl space-y-10">
+      <form
+        name="recommendation"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        onSubmit={handleSubmit}
+        className="bg-white p-12 md:p-20 rounded-[4rem] border border-[#e5e0d8] shadow-3xl space-y-10"
+      >
+        <input type="hidden" name="form-name" value="recommendation" />
+        <input type="hidden" name="bot-field" />
+
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Suggested Business Name *</label>
-            <input required type="text" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" placeholder="Name of establishment" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
+            <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" placeholder="Name of establishment" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
           </div>
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector *</label>
-            <select required className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
+            <select required name="sector" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
               <option value="">Select a Sector</option>
               {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -765,24 +968,24 @@ const RecommendView: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number (Optional)</label>
-            <input type="tel" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <input type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
           </div>
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Link (Optional)</label>
-            <input type="text" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Website or Facebook URL" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
+            <input type="text" name="website" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Website or Facebook URL" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
           </div>
         </div>
         <div className="space-y-4">
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Why do you recommend them?</label>
-          <textarea rows={3} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="Tell us about their service..." value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
+          <textarea name="reason" rows={3} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="Tell us about their service..." value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
         </div>
         <div className="space-y-4">
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Name (Optional)</label>
-          <input type="text" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Who are you?" value={formData.recommender} onChange={e => setFormData({...formData, recommender: e.target.value})} />
+          <input type="text" name="recommender" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Who are you?" value={formData.recommender} onChange={e => setFormData({...formData, recommender: e.target.value})} />
         </div>
         <div className="pt-10">
           <label className="flex items-center gap-4 cursor-pointer group">
-            <input type="checkbox" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
+            <input type="checkbox" name="popiaConsent" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
             <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">I consent to the processing of this information according to POPIA.</span>
           </label>
         </div>
@@ -795,36 +998,292 @@ const RecommendView: React.FC = () => {
 };
 
 const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ type }) => {
+  const termsContent = (
+    <div className="prose prose-lg max-w-none">
+      <p className="text-gray-600 mb-8"><strong>Effective Date:</strong> January 2025</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">1. Acceptance of Terms</h2>
+      <p className="text-gray-600 mb-4">By accessing and using VaalwaterConnect ("the Platform"), you accept and agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use our services.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. Description of Service</h2>
+      <p className="text-gray-600 mb-4">VaalwaterConnect is a local business directory serving the Vaalwater and Waterberg district of South Africa. We provide a platform for local businesses to showcase their services and for users to discover and connect with these businesses.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. User Responsibilities</h2>
+      <p className="text-gray-600 mb-4">Users of the Platform agree to:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Use the Platform only for lawful purposes</li>
+        <li>Not submit false, misleading, or fraudulent information</li>
+        <li>Not impersonate any person or entity</li>
+        <li>Not interfere with or disrupt the Platform's functionality</li>
+        <li>Respect the intellectual property rights of others</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">4. Business Listing Guidelines</h2>
+      <p className="text-gray-600 mb-4">Businesses listed on VaalwaterConnect must:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Provide accurate and truthful information about their services</li>
+        <li>Maintain valid contact information</li>
+        <li>Operate legally within South Africa</li>
+        <li>Have a physical presence or provide services in the Vaalwater/Waterberg region</li>
+        <li>Not engage in any illegal, harmful, or unethical business practices</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">5. Accuracy of Information</h2>
+      <p className="text-gray-600 mb-4">While we strive to ensure all information on our Platform is accurate and up-to-date, VaalwaterConnect does not guarantee the accuracy, completeness, or reliability of any business listing or information. Users are encouraged to verify details directly with businesses before engaging their services.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">6. Intellectual Property</h2>
+      <p className="text-gray-600 mb-4">All content on VaalwaterConnect, including but not limited to text, graphics, logos, and software, is the property of VaalwaterConnect or its content suppliers and is protected by South African and international copyright laws. Unauthorized use, reproduction, or distribution of this content is prohibited.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">7. Limitation of Liability</h2>
+      <p className="text-gray-600 mb-4">VaalwaterConnect shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Your use or inability to use the Platform</li>
+        <li>Any transactions between users and listed businesses</li>
+        <li>Any content posted on the Platform</li>
+        <li>Any errors or omissions in business listings</li>
+        <li>Any unauthorized access to or use of our servers</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">8. Termination</h2>
+      <p className="text-gray-600 mb-4">We reserve the right to terminate or suspend access to our Platform immediately, without prior notice, for any reason, including breach of these Terms. Upon termination, your right to use the Platform will cease immediately.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">9. Governing Law</h2>
+      <p className="text-gray-600 mb-4">These Terms shall be governed by and construed in accordance with the laws of the Republic of South Africa. Any disputes arising from these Terms or your use of the Platform shall be subject to the exclusive jurisdiction of the South African courts.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Contact Information</h2>
+      <p className="text-gray-600 mb-4">For questions about these Terms of Use, please contact us at:</p>
+      <ul className="list-none text-gray-600 mb-4">
+        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
+      </ul>
+    </div>
+  );
+
+  const privacyContent = (
+    <div className="prose prose-lg max-w-none">
+      <p className="text-gray-600 mb-8"><strong>Effective Date:</strong> January 2025</p>
+      <p className="text-gray-600 mb-8">This Privacy Policy is compliant with the Protection of Personal Information Act, 2013 (POPIA) of South Africa.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">1. Information We Collect</h2>
+      <p className="text-gray-600 mb-4">We collect the following types of information:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li><strong>Business Information:</strong> Business name, contact details (phone, email, address), website, social media links, business description, and photos</li>
+        <li><strong>Personal Information:</strong> Name, email address, and phone number when you submit a form or recommendation</li>
+        <li><strong>Usage Data:</strong> Information about how you interact with our Platform, including pages visited and features used</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. How We Use Your Information</h2>
+      <p className="text-gray-600 mb-4">We use the collected information for the following purposes:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>To display business listings on our directory</li>
+        <li>To process business registration applications</li>
+        <li>To respond to inquiries and support requests</li>
+        <li>To improve our Platform and services</li>
+        <li>To send relevant communications (with your consent)</li>
+        <li>To comply with legal obligations</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. Legal Basis for Processing (POPIA)</h2>
+      <p className="text-gray-600 mb-4">Under POPIA, we process your personal information based on:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li><strong>Consent:</strong> When you voluntarily submit information through our forms</li>
+        <li><strong>Contractual Necessity:</strong> To provide our directory services to listed businesses</li>
+        <li><strong>Legitimate Interest:</strong> To improve our services and maintain Platform security</li>
+        <li><strong>Legal Compliance:</strong> When required by South African law</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">4. Data Sharing</h2>
+      <p className="text-gray-600 mb-4">We do not sell your personal information. We may share information with:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Service providers who assist in operating our Platform (e.g., hosting, form processing)</li>
+        <li>Law enforcement or government agencies when required by law</li>
+        <li>Third parties with your explicit consent</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">5. Data Retention</h2>
+      <p className="text-gray-600 mb-4">We retain personal information for as long as necessary to fulfill the purposes outlined in this policy, or as required by law. Business listings remain active until the business requests removal or fails to maintain their subscription.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">6. Your Rights Under POPIA</h2>
+      <p className="text-gray-600 mb-4">As a data subject under POPIA, you have the right to:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li><strong>Access:</strong> Request a copy of the personal information we hold about you</li>
+        <li><strong>Correction:</strong> Request correction of inaccurate or incomplete information</li>
+        <li><strong>Deletion:</strong> Request deletion of your personal information (subject to legal requirements)</li>
+        <li><strong>Object:</strong> Object to the processing of your personal information</li>
+        <li><strong>Withdraw Consent:</strong> Withdraw consent where processing is based on consent</li>
+        <li><strong>Complaint:</strong> Lodge a complaint with the Information Regulator</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">7. Cookies</h2>
+      <p className="text-gray-600 mb-4">Our Platform may use cookies and similar technologies to enhance user experience. These may include essential cookies for Platform functionality and analytics cookies to understand usage patterns. You can manage cookie preferences through your browser settings.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">8. Security Measures</h2>
+      <p className="text-gray-600 mb-4">We implement appropriate technical and organizational measures to protect personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet is 100% secure.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">9. Changes to This Policy</h2>
+      <p className="text-gray-600 mb-4">We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page with an updated effective date.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Information Officer Contact</h2>
+      <p className="text-gray-600 mb-4">For any privacy-related inquiries or to exercise your rights under POPIA, please contact our Information Officer:</p>
+      <ul className="list-none text-gray-600 mb-4">
+        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
+        <li>Location: Vaalwater, Limpopo, South Africa</li>
+      </ul>
+    </div>
+  );
+
+  const disclaimerContent = (
+    <div className="prose prose-lg max-w-none">
+      <p className="text-gray-600 mb-8"><strong>Effective Date:</strong> January 2025</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">1. No Warranty on Business Listings</h2>
+      <p className="text-gray-600 mb-4">VaalwaterConnect provides business listings for informational purposes only. We make no representations or warranties of any kind, express or implied, regarding:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>The accuracy, reliability, or completeness of any business information</li>
+        <li>The quality, safety, or legality of products or services offered by listed businesses</li>
+        <li>The qualifications, certifications, or credentials of business owners or employees</li>
+        <li>The availability of listed businesses or their services</li>
+        <li>The pricing information displayed for any products or services</li>
+      </ul>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. Third-Party Content</h2>
+      <p className="text-gray-600 mb-4">Business listings, descriptions, photos, and other content on VaalwaterConnect are provided by the businesses themselves or third parties. VaalwaterConnect does not endorse, verify, or guarantee the accuracy of this content. Users should exercise their own judgment when engaging with listed businesses.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. No Responsibility for Transactions</h2>
+      <p className="text-gray-600 mb-4">VaalwaterConnect is a directory service only and is not a party to any transactions between users and listed businesses. We are not responsible for:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Any disputes arising from transactions with listed businesses</li>
+        <li>The quality, delivery, or performance of products or services</li>
+        <li>Payment issues or refund disputes</li>
+        <li>Personal injury or property damage resulting from services</li>
+        <li>Any losses incurred from reliance on business information</li>
+      </ul>
+      <p className="text-gray-600 mb-4">Users engage with listed businesses entirely at their own risk and should conduct their own due diligence before entering into any agreements.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">4. External Links Disclaimer</h2>
+      <p className="text-gray-600 mb-4">Our Platform may contain links to external websites operated by third parties. VaalwaterConnect has no control over the content, privacy policies, or practices of these external sites and assumes no responsibility for them. The inclusion of any link does not imply endorsement or recommendation.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">5. Service Availability</h2>
+      <p className="text-gray-600 mb-4">VaalwaterConnect strives to maintain continuous availability of our Platform but does not guarantee uninterrupted access. We may modify, suspend, or discontinue any aspect of the Platform at any time without notice. We are not liable for any loss or inconvenience caused by Platform downtime or technical issues.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">6. Limitation of Liability</h2>
+      <p className="text-gray-600 mb-4">To the fullest extent permitted by South African law, VaalwaterConnect, its owners, operators, employees, and affiliates shall not be liable for any:</p>
+      <ul className="list-disc pl-6 text-gray-600 mb-4">
+        <li>Direct, indirect, incidental, special, or consequential damages</li>
+        <li>Loss of profits, revenue, data, or business opportunities</li>
+        <li>Personal injury or property damage</li>
+        <li>Damages arising from the use or inability to use our Platform</li>
+        <li>Damages arising from any transaction with a listed business</li>
+      </ul>
+      <p className="text-gray-600 mb-4">This limitation applies regardless of the legal theory under which such damages are sought.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">7. Indemnification</h2>
+      <p className="text-gray-600 mb-4">You agree to indemnify and hold harmless VaalwaterConnect and its affiliates from any claims, damages, losses, or expenses arising from your use of the Platform or violation of these terms.</p>
+
+      <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">8. Contact Us</h2>
+      <p className="text-gray-600 mb-4">If you have questions about this Disclaimer, please contact us at:</p>
+      <ul className="list-none text-gray-600 mb-4">
+        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
+      </ul>
+    </div>
+  );
+
   const content = {
-    terms: { title: 'Terms of Use', body: 'By using VaalwaterConnect, you agree to comply with our standards of accuracy and community integrity. We act as a directory only and are not responsible for individual service quality.' },
-    privacy: { title: 'Privacy Policy (POPIA)', body: 'We respect your data. In compliance with the Protection of Personal Information Act (POPIA), we only store business information provided voluntarily for the purpose of directory listing.' },
-    disclaimer: { title: 'Legal Disclaimer', body: 'While we strive for accuracy, VaalwaterConnect does not warrant that business information is current at all times. Users should verify details directly with the establishments.' }
+    terms: { title: 'Terms of Use', body: termsContent },
+    privacy: { title: 'Privacy Policy (POPIA Compliant)', body: privacyContent },
+    disclaimer: { title: 'Legal Disclaimer', body: disclaimerContent }
   }[type];
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-32 animate-fade">
+    <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
       <h1 className="text-5xl font-serif font-bold text-forest mb-12 italic">{content.title}</h1>
-      <p className="text-xl text-gray-600 leading-relaxed font-light">{content.body}</p>
+      {content.body}
       <button onClick={() => window.history.back()} className="mt-12 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Return to Previous</button>
     </div>
   );
 };
 
 const ContactView: React.FC = () => (
-  <div className="max-w-4xl mx-auto px-6 py-32 animate-fade text-center">
-    <h1 className="text-6xl font-serif font-bold text-forest mb-12 italic">Get in Touch</h1>
-    <p className="text-xl text-gray-500 mb-16 font-light">Questions about our registry or need to update your listing?</p>
-    <div className="grid md:grid-cols-2 gap-12">
-      <div className="p-12 bg-sand/20 rounded-3xl border border-sand">
-        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-4">Email HQ</h4>
-        <p className="text-2xl font-serif font-bold text-forest">hello@vaalwaterconnect.co.za</p>
+  <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
+    <div className="text-center mb-16">
+      <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Get in Touch</h1>
+      <p className="text-xl text-gray-500 font-light">Questions about our registry or need to update your listing? We're here to help.</p>
+    </div>
+
+    <div className="mb-12">
+      <a
+        href="https://wa.me/27688986081"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full bg-[#25D366] hover:bg-[#128C7E] text-white p-8 rounded-3xl shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+      >
+        <div className="flex items-center justify-center gap-4">
+          <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          <div className="text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70 mb-1">Preferred Contact Method</p>
+            <p className="text-3xl font-serif font-bold">WhatsApp Us</p>
+            <p className="text-lg font-light mt-1">068 898 6081</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-8">
+      <a
+        href="mailto:stephenearle1972@gmail.com"
+        className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-forest/20 transition-colors">
+            <span className="text-3xl">✉️</span>
+          </div>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Email Us</h4>
+          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">stephenearle1972@gmail.com</p>
+        </div>
+      </a>
+
+      <a
+        href="tel:+27688986081"
+        className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-forest/20 transition-colors">
+            <span className="text-3xl">📞</span>
+          </div>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Call Us</h4>
+          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">068 898 6081</p>
+        </div>
+      </a>
+    </div>
+
+    <div className="mt-12 p-10 bg-forest text-white rounded-3xl text-center">
+      <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <span className="text-3xl">📍</span>
       </div>
-      <div className="p-12 bg-forest text-white rounded-3xl">
-        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/40 mb-4">District Office</h4>
-        <p className="text-2xl font-serif font-bold italic">Vaalwater, Waterberg</p>
-      </div>
+      <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/50 mb-3">Location</h4>
+      <p className="text-2xl font-serif font-bold italic">Vaalwater, Waterberg</p>
+      <p className="text-sand/70 mt-2 font-light">Limpopo Province, South Africa</p>
     </div>
   </div>
+);
+
+const FloatingWhatsApp: React.FC = () => (
+  <a
+    href="https://wa.me/27688986081"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group"
+    aria-label="Chat on WhatsApp"
+  >
+    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+    <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-white text-forest px-4 py-2 rounded-lg shadow-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+      Chat with us
+    </span>
+  </a>
 );
 
 export default function App() {
@@ -876,6 +1335,7 @@ export default function App() {
       <Navbar onNavigate={navigateTo} />
       <main className="flex-grow">{renderContent()}</main>
       <Footer onNavigate={navigateTo} />
+      <FloatingWhatsApp />
     </div>
   );
 }
