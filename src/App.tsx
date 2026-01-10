@@ -419,6 +419,12 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
       <p className="mt-12 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
         * Annual plans include 1 month free. Micro plan includes 2 months free for informal workers.
       </p>
+
+      <div className="mt-8 text-center p-6 bg-sand/30 rounded-2xl border border-sand max-w-2xl mx-auto">
+        <p className="text-sm text-forest font-medium">
+          <span className="font-bold">Payment Methods:</span> EFT, SnapScan, Zapper, or Cash deposit at Shoprite/PEP. Contact us to arrange payment.
+        </p>
+      </div>
     </div>
   );
 };
@@ -635,6 +641,13 @@ const AddBusinessView: React.FC = () => {
             )}
           </div>
           <p className="text-xs text-gray-400">Click to upload photos of your business (max 5MB each)</p>
+        </div>
+
+        <div className="p-6 bg-sand/30 rounded-2xl border border-sand">
+          <p className="text-sm text-forest font-medium flex items-start gap-3">
+            <span className="text-xl">📍</span>
+            <span>For map location: Please WhatsApp your location pin to <a href="https://wa.me/27688986081" target="_blank" rel="noopener noreferrer" className="text-clay font-bold hover:underline">068 898 6081</a> after submitting this form.</span>
+          </p>
         </div>
 
         <div className="pt-10 border-t border-[#e5e0d8]">
