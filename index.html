@@ -11,6 +11,30 @@
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
 <body class="antialiased">
+    <!-- Hidden Netlify Forms for build-time detection -->
+    <form name="business-application" netlify netlify-honeypot="bot-field" hidden>
+        <input type="text" name="businessName" />
+        <input type="text" name="sector" />
+        <input type="text" name="tier" />
+        <input type="email" name="email" />
+        <input type="tel" name="phone" />
+        <input type="text" name="address" />
+        <textarea name="description"></textarea>
+        <input type="text" name="photos" />
+        <input type="checkbox" name="popiaConsent" />
+    </form>
+
+    <form name="recommend-business" netlify netlify-honeypot="bot-field" hidden>
+        <input type="text" name="businessName" />
+        <input type="text" name="sector" />
+        <input type="tel" name="businessPhone" />
+        <input type="text" name="businessWebsite" />
+        <textarea name="recommendationReason"></textarea>
+        <input type="text" name="recommenderName" />
+        <input type="text" name="recommenderContact" />
+        <input type="checkbox" name="popiaConsent" />
+    </form>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 </body>

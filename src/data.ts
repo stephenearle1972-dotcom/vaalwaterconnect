@@ -14,6 +14,7 @@ export const SECTORS: Sector[] = [
   { id: 'wildlife-agriculture', name: 'Wildlife & Agriculture', icon: '🚜' },
   { id: 'daily-activities', name: 'Daily activities', icon: '🚵' },
   { id: 'emergency-services', name: 'Emergency Services', icon: '🚨' },
+  { id: 'informal-services', name: 'Informal Services', icon: '🧹' },
 ];
 
 export const BUSINESSES: Business[] = [

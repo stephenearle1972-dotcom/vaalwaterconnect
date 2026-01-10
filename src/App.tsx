@@ -65,8 +65,8 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
             <a href="https://wa.me/27688986081" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white hover:text-[#25D366] transition-colors">
               <span>📱</span> WhatsApp: 068 898 6081
             </a>
-            <a href="mailto:stephenearle1972@gmail.com" className="flex items-center gap-2 text-sm text-white hover:text-clay transition-colors">
-              <span>✉️</span> stephenearle1972@gmail.com
+            <a href="mailto:hello@vaalwaterconnect.co.za" className="flex items-center gap-2 text-sm text-white hover:text-clay transition-colors">
+              <span>✉️</span> hello@vaalwaterconnect.co.za
             </a>
           </div>
         </div>
@@ -262,26 +262,28 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
 
   const tiers = [
     {
-      name: 'Free',
-      monthlyPrice: 'R0',
-      annualPrice: 'R0',
+      name: 'Micro',
+      monthlyPrice: 'R50',
+      annualPrice: 'R500',
       period: isAnnual ? '/ year' : '/ month',
-      badge: null,
+      badge: 'First Month Free!',
       features: [
-        'Basic listing (name, phone, address)',
-        'Visible in directory'
+        'Basic listing (name, phone, area)',
+        'Visible in directory',
+        'Perfect for gardeners, handymen, domestic workers'
       ],
       icon: '🌱',
-      tierName: 'FREE'
+      tierName: 'MICRO',
+      savingsNote: isAnnual ? '(2 months free)' : null
     },
     {
       name: 'Standard',
       monthlyPrice: 'R199',
-      annualPrice: 'R1,999',
+      annualPrice: 'R2,189',
       period: isAnnual ? '/ year' : '/ month',
-      badge: isAnnual ? '2 Months Free!' : null,
+      badge: isAnnual ? '1 Month Free!' : null,
       features: [
-        'Everything in Free',
+        'Everything in Micro',
         'WhatsApp link',
         'Email link',
         'Website link',
@@ -289,14 +291,15 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         'Up to 3 photos'
       ],
       icon: '🌿',
-      tierName: 'STANDARD'
+      tierName: 'STANDARD',
+      savingsNote: isAnnual ? '(1 month free)' : null
     },
     {
       name: 'Premium',
       monthlyPrice: 'R349',
-      annualPrice: 'R3,499',
+      annualPrice: 'R3,839',
       period: isAnnual ? '/ year' : '/ month',
-      badge: isAnnual ? '2 Months Free!' : null,
+      badge: isAnnual ? '1 Month Free!' : null,
       highlighted: true,
       features: [
         'Everything in Standard',
@@ -306,14 +309,15 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         'Social media links (Facebook, Instagram)'
       ],
       icon: '🌳',
-      tierName: 'PREMIUM'
+      tierName: 'PREMIUM',
+      savingsNote: isAnnual ? '(1 month free)' : null
     },
     {
       name: 'Enterprise / Lodge',
       monthlyPrice: 'R599',
-      annualPrice: 'R5,999',
+      annualPrice: 'R6,589',
       period: isAnnual ? '/ year' : '/ month',
-      badge: isAnnual ? '2 Months Free!' : 'Best for Lodges',
+      badge: isAnnual ? '1 Month Free!' : 'Best for Lodges',
       features: [
         'Everything in Premium',
         'Unlimited photos',
@@ -323,7 +327,8 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         'Priority support'
       ],
       icon: '🏨',
-      tierName: 'ENTERPRISE'
+      tierName: 'ENTERPRISE',
+      savingsNote: isAnnual ? '(1 month free)' : null
     },
   ];
 
@@ -350,7 +355,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
             onClick={() => setIsAnnual(true)}
             className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
           >
-            Annual <span className="text-clay ml-1">(Save 2 months)</span>
+            Annual <span className="text-clay ml-1">(Save 1 month)</span>
           </button>
         </div>
       </div>
@@ -412,7 +417,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
       </div>
 
       <p className="mt-12 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-        * Annual plans include 2 months free (pay for 10, get 12).
+        * Annual plans include 1 month free. Micro plan includes 2 months free for informal workers.
       </p>
     </div>
   );
@@ -458,7 +463,7 @@ const AddBusinessView: React.FC = () => {
   const [formData, setFormData] = useState({
     businessName: '',
     sectorId: '',
-    tier: 'free',
+    tier: 'micro',
     phone: '',
     email: '',
     description: '',
@@ -577,7 +582,7 @@ const AddBusinessView: React.FC = () => {
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan</label>
             <select name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
-              <option value="free">Free (R0)</option>
+              <option value="micro">Micro (R50/month) - First month free!</option>
               <option value="standard">Standard (R199/month)</option>
               <option value="premium">Premium (R349/month)</option>
               <option value="enterprise">Enterprise / Lodge (R599/month)</option>
@@ -709,7 +714,7 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
         <div className="absolute inset-0 hero-overlay"></div>
         <div className="relative z-10 max-w-5xl mx-auto text-center text-white pt-20">
           <span className="text-[10px] font-black uppercase tracking-[0.8em] text-sand/60 mb-8 block">Waterberg Biosphere District</span>
-          <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">Vaalwater<br/>Connect.</h1>
+          <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">Vaalwater<br/>Connect</h1>
           
           <div className="max-w-3xl mx-auto mb-16 px-4">
             <form onSubmit={handleSearch} className="relative group">
@@ -878,7 +883,7 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
               </div>
               
               <div className="mt-12 pt-10 border-t border-[#e5e0d8] space-y-6">
-                 {business.email && <div className="text-sm text-gray-500 text-center font-light underline decoration-sand decoration-2">{business.email}</div>}
+                 {business.email && <a href={`mailto:${business.email}`} className="block text-sm text-gray-500 text-center font-light underline decoration-sand decoration-2 hover:text-clay transition-colors">{business.email}</a>}
                  {business.address && <div className="text-sm text-gray-400 text-center font-light italic leading-relaxed">{business.address}</div>}
               </div>
             </div>
@@ -1071,7 +1076,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Contact Information</h2>
       <p className="text-gray-600 mb-4">For questions about these Terms of Use, please contact us at:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
         <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
       </ul>
     </div>
@@ -1144,7 +1149,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Information Officer Contact</h2>
       <p className="text-gray-600 mb-4">For any privacy-related inquiries or to exercise your rights under POPIA, please contact our Information Officer:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
         <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
         <li>Location: Vaalwater, Limpopo, South Africa</li>
       </ul>
@@ -1202,7 +1207,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">8. Contact Us</h2>
       <p className="text-gray-600 mb-4">If you have questions about this Disclaimer, please contact us at:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:stephenearle1972@gmail.com" className="text-clay hover:underline">stephenearle1972@gmail.com</a></li>
+        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
         <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
       </ul>
     </div>
@@ -1250,7 +1255,7 @@ const ContactView: React.FC = () => (
 
     <div className="grid md:grid-cols-2 gap-8">
       <a
-        href="mailto:stephenearle1972@gmail.com"
+        href="mailto:hello@vaalwaterconnect.co.za"
         className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
       >
         <div className="text-center">
@@ -1258,7 +1263,7 @@ const ContactView: React.FC = () => (
             <span className="text-3xl">✉️</span>
           </div>
           <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Email Us</h4>
-          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">stephenearle1972@gmail.com</p>
+          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">hello@vaalwaterconnect.co.za</p>
         </div>
       </a>
 
