@@ -902,7 +902,8 @@ const RecommendView: React.FC = () => {
     phone: '',
     website: '',
     reason: '',
-    recommender: '',
+    recommenderName: '',
+    recommenderContact: '',
     popiaConsent: false
   });
 
@@ -930,35 +931,39 @@ const RecommendView: React.FC = () => {
     <div className="max-w-2xl mx-auto px-6 py-40 text-center animate-fade">
       <div className="w-24 h-24 bg-forest/5 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">✅</div>
       <h1 className="text-6xl font-serif font-bold text-forest italic mb-6">Thank You!</h1>
-      <p className="text-xl text-gray-500 font-light mb-12">We've received your recommendation. If valid, we will reach out to the business and add them to our registry.</p>
-      <button onClick={() => setSubmitted(false)} className="text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Submit Another</button>
+      <p className="text-xl text-gray-500 font-light mb-12">We'll review this recommendation and reach out to the business.</p>
+      <button onClick={() => setSubmitted(false)} className="text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Submit Another Recommendation</button>
     </div>
   );
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
       <div className="mb-16 text-center">
-        <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Recommend a Gem</h1>
-        <p className="text-xl text-gray-500 font-light">Know a master artisan or local shop that belongs on our map? Let us know.</p>
+        <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Recommend a Business</h1>
+        <p className="text-xl text-gray-500 font-light">Know a great local business that should be on VaalwaterConnect? Tell us about them.</p>
       </div>
       <form
-        name="recommendation"
+        name="recommend-business"
         method="POST"
         data-netlify="true"
         netlify-honeypot="bot-field"
         onSubmit={handleSubmit}
         className="bg-white p-12 md:p-20 rounded-[4rem] border border-[#e5e0d8] shadow-3xl space-y-10"
       >
-        <input type="hidden" name="form-name" value="recommendation" />
+        <input type="hidden" name="form-name" value="recommend-business" />
         <input type="hidden" name="bot-field" />
+
+        <div className="border-b border-sand pb-8 mb-2">
+          <h3 className="text-[11px] font-black text-forest uppercase tracking-[0.3em]">Business Details</h3>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Suggested Business Name *</label>
-            <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" placeholder="Name of establishment" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Name *</label>
+            <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" placeholder="Name of business" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
           </div>
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector *</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector / Category *</label>
             <select required name="sector" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
               <option value="">Select a Sector</option>
               {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -967,29 +972,42 @@ const RecommendView: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number (Optional)</label>
-            <input type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Phone (if known)</label>
+            <input type="tel" name="businessPhone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
           </div>
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Link (Optional)</label>
-            <input type="text" name="website" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Website or Facebook URL" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Website / Facebook (if known)</label>
+            <input type="text" name="businessWebsite" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="URL or Facebook page" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
           </div>
         </div>
         <div className="space-y-4">
-          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Why do you recommend them?</label>
-          <textarea name="reason" rows={3} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="Tell us about their service..." value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Why do you recommend this business? *</label>
+          <textarea required name="recommendationReason" rows={4} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif italic resize-none" placeholder="Tell us about their service, quality, what makes them special..." value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />
         </div>
-        <div className="space-y-4">
-          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Name (Optional)</label>
-          <input type="text" name="recommender" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Who are you?" value={formData.recommender} onChange={e => setFormData({...formData, recommender: e.target.value})} />
+
+        <div className="border-b border-sand pb-8 mb-2 pt-6">
+          <h3 className="text-[11px] font-black text-forest uppercase tracking-[0.3em]">Your Details (Optional)</h3>
+          <p className="text-sm text-gray-400 mt-2">So we can thank you or follow up if needed</p>
         </div>
-        <div className="pt-10">
+
+        <div className="grid md:grid-cols-2 gap-10">
+          <div className="space-y-4">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Name</label>
+            <input type="text" name="recommenderName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Your name" value={formData.recommenderName} onChange={e => setFormData({...formData, recommenderName: e.target.value})} />
+          </div>
+          <div className="space-y-4">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Contact (Phone or Email)</label>
+            <input type="text" name="recommenderContact" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Phone or email" value={formData.recommenderContact} onChange={e => setFormData({...formData, recommenderContact: e.target.value})} />
+          </div>
+        </div>
+
+        <div className="pt-10 border-t border-[#e5e0d8]">
           <label className="flex items-center gap-4 cursor-pointer group">
-            <input type="checkbox" name="popiaConsent" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
-            <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">I consent to the processing of this information according to POPIA.</span>
+            <input required type="checkbox" name="popiaConsent" className="w-6 h-6 rounded border-sand text-forest focus:ring-clay" checked={formData.popiaConsent} onChange={e => setFormData({...formData, popiaConsent: e.target.checked})} />
+            <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">I consent to the processing of this information according to POPIA. *</span>
           </label>
         </div>
-        <button type="submit" className="w-full bg-forest text-white py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl transition-all hover:scale-[1.01]">
+        <button type="submit" className="w-full bg-forest text-white py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl transition-all hover:scale-[1.01] active:scale-[0.99]">
           Submit Recommendation
         </button>
       </form>
