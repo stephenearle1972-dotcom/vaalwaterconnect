@@ -1,18 +1,18 @@
 {
   "site": {
-    "name": "VaalwaterConnect",
-    "townName": "Vaalwater",
-    "region": "Waterberg Biosphere District"
+    "name": "Port Alfred Connect",
+    "townName": "Port Alfred",
+    "region": "Eastern Cape Coast"
   },
   "contact": {
-    "whatsapp": "+27688986081",
-    "email": "hello@vaalwaterconnect.co.za"
+    "whatsapp": "+27460000000",
+    "email": "hello@portalfredconnect.co.za"
   },
   "theme": {
     "colors": {
-      "primary": "#2d4a3e",
-      "secondary": "#b87352",
-      "accent": "#e8e2d6"
+      "primary": "#0077be",
+      "secondary": "#f4a460",
+      "accent": "#e8f4f8"
     }
   }
 }
