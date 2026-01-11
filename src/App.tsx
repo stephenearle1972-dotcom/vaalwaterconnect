@@ -930,19 +930,32 @@ const RecommendView: React.FC = () => {
     e.preventDefault();
     if (!formData.businessName || !formData.sectorId || !formData.popiaConsent) return;
 
-    const form = e.target as HTMLFormElement;
-    const formDataToSend = new FormData(form);
+    // Explicitly encode form data with field names matching index.html hidden form
+    const encode = (data: Record<string, string>) => {
+      return Object.keys(data)
+        .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+        .join('&');
+    };
 
     try {
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formDataToSend as any).toString()
+        body: encode({
+          'form-name': 'recommend-business',
+          businessName: formData.businessName,
+          sector: formData.sectorId,
+          businessPhone: formData.phone,
+          businessWebsite: formData.website,
+          recommendationReason: formData.reason,
+          recommenderName: formData.recommenderName,
+          recommenderContact: formData.recommenderContact,
+          popiaConsent: formData.popiaConsent ? 'yes' : ''
+        })
       });
       setSubmitted(true);
     } catch (error) {
       console.error('Form submission error:', error);
-      setSubmitted(true);
     }
   };
 
