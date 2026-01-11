@@ -27,7 +27,8 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           <button onClick={() => onNavigate('tourism')} className="nav-link">Tourism</button>
           <button onClick={() => onNavigate('pricing')} className="nav-link">Pricing</button>
           <button onClick={() => onNavigate('contact')} className="nav-link">Contact</button>
-          <button 
+          <button onClick={() => onNavigate('recommend')} className="nav-link">Recommend</button>
+          <button
             onClick={() => onNavigate('add-business')} 
             className="btn-primary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest ml-2"
           >
