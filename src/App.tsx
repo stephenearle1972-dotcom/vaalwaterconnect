@@ -2,7 +2,21 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BUSINESSES, SECTORS } from './data';
 import { Business, SectorId, Page, Sector } from './types';
+import config from './config.json';
 import L from 'leaflet';
+
+// Helper to format WhatsApp number for display (e.g., +27688986081 -> 068 898 6081)
+const formatWhatsApp = (num: string) => {
+  const digits = num.replace(/\D/g, '');
+  if (digits.startsWith('27')) {
+    const local = '0' + digits.slice(2);
+    return local.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+  }
+  return num;
+};
+
+// Helper to get WhatsApp link number (remove + for wa.me)
+const waLinkNum = config.contact.whatsapp.replace('+', '');
 
 const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => (
   <nav className="bg-white/90 backdrop-blur-md border-b border-[#e5e0d8] sticky top-0 z-50">
@@ -16,7 +30,7 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
             <span className="text-white font-serif font-bold text-xl italic">V</span>
           </div>
           <span className="text-xl font-serif font-bold tracking-tight text-forest">
-            Vaalwater<span className="text-clay">Connect</span>
+            {config.site.townName}<span className="text-clay">Connect</span>
           </span>
         </div>
         <div className="hidden md:flex space-x-4 lg:space-x-5 items-center">
@@ -57,17 +71,17 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
     <div className="max-w-7xl mx-auto px-6 lg:px-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-16">
         <div className="md:col-span-2">
-          <h4 className="text-white font-serif font-bold text-2xl mb-6 italic">VaalwaterConnect</h4>
+          <h4 className="text-white font-serif font-bold text-2xl mb-6 italic">{config.site.name}</h4>
           <p className="text-sm leading-relaxed max-w-sm text-sand/60 font-light">
             Hyperlocal excellence for the Waterberg district. Connecting our community with integrity and boutique visibility.
           </p>
           <div className="mt-8 space-y-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-clay">Contact Us</p>
-            <a href="https://wa.me/27688986081" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white hover:text-[#25D366] transition-colors">
-              <span>📱</span> WhatsApp: 068 898 6081
+            <a href={`https://wa.me/${waLinkNum}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white hover:text-[#25D366] transition-colors">
+              <span>📱</span> WhatsApp: {formatWhatsApp(config.contact.whatsapp)}
             </a>
-            <a href="mailto:hello@vaalwaterconnect.co.za" className="flex items-center gap-2 text-sm text-white hover:text-clay transition-colors">
-              <span>✉️</span> hello@vaalwaterconnect.co.za
+            <a href={`mailto:${config.contact.email}`} className="flex items-center gap-2 text-sm text-white hover:text-clay transition-colors">
+              <span>✉️</span> {config.contact.email}
             </a>
           </div>
         </div>
@@ -91,7 +105,7 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
         </div>
       </div>
       <div className="mt-20 pt-10 border-t border-white/10 text-center">
-        <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">&copy; {new Date().getFullYear()} VaalwaterConnect. All rights reserved.</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">&copy; {new Date().getFullYear()} {config.site.name}. All rights reserved.</p>
       </div>
     </div>
   </footer>
@@ -189,7 +203,7 @@ const SpecialsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
       <div className="mt-24 bg-sand/30 rounded-[3rem] p-16 text-center border border-sand">
          <h2 className="text-4xl font-serif font-bold text-forest italic mb-6">Promote Your Specials</h2>
          <p className="text-gray-500 max-w-xl mx-auto mb-10 text-lg font-light">
-           Are you a Vaalwater business with a special offer? Listings on our Specials page are included in our Annual Essential and Lodge partner plans.
+           Are you a {config.site.townName} business with a special offer? Listings on our Specials page are included in our Annual Essential and Lodge partner plans.
          </p>
          <button 
            onClick={() => onNavigate('pricing')}
@@ -335,7 +349,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
 
   const openWhatsApp = (tierName: string) => {
     const message = encodeURIComponent(`Hi, I'm interested in the ${tierName} plan for my business.`);
-    window.open(`https://wa.me/27688986081?text=${message}`, '_blank');
+    window.open(`https://wa.me/${waLinkNum}?text=${message}`, '_blank');
   };
 
   return (
@@ -407,7 +421,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
           Get in touch via WhatsApp and we'll help you choose the perfect plan for your business needs.
         </p>
         <a
-          href="https://wa.me/27688986081?text=Hi%2C%20I%27m%20interested%20in%20listing%20my%20business%20on%20VaalwaterConnect."
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent(`Hi, I'm interested in listing my business on ${config.site.name}.`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:bg-white hover:text-[#075e54] relative z-10"
@@ -437,13 +451,13 @@ const AboutView: React.FC = () => (
       <p className="text-3xl font-serif italic text-clay leading-snug mb-16">Connecting the Waterberg Biosphere, one trusted business at a time.</p>
       <div className="prose prose-2xl text-gray-600 font-light leading-relaxed space-y-8">
         <p>
-          VaalwaterConnect was born from a simple observation: in our vast and beautiful Waterberg region, finding reliable services shouldn't feel like navigating the bush without a compass.
+          {config.site.name} was born from a simple observation: in our vast and beautiful Waterberg region, finding reliable services shouldn't feel like navigating the bush without a compass.
         </p>
         <p>
-          We are more than a directory; we are a digital bridge. Our mission is to provide boutique visibility to the master artisans, world-class lodges, and essential services that form the heartbeat of Vaalwater and its surrounds.
+          We are more than a directory; we are a digital bridge. Our mission is to provide boutique visibility to the master artisans, world-class lodges, and essential services that form the heartbeat of {config.site.townName} and its surrounds.
         </p>
         <p>
-          Whether you're a local resident looking for a plumber or a traveler seeking the perfect safari escape, VaalwaterConnect ensures you find verified excellence with a hyper-local touch.
+          Whether you're a local resident looking for a plumber or a traveler seeking the perfect safari escape, {config.site.name} ensures you find verified excellence with a hyper-local touch.
         </p>
       </div>
     </div>
@@ -559,7 +573,7 @@ const AddBusinessView: React.FC = () => {
     <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
       <div className="mb-16">
         <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Partner Registration</h1>
-        <p className="text-xl text-gray-500 font-light">Join the VaalwaterConnect registry and reach your local audience with professional clarity.</p>
+        <p className="text-xl text-gray-500 font-light">Join the {config.site.name} registry and reach your local audience with professional clarity.</p>
       </div>
       <form
         name="business-application"
@@ -647,7 +661,7 @@ const AddBusinessView: React.FC = () => {
         <div className="p-6 bg-sand/30 rounded-2xl border border-sand">
           <p className="text-sm text-forest font-medium flex items-start gap-3">
             <span className="text-xl">📍</span>
-            <span>For map location: Please WhatsApp your location pin to <a href="https://wa.me/27688986081" target="_blank" rel="noopener noreferrer" className="text-clay font-bold hover:underline">068 898 6081</a> after submitting this form.</span>
+            <span>For map location: Please WhatsApp your location pin to <a href={`https://wa.me/${waLinkNum}`} target="_blank" rel="noopener noreferrer" className="text-clay font-bold hover:underline">{formatWhatsApp(config.contact.whatsapp)}</a> after submitting this form.</span>
           </p>
         </div>
 
@@ -728,15 +742,15 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
         <div className="absolute inset-0 hero-overlay"></div>
         <div className="relative z-10 max-w-5xl mx-auto text-center text-white pt-20">
           <span className="text-[10px] font-black uppercase tracking-[0.8em] text-sand/60 mb-8 block">Waterberg Biosphere District</span>
-          <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">Vaalwater<br/>Connect</h1>
-          
+          <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">{config.site.townName}<br/>Connect</h1>
+
           <div className="max-w-3xl mx-auto mb-16 px-4">
             <form onSubmit={handleSearch} className="relative group">
-               <input 
-                type="text" 
+               <input
+                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="where can i find... in Vaalwater?" 
+                placeholder={`where can i find... in ${config.site.townName}?`} 
                 className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-full py-8 pl-10 pr-28 text-2xl font-serif italic text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-2xl"
                />
                <button 
@@ -972,7 +986,7 @@ const RecommendView: React.FC = () => {
     <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
       <div className="mb-16 text-center">
         <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Recommend a Business</h1>
-        <p className="text-xl text-gray-500 font-light">Know a great local business that should be on VaalwaterConnect? Tell us about them.</p>
+        <p className="text-xl text-gray-500 font-light">Know a great local business that should be on {config.site.name}? Tell us about them.</p>
       </div>
       <form
         name="recommend-business"
@@ -1053,10 +1067,10 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <p className="text-gray-600 mb-8"><strong>Effective Date:</strong> January 2025</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">1. Acceptance of Terms</h2>
-      <p className="text-gray-600 mb-4">By accessing and using VaalwaterConnect ("the Platform"), you accept and agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use our services.</p>
+      <p className="text-gray-600 mb-4">By accessing and using {config.site.name} ("the Platform"), you accept and agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use our services.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. Description of Service</h2>
-      <p className="text-gray-600 mb-4">VaalwaterConnect is a local business directory serving the Vaalwater and Waterberg district of South Africa. We provide a platform for local businesses to showcase their services and for users to discover and connect with these businesses.</p>
+      <p className="text-gray-600 mb-4">{config.site.name} is a local business directory serving the {config.site.townName} and Waterberg district of South Africa. We provide a platform for local businesses to showcase their services and for users to discover and connect with these businesses.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. User Responsibilities</h2>
       <p className="text-gray-600 mb-4">Users of the Platform agree to:</p>
@@ -1069,23 +1083,23 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       </ul>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">4. Business Listing Guidelines</h2>
-      <p className="text-gray-600 mb-4">Businesses listed on VaalwaterConnect must:</p>
+      <p className="text-gray-600 mb-4">Businesses listed on {config.site.name} must:</p>
       <ul className="list-disc pl-6 text-gray-600 mb-4">
         <li>Provide accurate and truthful information about their services</li>
         <li>Maintain valid contact information</li>
         <li>Operate legally within South Africa</li>
-        <li>Have a physical presence or provide services in the Vaalwater/Waterberg region</li>
+        <li>Have a physical presence or provide services in the {config.site.townName}/Waterberg region</li>
         <li>Not engage in any illegal, harmful, or unethical business practices</li>
       </ul>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">5. Accuracy of Information</h2>
-      <p className="text-gray-600 mb-4">While we strive to ensure all information on our Platform is accurate and up-to-date, VaalwaterConnect does not guarantee the accuracy, completeness, or reliability of any business listing or information. Users are encouraged to verify details directly with businesses before engaging their services.</p>
+      <p className="text-gray-600 mb-4">While we strive to ensure all information on our Platform is accurate and up-to-date, {config.site.name} does not guarantee the accuracy, completeness, or reliability of any business listing or information. Users are encouraged to verify details directly with businesses before engaging their services.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">6. Intellectual Property</h2>
-      <p className="text-gray-600 mb-4">All content on VaalwaterConnect, including but not limited to text, graphics, logos, and software, is the property of VaalwaterConnect or its content suppliers and is protected by South African and international copyright laws. Unauthorized use, reproduction, or distribution of this content is prohibited.</p>
+      <p className="text-gray-600 mb-4">All content on {config.site.name}, including but not limited to text, graphics, logos, and software, is the property of {config.site.name} or its content suppliers and is protected by South African and international copyright laws. Unauthorized use, reproduction, or distribution of this content is prohibited.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">7. Limitation of Liability</h2>
-      <p className="text-gray-600 mb-4">VaalwaterConnect shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from:</p>
+      <p className="text-gray-600 mb-4">{config.site.name} shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from:</p>
       <ul className="list-disc pl-6 text-gray-600 mb-4">
         <li>Your use or inability to use the Platform</li>
         <li>Any transactions between users and listed businesses</li>
@@ -1103,8 +1117,8 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Contact Information</h2>
       <p className="text-gray-600 mb-4">For questions about these Terms of Use, please contact us at:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
-        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
+        <li>Email: <a href={`mailto:${config.contact.email}`} className="text-clay hover:underline">{config.contact.email}</a></li>
+        <li>WhatsApp: <a href={`https://wa.me/${waLinkNum}`} className="text-clay hover:underline">{formatWhatsApp(config.contact.whatsapp)}</a></li>
       </ul>
     </div>
   );
@@ -1176,9 +1190,9 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">10. Information Officer Contact</h2>
       <p className="text-gray-600 mb-4">For any privacy-related inquiries or to exercise your rights under POPIA, please contact our Information Officer:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
-        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
-        <li>Location: Vaalwater, Limpopo, South Africa</li>
+        <li>Email: <a href={`mailto:${config.contact.email}`} className="text-clay hover:underline">{config.contact.email}</a></li>
+        <li>WhatsApp: <a href={`https://wa.me/${waLinkNum}`} className="text-clay hover:underline">{formatWhatsApp(config.contact.whatsapp)}</a></li>
+        <li>Location: {config.site.townName}, Limpopo, South Africa</li>
       </ul>
     </div>
   );
@@ -1188,7 +1202,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <p className="text-gray-600 mb-8"><strong>Effective Date:</strong> January 2025</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">1. No Warranty on Business Listings</h2>
-      <p className="text-gray-600 mb-4">VaalwaterConnect provides business listings for informational purposes only. We make no representations or warranties of any kind, express or implied, regarding:</p>
+      <p className="text-gray-600 mb-4">{config.site.name} provides business listings for informational purposes only. We make no representations or warranties of any kind, express or implied, regarding:</p>
       <ul className="list-disc pl-6 text-gray-600 mb-4">
         <li>The accuracy, reliability, or completeness of any business information</li>
         <li>The quality, safety, or legality of products or services offered by listed businesses</li>
@@ -1198,10 +1212,10 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       </ul>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. Third-Party Content</h2>
-      <p className="text-gray-600 mb-4">Business listings, descriptions, photos, and other content on VaalwaterConnect are provided by the businesses themselves or third parties. VaalwaterConnect does not endorse, verify, or guarantee the accuracy of this content. Users should exercise their own judgment when engaging with listed businesses.</p>
+      <p className="text-gray-600 mb-4">Business listings, descriptions, photos, and other content on {config.site.name} are provided by the businesses themselves or third parties. {config.site.name} does not endorse, verify, or guarantee the accuracy of this content. Users should exercise their own judgment when engaging with listed businesses.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. No Responsibility for Transactions</h2>
-      <p className="text-gray-600 mb-4">VaalwaterConnect is a directory service only and is not a party to any transactions between users and listed businesses. We are not responsible for:</p>
+      <p className="text-gray-600 mb-4">{config.site.name} is a directory service only and is not a party to any transactions between users and listed businesses. We are not responsible for:</p>
       <ul className="list-disc pl-6 text-gray-600 mb-4">
         <li>Any disputes arising from transactions with listed businesses</li>
         <li>The quality, delivery, or performance of products or services</li>
@@ -1212,13 +1226,13 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <p className="text-gray-600 mb-4">Users engage with listed businesses entirely at their own risk and should conduct their own due diligence before entering into any agreements.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">4. External Links Disclaimer</h2>
-      <p className="text-gray-600 mb-4">Our Platform may contain links to external websites operated by third parties. VaalwaterConnect has no control over the content, privacy policies, or practices of these external sites and assumes no responsibility for them. The inclusion of any link does not imply endorsement or recommendation.</p>
+      <p className="text-gray-600 mb-4">Our Platform may contain links to external websites operated by third parties. {config.site.name} has no control over the content, privacy policies, or practices of these external sites and assumes no responsibility for them. The inclusion of any link does not imply endorsement or recommendation.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">5. Service Availability</h2>
-      <p className="text-gray-600 mb-4">VaalwaterConnect strives to maintain continuous availability of our Platform but does not guarantee uninterrupted access. We may modify, suspend, or discontinue any aspect of the Platform at any time without notice. We are not liable for any loss or inconvenience caused by Platform downtime or technical issues.</p>
+      <p className="text-gray-600 mb-4">{config.site.name} strives to maintain continuous availability of our Platform but does not guarantee uninterrupted access. We may modify, suspend, or discontinue any aspect of the Platform at any time without notice. We are not liable for any loss or inconvenience caused by Platform downtime or technical issues.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">6. Limitation of Liability</h2>
-      <p className="text-gray-600 mb-4">To the fullest extent permitted by South African law, VaalwaterConnect, its owners, operators, employees, and affiliates shall not be liable for any:</p>
+      <p className="text-gray-600 mb-4">To the fullest extent permitted by South African law, {config.site.name}, its owners, operators, employees, and affiliates shall not be liable for any:</p>
       <ul className="list-disc pl-6 text-gray-600 mb-4">
         <li>Direct, indirect, incidental, special, or consequential damages</li>
         <li>Loss of profits, revenue, data, or business opportunities</li>
@@ -1229,13 +1243,13 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <p className="text-gray-600 mb-4">This limitation applies regardless of the legal theory under which such damages are sought.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">7. Indemnification</h2>
-      <p className="text-gray-600 mb-4">You agree to indemnify and hold harmless VaalwaterConnect and its affiliates from any claims, damages, losses, or expenses arising from your use of the Platform or violation of these terms.</p>
+      <p className="text-gray-600 mb-4">You agree to indemnify and hold harmless {config.site.name} and its affiliates from any claims, damages, losses, or expenses arising from your use of the Platform or violation of these terms.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">8. Contact Us</h2>
       <p className="text-gray-600 mb-4">If you have questions about this Disclaimer, please contact us at:</p>
       <ul className="list-none text-gray-600 mb-4">
-        <li>Email: <a href="mailto:hello@vaalwaterconnect.co.za" className="text-clay hover:underline">hello@vaalwaterconnect.co.za</a></li>
-        <li>WhatsApp: <a href="https://wa.me/27688986081" className="text-clay hover:underline">068 898 6081</a></li>
+        <li>Email: <a href={`mailto:${config.contact.email}`} className="text-clay hover:underline">{config.contact.email}</a></li>
+        <li>WhatsApp: <a href={`https://wa.me/${waLinkNum}`} className="text-clay hover:underline">{formatWhatsApp(config.contact.whatsapp)}</a></li>
       </ul>
     </div>
   );
@@ -1264,7 +1278,7 @@ const ContactView: React.FC = () => (
 
     <div className="mb-12">
       <a
-        href="https://wa.me/27688986081"
+        href={`https://wa.me/${waLinkNum}`}
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full bg-[#25D366] hover:bg-[#128C7E] text-white p-8 rounded-3xl shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -1274,7 +1288,7 @@ const ContactView: React.FC = () => (
           <div className="text-left">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70 mb-1">Preferred Contact Method</p>
             <p className="text-3xl font-serif font-bold">WhatsApp Us</p>
-            <p className="text-lg font-light mt-1">068 898 6081</p>
+            <p className="text-lg font-light mt-1">{formatWhatsApp(config.contact.whatsapp)}</p>
           </div>
         </div>
       </a>
@@ -1282,7 +1296,7 @@ const ContactView: React.FC = () => (
 
     <div className="grid md:grid-cols-2 gap-8">
       <a
-        href="mailto:hello@vaalwaterconnect.co.za"
+        href={`mailto:${config.contact.email}`}
         className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
       >
         <div className="text-center">
@@ -1290,12 +1304,12 @@ const ContactView: React.FC = () => (
             <span className="text-3xl">✉️</span>
           </div>
           <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Email Us</h4>
-          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">hello@vaalwaterconnect.co.za</p>
+          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">{config.contact.email}</p>
         </div>
       </a>
 
       <a
-        href="tel:+27688986081"
+        href={`tel:${config.contact.whatsapp}`}
         className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
       >
         <div className="text-center">
@@ -1303,7 +1317,7 @@ const ContactView: React.FC = () => (
             <span className="text-3xl">📞</span>
           </div>
           <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Call Us</h4>
-          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">068 898 6081</p>
+          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">{formatWhatsApp(config.contact.whatsapp)}</p>
         </div>
       </a>
     </div>
@@ -1313,7 +1327,7 @@ const ContactView: React.FC = () => (
         <span className="text-3xl">📍</span>
       </div>
       <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/50 mb-3">Location</h4>
-      <p className="text-2xl font-serif font-bold italic">Vaalwater, Waterberg</p>
+      <p className="text-2xl font-serif font-bold italic">{config.site.townName}, Waterberg</p>
       <p className="text-sand/70 mt-2 font-light">Limpopo Province, South Africa</p>
     </div>
   </div>
@@ -1321,7 +1335,7 @@ const ContactView: React.FC = () => (
 
 const FloatingWhatsApp: React.FC = () => (
   <a
-    href="https://wa.me/27688986081"
+    href={`https://wa.me/${waLinkNum}`}
     target="_blank"
     rel="noopener noreferrer"
     className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group"

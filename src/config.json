@@ -1,0 +1,18 @@
+{
+  "site": {
+    "name": "VaalwaterConnect",
+    "townName": "Vaalwater",
+    "region": "Waterberg Biosphere District"
+  },
+  "contact": {
+    "whatsapp": "+27688986081",
+    "email": "hello@vaalwaterconnect.co.za"
+  },
+  "theme": {
+    "colors": {
+      "primary": "#2d4a3e",
+      "secondary": "#b87352",
+      "accent": "#e8e2d6"
+    }
+  }
+}
