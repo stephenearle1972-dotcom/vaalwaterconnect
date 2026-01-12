@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+
 
 export async function handler(event) {
   const q = (event.queryStringParameters?.q || "").toLowerCase();
