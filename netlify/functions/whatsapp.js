@@ -1,30 +1,41 @@
-// netlify/functions/whatsapp.js
+import fetch from "node-fetch";
 
 export async function handler(event) {
-  // ---- 1) Meta webhook verification (GET) ----
-  const qs = event.queryStringParameters || {};
-  const mode = qs["hub.mode"];
-  const token = qs["hub.verify_token"];
-  const challenge = qs["hub.challenge"];
+  const q = (event.queryStringParameters?.q || "").toLowerCase();
 
-  if (event.httpMethod === "GET" && mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+  if (!q) {
     return {
       statusCode: 200,
-      body: challenge,
+      body: "ok",
     };
   }
 
-  // ---- 2) Incoming webhook notifications (POST) ----
-  if (event.httpMethod === "POST") {
-    // For now: acknowledge receipt. We'll parse + reply in the next step.
-    return {
-      statusCode: 200,
-      body: "EVENT_RECEIVED",
-    };
-  }
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv";
+
+  const res = await fetch(CSV_URL);
+  const text = await res.text();
+
+  const lines = text.split("\n");
+  const headers = lines[0].split(",");
+
+  const subcategoryIndex = headers.indexOf("subcategory");
+  const nameIndex = headers.indexOf("name");
+  const phoneIndex = headers.indexOf("phone");
+
+  const matches = lines
+    .slice(1)
+    .map((line) => line.split(","))
+    .filter((row) =>
+      (row[subcategoryIndex] || "").toLowerCase().includes(q)
+    )
+    .map(
+      (row) =>
+        `• ${row[nameIndex] || "Unnamed"} – ${row[phoneIndex] || "No phone"}`
+    );
 
   return {
     statusCode: 200,
-    body: "OK",
+    body: matches.length ? matches.join("\n") : "No results",
   };
 }
