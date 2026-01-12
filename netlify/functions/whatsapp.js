@@ -3,7 +3,6 @@
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv";
 
-// Super-simple CSV split (OK for now; we can harden later)
 function splitCSVLine(line) {
   return line.split(",").map((s) => (s || "").trim());
 }
@@ -33,9 +32,7 @@ async function lookupBySubcategory(query) {
 }
 
 async function sendWhatsAppText(to, bodyText) {
-  const phoneNumberId =
-    process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBERID;
-
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_TOKEN;
 
   if (!phoneNumberId) throw new Error("Missing WHATSAPP_PHONE_NUMBER_ID");
@@ -57,54 +54,55 @@ async function sendWhatsAppText(to, bodyText) {
     }),
   });
 
-  // Optional: read response for debugging
   const data = await resp.json().catch(() => ({}));
   if (!resp.ok) {
-    throw new Error(`Meta send failed: ${resp.status} ${JSON.stringify(data)}`);
+    console.error("META_API_ERROR:", resp.status, data);
+    throw new Error("Meta API send failed");
   }
+
   return data;
 }
 
 export async function handler(event) {
-  // 1) Webhook verification (GET)
+  // Webhook verification
   if (event.httpMethod === "GET") {
     const qs = event.queryStringParameters || {};
-    const mode = qs["hub.mode"];
-    const token = qs["hub.verify_token"];
-    const challenge = qs["hub.challenge"];
-
-    if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-      return { statusCode: 200, body: String(challenge || "") };
+    if (
+      qs["hub.mode"] === "subscribe" &&
+      qs["hub.verify_token"] === process.env.WHATSAPP_VERIFY_TOKEN
+    ) {
+      return { statusCode: 200, body: qs["hub.challenge"] };
     }
     return { statusCode: 403, body: "Forbidden" };
   }
 
-  // 2) Incoming messages (POST)
+  // Incoming WhatsApp messages
   if (event.httpMethod === "POST") {
     try {
       const body = JSON.parse(event.body || "{}");
+      const msg = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
-      const msgObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-      const from = msgObj?.from; // user's WhatsApp number (international format digits)
-      const text = msgObj?.text?.body || "";
+      const from = msg?.from;
+      const text = msg?.text?.body;
 
-      // Always acknowledge webhook quickly
-      if (!from || !text) return { statusCode: 200, body: "OK" };
+      console.log("INCOMING_MESSAGE:", from, text);
+
+      if (!from || !text) {
+        return { statusCode: 200, body: "OK" };
+      }
 
       const reply = await lookupBySubcategory(text);
-
-      // Send reply back to the user
       await sendWhatsAppText(from, reply);
 
       return { statusCode: 200, body: "OK" };
     } catch (err) {
-      // Return 200 so Meta doesn't keep retrying forever
+      console.error("WHATSAPP_FUNCTION_ERROR:", err);
       return { statusCode: 200, body: "OK" };
     }
   }
 
-  // 3) Browser test mode: /whatsapp?q=plumber
-  const q = (event.queryStringParameters?.q || "").toLowerCase().trim();
+  // Browser test
+  const q = (event.queryStringParameters?.q || "").toLowerCase();
   if (!q) return { statusCode: 200, body: "ok" };
 
   const reply = await lookupBySubcategory(q);
