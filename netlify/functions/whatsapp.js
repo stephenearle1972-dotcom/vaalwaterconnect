@@ -1,5 +1,6 @@
 // netlify/functions/whatsapp.js
 // Vaalwater Connect – WhatsApp directory bot with optional Gemini intent parsing
+// + Auto language detect (EN/AF) and Afrikaans-friendly mapping
 
 export async function handler(event) {
   try {
@@ -40,8 +41,7 @@ export async function handler(event) {
     const body = safeJson(event.body);
 
     // Extract message
-    const msg =
-      body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0] || null;
+    const msg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0] || null;
 
     // Ignore non-text messages
     const from = msg?.from;
@@ -84,12 +84,16 @@ export async function handler(event) {
 
 /**
  * Build the directory reply for any incoming user text.
+ * - Detects language (EN/AF) and replies in same language
  * - Uses Gemini intent parsing if enabled
  * - Falls back to smart heuristics + keyword matching
  */
 async function buildReplyForText(userTextRaw) {
   const userText = (userTextRaw || "").trim();
   const lower = userText.toLowerCase();
+
+  const lang = detectLang(lower); // "af" | "en"
+  const T = TEXT[lang];
 
   // 1) Load listings from CSV
   const CSV_URL =
@@ -100,7 +104,9 @@ async function buildReplyForText(userTextRaw) {
 
   const rows = parseCsv(csv);
   if (rows.length < 2) {
-    return "Sorry — directory is currently unavailable. Please try again soon.";
+    return lang === "af"
+      ? "Jammer — die gids is tans nie beskikbaar nie. Probeer asseblief later weer."
+      : "Sorry — directory is currently unavailable. Please try again soon.";
   }
 
   const headers = rows[0].map((h) => (h || "").trim());
@@ -130,7 +136,7 @@ async function buildReplyForText(userTextRaw) {
     tags: (r[idx.tags] || "").trim(),
   }));
 
-  // Build known categories from sheet
+  // Build known categories from sheet (English)
   const categories = uniq(
     listings
       .map((l) => l.subcategory)
@@ -142,31 +148,33 @@ async function buildReplyForText(userTextRaw) {
   const aiEnabled = isTrue(process.env.AI_INTENT_ENABLED);
   let query = "";
 
+  // A) AI intent (Gemini) if enabled
   if (aiEnabled && process.env.GEMINI_API_KEY) {
     try {
-      const ai = await geminiPickCategory(userText, categories);
+      const ai = await geminiPickCategory(userText, categories, lang);
       if (ai?.query) query = ai.query.toLowerCase().trim();
-      console.log("AI_INTENT", { userText, ai });
+      console.log("AI_INTENT", { userText, lang, ai });
     } catch (e) {
       console.log("AI_INTENT_ERROR", String(e));
       // fall through to heuristics
     }
   }
 
-  // Heuristic fallback if AI is off or failed
+  // B) Heuristic fallback if AI is off or failed
   if (!query) query = heuristicQuery(lower);
 
-  // Final fallback: first meaningful token
+  // C) Afrikaans synonym mapping (so "loodgieter" etc. works even without AI)
+  if (!query && lang === "af") {
+    const mapped = afrikaansToCategory(lower);
+    if (mapped) query = mapped;
+  }
+
+  // D) Final fallback: first meaningful token
   if (!query) query = firstKeyword(lower);
 
   // 3) Match listings (subcategory + tags + name + description)
   const matches = listings.filter((l) => {
-    const hay = [
-      l.subcategory,
-      l.tags,
-      l.name,
-      l.description,
-    ]
+    const hay = [l.subcategory, l.tags, l.name, l.description]
       .join(" ")
       .toLowerCase();
     return hay.includes(query);
@@ -174,17 +182,21 @@ async function buildReplyForText(userTextRaw) {
 
   // 4) No results
   if (matches.length === 0) {
-    return `Sorry — no listing found for "${userText}".\nReply ADD to submit a business.`;
+    // Don’t echo the full messy sentence; keep it clean
+    return (
+      `${T.noResults}\n` +
+      `${T.tryExamples}\n` +
+      `${T.addPrompt}`
+    ).trim();
   }
 
   // 5) Format response
-  const title = `${capitalize(query)} in Vaalwater:`;
+  const heading = `${T.searchIcon} ${T.heading(capitalize(query))}`;
   const out = [];
-  out.push(`🔎 ${title}`);
+  out.push(heading);
   out.push("");
 
   for (const m of matches.slice(0, 8)) {
-    // Keep it tight + usable
     const parts = [];
     parts.push(`• ${m.name || "Unnamed"}`);
 
@@ -206,14 +218,20 @@ async function buildReplyForText(userTextRaw) {
 
 /**
  * Gemini: pick best directory category from a provided list.
+ * Note: allowed list is English categories from the sheet.
  */
-async function geminiPickCategory(userText, categories) {
+async function geminiPickCategory(userText, categories, lang) {
   const apiKey = process.env.GEMINI_API_KEY;
   const model = (process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim();
 
-  // Keep prompt short + deterministic
+  const languageLine =
+    lang === "af"
+      ? "User language: Afrikaans (respond still with an allowed English keyword)."
+      : "User language: English.";
+
   const prompt =
     `You are a classifier for a small-town business directory.\n` +
+    `${languageLine}\n` +
     `Task: choose the ONE best matching directory keyword from the allowed list.\n` +
     `Allowed keywords: ${categories.join(", ")}\n\n` +
     `User message: "${userText}"\n\n` +
@@ -249,7 +267,6 @@ async function geminiPickCategory(userText, categories) {
   const parsed = safeJson(jsonText) || {};
   if (!parsed.query) return null;
 
-  // If Gemini returns something not in the list, ignore it
   const q = String(parsed.query || "").toLowerCase().trim();
   if (!categories.includes(q)) return null;
 
@@ -257,22 +274,53 @@ async function geminiPickCategory(userText, categories) {
 }
 
 /**
- * Heuristics: map common “natural language” to a directory keyword.
+ * Language detection: lightweight heuristic.
+ */
+function detectLang(lower) {
+  // If user types obvious Afrikaans markers, treat as Afrikaans
+  const afMarkers = [
+    "asb", "asseblief", "dankie", "môre", "more", "vandág", "vandag",
+    "ek", "my", "jy", "julle", "ons", "hulle",
+    "wat", "waar", "wanneer", "hoekom",
+    "is daar", "het jy", "kan jy",
+    "loodgieter", "elektrisiën", "elektrisien", "dokter", "aptek", "apteek",
+    "huis te koop", "te koop", "te huur", "plaas",
+  ];
+
+  if (/[áéíóúäëïöüâêîôû]/.test(lower)) return "af"; // Afrikaans-ish diacritics
+  for (const m of afMarkers) if (lower.includes(m)) return "af";
+  return "en";
+}
+
+/**
+ * Afrikaans synonyms → English categories (matches your sheet).
+ */
+function afrikaansToCategory(lower) {
+  const map = [
+    { re: /\b(loodgieter|pype|pyp|geiser|geyser|lek|lekkasie|verstopping|riool)\b/i, q: "plumber" },
+    { re: /\b(dokter|huisdokter|kliniek|medies|apteek|aptek|verpleeg)\b/i, q: "doctor" },
+    { re: /\b(elektrisi[ëe]n|krag|trip|bedrading|prop|lig(te)?|elektries)\b/i, q: "electrician" },
+    { re: /\b(huis te koop|te koop|eiendom|huur|te huur|makelaar)\b/i, q: "property" },
+    { re: /\b(taxi|vervoer|lift|rit)\b/i, q: "taxi" },
+  ];
+
+  for (const m of map) if (m.re.test(lower)) return m.q;
+  return "";
+}
+
+/**
+ * Heuristics: map common natural language to a directory keyword.
  */
 function heuristicQuery(lower) {
-  // Plumbing
   if (/(geyser|leak|burst|pipe|blocked|blockage|drain|toilet|tap|sewer)/i.test(lower))
     return "plumber";
 
-  // Medical
   if (/(doctor|gp|clinic|medical|pharmacy|nurse)/i.test(lower))
     return "doctor";
 
-  // Electrician
   if (/(electric|power|trip|wiring|plug|lights? not working)/i.test(lower))
     return "electrician";
 
-  // Property / real estate
   if (/(house|home|property|rent|rental|for sale|estate agent)/i.test(lower))
     return "property";
 
@@ -299,7 +347,6 @@ function parseCsvLine(line) {
     const ch = line[i];
 
     if (ch === '"' && line[i + 1] === '"') {
-      // Escaped quote
       cur += '"';
       i++;
       continue;
@@ -325,17 +372,18 @@ function parseCsvLine(line) {
 
 function makeIndex(headers, wanted) {
   const idx = {};
-  for (const key of wanted) {
-    idx[key] = headers.indexOf(key);
-  }
+  for (const key of wanted) idx[key] = headers.indexOf(key);
   return idx;
 }
 
 function firstKeyword(lower) {
   const stop = new Set([
     "i","need","a","an","the","someone","somebody","today","now","please","help",
-    "for","in","on","at","to","my","me","is","are","with","and","of","near"
+    "for","in","on","at","to","my","me","is","are","with","and","of","near",
+    // Afrikaans-ish fillers
+    "ek","my","jy","ons","hulle","asb","asseblief","vandag","nou","help"
   ]);
+
   const tokens = lower
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
@@ -356,9 +404,7 @@ function safeJson(s) {
 function safeExtractJson(text) {
   if (!text) return null;
   const t = String(text).trim();
-  // If it's already pure JSON
   if (t.startsWith("{") && t.endsWith("}")) return t;
-  // Otherwise try to find a JSON object inside
   const m = t.match(/\{[\s\S]*\}/);
   return m ? m[0] : null;
 }
@@ -386,3 +432,20 @@ function capitalize(str) {
   const s = String(str || "");
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
+
+const TEXT = {
+  en: {
+    searchIcon: "🔎",
+    heading: (q) => `${q} in Vaalwater:`,
+    noResults: "Sorry — no listing found.",
+    tryExamples: "Try: plumber, electrician, doctor, taxi",
+    addPrompt: 'Reply ADD to submit a business.',
+  },
+  af: {
+    searchIcon: "🔎",
+    heading: (q) => `${q} in Vaalwater:`,
+    noResults: "Jammer — geen inskrywing gevind nie.",
+    tryExamples: "Probeer: loodgieter, elektrisiën, dokter, taxi",
+    addPrompt: "Antwoord ADD om ’n besigheid in te dien.",
+  },
+};
