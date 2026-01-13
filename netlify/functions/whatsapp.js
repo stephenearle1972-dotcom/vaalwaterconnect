@@ -1,59 +1,67 @@
 // netlify/functions/whatsapp.js
-// WhatsApp directory bot + optional Gemini intent parsing (safe fallback)
+// Vaalwater Connect – WhatsApp directory bot with optional Gemini intent parsing
 
 export async function handler(event) {
   try {
-    // --- 0) Webhook verification (Meta does a GET with hub.* params) ---
+    // 0) Webhook verification (Meta will GET with hub.challenge)
     if (event.httpMethod === "GET") {
       const qs = event.queryStringParameters || {};
 
-      // Meta webhook verification
-      if (qs["hub.mode"] && qs["hub.verify_token"] && qs["hub.challenge"]) {
-        const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
-        if (qs["hub.verify_token"] === verifyToken) {
-          return { statusCode: 200, body: qs["hub.challenge"] };
+      // A) Meta webhook verify
+      if (qs["hub.mode"] && qs["hub.challenge"]) {
+        const mode = qs["hub.mode"];
+        const token = qs["hub.verify_token"];
+        const challenge = qs["hub.challenge"];
+        const expected = process.env.WHATSAPP_VERIFY_TOKEN;
+
+        if (mode === "subscribe" && expected && token === expected) {
+          return { statusCode: 200, body: challenge };
         }
-        return { statusCode: 403, body: "Verification token mismatch" };
+        return { statusCode: 403, body: "Forbidden" };
       }
 
-      // Simple browser test: /.netlify/functions/whatsapp?q=plumber
+      // B) Browser test: /.netlify/functions/whatsapp?q=plumber
       const q = (qs.q || "").trim();
       if (!q) return ok("OK");
-      const reply = await buildDirectoryReply({ userText: q, fromMsisdn: null });
+
+      const reply = await buildReplyForText(q);
       return ok(reply);
     }
 
-    // --- 1) POST: incoming WhatsApp webhook event ---
+    // 1) Only handle POST for real WhatsApp messages
+    if (event.httpMethod !== "POST") return ok("OK");
+
     const token = process.env.WHATSAPP_TOKEN;
-    const phoneNumberId =
-      process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
     if (!token) return ok("Missing WHATSAPP_TOKEN env var.");
     if (!phoneNumberId) return ok("Missing WHATSAPP_PHONE_NUMBER_ID env var.");
 
-    const body = safeJsonParse(event.body) || {};
-    const msg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const body = safeJson(event.body);
 
-    // Ignore non-message webhooks (statuses etc.)
-    if (!msg?.text?.body || !msg?.from) {
-      return ok("No text message to process.");
-    }
+    // Extract message
+    const msg =
+      body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0] || null;
 
-    const from = msg.from; // user MSISDN
-    const userText = msg.text.body;
+    // Ignore non-text messages
+    const from = msg?.from;
+    const text = msg?.text?.body;
 
-    const reply = await buildDirectoryReply({ userText, fromMsisdn: from });
+    if (!from || !text) return ok("No text message to process.");
 
-    // --- 2) Send reply via WhatsApp Cloud API ---
-    const sendUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+    const reply = await buildReplyForText(text);
+
+    // 2) Send WhatsApp message
+    const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
     const payload = {
       messaging_product: "whatsapp",
       to: from,
       type: "text",
-      text: { body: reply },
+      text: { body: reply, preview_url: false },
     };
 
-    const sendRes = await fetch(sendUrl, {
+    const sendRes = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,282 +70,319 @@ export async function handler(event) {
       body: JSON.stringify(payload),
     });
 
-    const sendBody = await sendRes.text();
+    const sendText = await sendRes.text();
     console.log("META_SEND_STATUS", sendRes.status);
-    console.log("META_SEND_BODY", truncate(sendBody, 500));
+    console.log("META_SEND_BODY", sendText);
 
-    // Always respond 200 to Meta quickly
+    // Always return 200 to Meta quickly
     return ok("OK");
   } catch (err) {
-    console.error("HANDLER_ERROR", err);
+    console.error("WHATSAPP_FUNCTION_ERROR", err);
     return ok("Something went wrong. Please try again.");
   }
 }
 
-/* =========================
-   Directory logic
-   ========================= */
+/**
+ * Build the directory reply for any incoming user text.
+ * - Uses Gemini intent parsing if enabled
+ * - Falls back to smart heuristics + keyword matching
+ */
+async function buildReplyForText(userTextRaw) {
+  const userText = (userTextRaw || "").trim();
+  const lower = userText.toLowerCase();
 
-async function buildDirectoryReply({ userText, fromMsisdn }) {
-  const raw = (userText || "").trim();
-  if (!raw) return "OK";
-
-  // Optional AI intent parsing (safe)
-  const aiEnabled = (process.env.AI_INTENT_ENABLED || "").toLowerCase() === "true";
-
-  let normalizedQuery = raw;
-  let keywords = [];
-  let lang = "en";
-
-  if (aiEnabled) {
-    const intent = await getGeminiIntent(raw);
-    if (intent) {
-      normalizedQuery = intent.normalized_query || normalizedQuery;
-      keywords = Array.isArray(intent.keywords) ? intent.keywords : [];
-      lang = intent.language === "af" ? "af" : "en";
-    }
-  }
-
-  // Fallback if AI off or returned nothing useful
-  if (!keywords.length) {
-    keywords = [normalizedQuery.toLowerCase()];
-  } else {
-    keywords = keywords
-      .map((k) => String(k || "").trim().toLowerCase())
-      .filter(Boolean)
-      .slice(0, 5);
-  }
-
-  // Load listings (CSV)
+  // 1) Load listings from CSV
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv";
 
-  const res = await fetch(CSV_URL);
-  const csv = await res.text();
+  const csvRes = await fetch(CSV_URL);
+  const csv = await csvRes.text();
 
-  const { headers, rows } = parseCsvNaive(csv);
-
-  // Column indices (safe if missing)
-  const idx = (name) => headers.indexOf(name);
-
-  const subIdx = idx("subcategory");
-  const tagsIdx = idx("tags");
-  const nameIdx = idx("name");
-  const descIdx = idx("description");
-  const phoneIdx = idx("phone");
-  const waIdx = idx("whatsapp");
-  const emailIdx = idx("email");
-  const webIdx = idx("website");
-  const areaIdx = idx("area"); // if you have it
-  const townIdx = idx("town");
-
-  // Score each row by keyword hits across fields
-  const scored = rows
-    .map((row) => {
-      const hay = [
-        row[subIdx],
-        row[tagsIdx],
-        row[nameIdx],
-        row[descIdx],
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      let score = 0;
-      for (const k of keywords) {
-        if (k && hay.includes(k)) score += 1;
-      }
-      return { row, score };
-    })
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  // Pick top 3
-  const top = scored.slice(0, 3).map((x) => x.row);
-
-  if (!top.length) {
-    return lang === "af"
-      ? `Jammer — geen lysing gevind vir "${raw}".\nAntwoord ADD om ’n besigheid by te voeg.`
-      : `Sorry — no listing found for "${raw}".\nReply ADD to submit a business.`;
+  const rows = parseCsv(csv);
+  if (rows.length < 2) {
+    return "Sorry — directory is currently unavailable. Please try again soon.";
   }
 
-  const heading =
-    lang === "af"
-      ? `🔧 ${capitalize(normalizedQuery)} in Vaalwater:`
-      : `🔧 ${capitalize(normalizedQuery)} in Vaalwater:`;
+  const headers = rows[0].map((h) => (h || "").trim());
+  const data = rows.slice(1);
 
-  const blocks = top.map((row) => {
-    const name = row[nameIdx] || "Unnamed";
-    const desc = row[descIdx] ? `— ${row[descIdx]}` : "";
-    const phone = cleanValue(row[phoneIdx]);
-    const wa = cleanValue(row[waIdx]);
-    const email = cleanValue(row[emailIdx]);
-    const web = cleanValue(row[webIdx]);
+  const idx = makeIndex(headers, [
+    "subcategory",
+    "name",
+    "description",
+    "phone",
+    "whatsapp",
+    "email",
+    "address",
+    "town",
+    "tags",
+  ]);
 
-    const town = cleanValue(row[townIdx]);
-    const area = cleanValue(row[areaIdx]);
-    const location =
-      area || town ? `${[area, town].filter(Boolean).join(" & ")}` : "Vaalwater";
+  const listings = data.map((r) => ({
+    subcategory: (r[idx.subcategory] || "").trim(),
+    name: (r[idx.name] || "").trim(),
+    description: (r[idx.description] || "").trim(),
+    phone: (r[idx.phone] || "").trim(),
+    whatsapp: (r[idx.whatsapp] || "").trim(),
+    email: (r[idx.email] || "").trim(),
+    address: (r[idx.address] || "").trim(),
+    town: (r[idx.town] || "").trim(),
+    tags: (r[idx.tags] || "").trim(),
+  }));
 
-    const lines = [];
-    lines.push(`• ${name} ${desc}`.replace(/\s+/g, " ").trim());
+  // Build known categories from sheet
+  const categories = uniq(
+    listings
+      .map((l) => l.subcategory)
+      .filter(Boolean)
+      .map((s) => s.toLowerCase())
+  ).slice(0, 120);
 
-    // Put numbers on their own lines for clickability
-    if (phone) lines.push(`📞 ${phone}`);
-    if (wa && wa !== phone) lines.push(`💬 WhatsApp: ${wa}`);
-    if (email) lines.push(`✉️ ${email}`);
-    if (web) lines.push(`🌐 ${web}`);
+  // 2) Decide the search query
+  const aiEnabled = isTrue(process.env.AI_INTENT_ENABLED);
+  let query = "";
 
-    lines.push(`📍 ${location}`);
+  if (aiEnabled && process.env.GEMINI_API_KEY) {
+    try {
+      const ai = await geminiPickCategory(userText, categories);
+      if (ai?.query) query = ai.query.toLowerCase().trim();
+      console.log("AI_INTENT", { userText, ai });
+    } catch (e) {
+      console.log("AI_INTENT_ERROR", String(e));
+      // fall through to heuristics
+    }
+  }
 
-    return lines.join("\n");
+  // Heuristic fallback if AI is off or failed
+  if (!query) query = heuristicQuery(lower);
+
+  // Final fallback: first meaningful token
+  if (!query) query = firstKeyword(lower);
+
+  // 3) Match listings (subcategory + tags + name + description)
+  const matches = listings.filter((l) => {
+    const hay = [
+      l.subcategory,
+      l.tags,
+      l.name,
+      l.description,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return hay.includes(query);
   });
 
-  return `${heading}\n\n${blocks.join("\n\n")}`;
+  // 4) No results
+  if (matches.length === 0) {
+    return `Sorry — no listing found for "${userText}".\nReply ADD to submit a business.`;
+  }
+
+  // 5) Format response
+  const title = `${capitalize(query)} in Vaalwater:`;
+  const out = [];
+  out.push(`🔎 ${title}`);
+  out.push("");
+
+  for (const m of matches.slice(0, 8)) {
+    // Keep it tight + usable
+    const parts = [];
+    parts.push(`• ${m.name || "Unnamed"}`);
+
+    if (m.description) parts.push(`  ${dashTrim(m.description, 140)}`);
+
+    if (m.phone) parts.push(`📞 ${m.phone}`);
+    if (m.whatsapp) parts.push(`💬 WhatsApp: ${m.whatsapp}`);
+    if (m.email) parts.push(`✉️ ${m.email}`);
+
+    const place = m.address || m.town;
+    if (place) parts.push(`📍 ${place}`);
+
+    out.push(parts.join("\n"));
+    out.push("");
+  }
+
+  return out.join("\n").trim();
 }
 
-/* =========================
-   Gemini intent parsing
-   ========================= */
+/**
+ * Gemini: pick best directory category from a provided list.
+ */
+async function geminiPickCategory(userText, categories) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const model = (process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim();
 
-async function getGeminiIntent(userText) {
-  try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-    if (!apiKey) return null;
+  // Keep prompt short + deterministic
+  const prompt =
+    `You are a classifier for a small-town business directory.\n` +
+    `Task: choose the ONE best matching directory keyword from the allowed list.\n` +
+    `Allowed keywords: ${categories.join(", ")}\n\n` +
+    `User message: "${userText}"\n\n` +
+    `Return ONLY valid JSON with keys: query, confidence.\n` +
+    `Example: {"query":"plumber","confidence":0.82}\n`;
 
-    // Gemini generateContent REST endpoint (API key in query string)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       model
     )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-    const prompt = `
-You are an intent parser for a small-town business directory.
-Return ONLY valid JSON (no markdown, no backticks).
-Task: extract directory-search keywords from the user's message.
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 60 },
+    }),
+  });
 
-Rules:
-- Do NOT invent businesses.
-- Output JSON with:
-  - "normalized_query": a short phrase like "plumber" or "electrician"
-  - "keywords": array of 1-5 lowercase keywords/tags
-  - "language": "en" or "af" (detect from user text)
+  const txt = await res.text();
+  if (!res.ok) {
+    console.log("GEMINI_STATUS", res.status);
+    console.log("GEMINI_BODY", txt);
+    throw new Error(`Gemini error ${res.status}`);
+  }
 
-Examples:
-User: "my geyser is leaking" -> {"normalized_query":"plumber","keywords":["plumber","geyser","leak"],"language":"en"}
-User: "krag probleem by huis" -> {"normalized_query":"electrician","keywords":["electrician","krag"],"language":"af"}
+  const jsonText =
+    safeExtractJson(
+      safeJson(txt)?.candidates?.[0]?.content?.parts?.[0]?.text || txt
+    ) || "{}";
 
-User message: ${JSON.stringify(String(userText || ""))}
-`.trim();
+  const parsed = safeJson(jsonText) || {};
+  if (!parsed.query) return null;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+  // If Gemini returns something not in the list, ignore it
+  const q = String(parsed.query || "").toLowerCase().trim();
+  if (!categories.includes(q)) return null;
 
-    const res = await fetch(url, {
-      method: "POST",
-      signal: controller.signal,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-      }),
-    });
+  return { query: q, confidence: parsed.confidence ?? null };
+}
 
-    clearTimeout(timeout);
+/**
+ * Heuristics: map common “natural language” to a directory keyword.
+ */
+function heuristicQuery(lower) {
+  // Plumbing
+  if (/(geyser|leak|burst|pipe|blocked|blockage|drain|toilet|tap|sewer)/i.test(lower))
+    return "plumber";
 
-    const txt = await res.text();
-    if (!res.ok) {
-      console.log("GEMINI_ERROR_STATUS", res.status);
-      console.log("GEMINI_ERROR_BODY", truncate(txt, 500));
-      return null;
+  // Medical
+  if (/(doctor|gp|clinic|medical|pharmacy|nurse)/i.test(lower))
+    return "doctor";
+
+  // Electrician
+  if (/(electric|power|trip|wiring|plug|lights? not working)/i.test(lower))
+    return "electrician";
+
+  // Property / real estate
+  if (/(house|home|property|rent|rental|for sale|estate agent)/i.test(lower))
+    return "property";
+
+  return "";
+}
+
+/**
+ * CSV parsing that handles quoted commas.
+ */
+function parseCsv(csvText) {
+  const lines = (csvText || "")
+    .split(/\r?\n/)
+    .filter((l) => l.trim().length > 0);
+
+  return lines.map(parseCsvLine);
+}
+
+function parseCsvLine(line) {
+  const out = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+
+    if (ch === '"' && line[i + 1] === '"') {
+      // Escaped quote
+      cur += '"';
+      i++;
+      continue;
     }
 
-    // Typical response: candidates[0].content.parts[0].text
-    const data = safeJsonParse(txt);
-    const outText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      data?.candidates?.[0]?.output ||
-      "";
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
 
-    const cleaned = stripJsonFence(String(outText || ""));
-    const parsed = safeJsonParse(cleaned);
+    if (ch === "," && !inQuotes) {
+      out.push(cur);
+      cur = "";
+      continue;
+    }
 
-    if (!parsed || typeof parsed !== "object") return null;
-
-    // Minimal validation
-    if (!Array.isArray(parsed.keywords)) parsed.keywords = [];
-    parsed.keywords = parsed.keywords
-      .map((k) => String(k || "").trim().toLowerCase())
-      .filter(Boolean)
-      .slice(0, 5);
-
-    if (parsed.language !== "af") parsed.language = "en";
-    if (typeof parsed.normalized_query !== "string") parsed.normalized_query = "";
-
-    return parsed;
-  } catch (e) {
-    console.log("GEMINI_INTENT_FAIL", String(e?.message || e));
-    return null;
+    cur += ch;
   }
+
+  out.push(cur);
+  return out;
 }
 
-/* =========================
-   Utilities
-   ========================= */
-
-function ok(message) {
-  return { statusCode: 200, body: String(message || "") };
+function makeIndex(headers, wanted) {
+  const idx = {};
+  for (const key of wanted) {
+    idx[key] = headers.indexOf(key);
+  }
+  return idx;
 }
 
-function safeJsonParse(s) {
+function firstKeyword(lower) {
+  const stop = new Set([
+    "i","need","a","an","the","someone","somebody","today","now","please","help",
+    "for","in","on","at","to","my","me","is","are","with","and","of","near"
+  ]);
+  const tokens = lower
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((t) => !stop.has(t));
+
+  return tokens[0] || "";
+}
+
+function safeJson(s) {
   try {
-    return JSON.parse(s);
+    return typeof s === "string" ? JSON.parse(s) : s;
   } catch {
     return null;
   }
 }
 
-// Naive CSV parse (works if your sheet doesn't contain commas inside fields)
-function parseCsvNaive(csv) {
-  const lines = String(csv || "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-
-  const headers = (lines[0] || "").split(",").map((h) => h.trim());
-  const rows = lines.slice(1).map((l) => l.split(",").map((v) => v.trim()));
-
-  return { headers, rows };
+function safeExtractJson(text) {
+  if (!text) return null;
+  const t = String(text).trim();
+  // If it's already pure JSON
+  if (t.startsWith("{") && t.endsWith("}")) return t;
+  // Otherwise try to find a JSON object inside
+  const m = t.match(/\{[\s\S]*\}/);
+  return m ? m[0] : null;
 }
 
-function cleanValue(v) {
-  const s = String(v || "").trim();
-  if (!s) return "";
-  if (s.toLowerCase() === "null") return "";
-  return s;
+function uniq(arr) {
+  return Array.from(new Set(arr));
+}
+
+function dashTrim(s, maxLen) {
+  const t = String(s || "").trim();
+  if (t.length <= maxLen) return t;
+  return t.slice(0, maxLen - 1).trim() + "…";
+}
+
+function isTrue(v) {
+  const s = String(v || "").toLowerCase().trim();
+  return s === "true" || s === "1" || s === "yes" || s === "y";
+}
+
+function ok(message) {
+  return { statusCode: 200, body: String(message || "") };
 }
 
 function capitalize(str) {
-  const s = String(str || "").trim();
-  if (!s) return "";
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function truncate(s, n) {
-  const t = String(s || "");
-  return t.length > n ? t.slice(0, n) + "…" : t;
-}
-
-function stripJsonFence(s) {
-  // Remove ```json fences if model ignores instruction
-  return s
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
+  const s = String(str || "");
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
