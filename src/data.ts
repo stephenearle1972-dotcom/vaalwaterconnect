@@ -920,3 +920,13 @@ export const ANNOUNCEMENTS: Announcement[] = [
     isActive: true,
   },
 ];
+
+// Vaalwater-specific exports for multi-tenant config system
+// These are aliases to the main exports above
+export const VAALWATER_SECTORS = SECTORS;
+export const VAALWATER_BUSINESSES = BUSINESSES;
+export const VAALWATER_JOBS = JOBS;
+export const VAALWATER_EVENTS = EVENTS;
+export const VAALWATER_CLASSIFIEDS = CLASSIFIEDS;
+export const VAALWATER_PROPERTIES = PROPERTIES;
+export const VAALWATER_ANNOUNCEMENTS = ANNOUNCEMENTS;
