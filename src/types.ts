@@ -177,3 +177,15 @@ export type Announcement = {
   imageUrl?: string;
   isActive: boolean;
 };
+
+export type Special = {
+  id: string;
+  businessId: string;
+  businessName: string;
+  title: string;
+  offer: string;
+  validUntil: string;
+  description: string;
+  icon: string;
+  imageUrl: string;
+};

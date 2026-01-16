@@ -1,5 +1,5 @@
 import { TownConfig } from '../types';
-import { Business, Sector, Job, Event, Classified, Property, Announcement } from '../../types';
+import { Business, Sector, Job, Event, Classified, Property, Announcement, Special } from '../../types';
 
 // Menlyn Sectors (same structure, urban focus)
 const MENLYN_SECTORS: Sector[] = [
@@ -1185,6 +1185,43 @@ const MENLYN_ANNOUNCEMENTS: Announcement[] = [
   },
 ];
 
+// Menlyn Specials - Urban lifestyle focus
+const MENLYN_SPECIALS: Special[] = [
+  {
+    id: 'ms1',
+    businessId: 'm1',
+    businessName: 'The Capital Grill House',
+    title: 'Executive Lunch Special',
+    offer: '3-Course Lunch for R295',
+    validUntil: 'Weekdays Only',
+    description: 'Business lunch special including starter, main course, and dessert. Perfect for client meetings. Includes complimentary still or sparkling water.',
+    icon: '🥩',
+    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'ms2',
+    businessId: 'm4',
+    businessName: 'Menlyn Fitness Hub',
+    title: 'New Year Fitness Package',
+    offer: '3 Months for the Price of 2',
+    validUntil: '28 February 2025',
+    description: 'Kickstart your fitness journey with our new year special. Includes unlimited gym access, 2 PT sessions, and body composition analysis.',
+    icon: '💪',
+    imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'ms3',
+    businessId: 'm16',
+    businessName: 'Menlyn Park Hotel & Spa',
+    title: 'Staycation Weekend Package',
+    offer: 'R1,999 per Night Including Breakfast',
+    validUntil: 'Book by March 2025',
+    description: 'Escape the city without leaving it. Includes luxury room, breakfast for two, spa voucher, and late checkout. Perfect urban getaway.',
+    icon: '🏨',
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800'
+  }
+];
+
 // Menlyn Configuration
 export const menlynConfig: TownConfig = {
   id: 'menlyn',
@@ -1233,5 +1270,6 @@ export const menlynConfig: TownConfig = {
     classifieds: MENLYN_CLASSIFIEDS,
     properties: MENLYN_PROPERTIES,
     announcements: MENLYN_ANNOUNCEMENTS,
+    specials: MENLYN_SPECIALS,
   },
 };

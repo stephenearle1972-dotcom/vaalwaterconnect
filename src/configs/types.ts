@@ -1,4 +1,4 @@
-import { Business, Sector, Job, Event, Classified, Property, Announcement } from '../types';
+import { Business, Sector, Job, Event, Classified, Property, Announcement, Special } from '../types';
 
 export interface TownConfig {
   // Town identification
@@ -54,6 +54,7 @@ export interface TownConfig {
     classifieds: Classified[];
     properties: Property[];
     announcements: Announcement[];
+    specials: Special[];
   };
 }
 

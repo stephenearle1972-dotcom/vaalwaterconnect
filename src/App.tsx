@@ -135,52 +135,19 @@ const SectorGrid: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
 );
 
 const SpecialsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
-  const exampleSpecials = [
-    {
-      id: 's1',
-      businessId: '1',
-      businessName: 'Waterberg Game Reserve',
-      title: 'Mid-Week Wilderness Escape',
-      offer: '30% Discount on Luxury Safari Suites',
-      validUntil: '30 September 2024',
-      description: 'Book a mid-week stay (Mon-Thu) and enjoy deep discounts on our premium suites. Includes 2 guided game drives per day.',
-      icon: '🦓',
-      imageUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      id: 's2',
-      businessId: '11',
-      businessName: 'The Stoep Cafe',
-      title: 'Farmers Breakfast Special',
-      offer: 'Buy One, Get One Half Price',
-      validUntil: 'Every Saturday Morning',
-      description: 'The perfect start to your weekend. Bring a friend and enjoy our famous traditional breakfast platter. Valid 08:00 - 11:00.',
-      icon: '🍳',
-      imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      id: 's3',
-      businessId: '20',
-      businessName: 'Sunset Ridge Lodge',
-      title: 'Waterberg Stargazing Long Stay',
-      offer: 'Stay 4 Nights, Pay for 3',
-      validUntil: 'End of Year 2024',
-      description: 'Experience the pristine night skies of the Waterberg. Book a 4-night stay and the final night is on us. Perfect for family retreats.',
-      icon: '✨',
-      imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=800'
-    }
-  ];
+  // Read specials from config
+  const specials = config.data.specials;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
       <div className="mb-20 text-center">
         <span className="text-[10px] font-black uppercase tracking-[0.6em] text-clay mb-4 block">Limited Time Offers</span>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Local Specials.</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover exclusive deals from our trusted partners in the Waterberg district.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover exclusive deals from our trusted partners in {config.town.name}.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-10">
-        {exampleSpecials.map((special) => (
+        {specials.map((special) => (
           <div key={special.id} className="card-classy rounded-[3rem] overflow-hidden flex flex-col group">
             <div className="h-64 relative overflow-hidden">
                <img src={special.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={special.businessName} />
@@ -746,10 +713,10 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
   return (
     <div className="animate-fade">
       <section className="relative h-[850px] flex items-center justify-center px-6 overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=2000" className="absolute inset-0 w-full h-full object-cover scale-105" alt="Waterberg" />
+        <img src={config.branding.heroImage} className="absolute inset-0 w-full h-full object-cover scale-105" alt={config.town.name} />
         <div className="absolute inset-0 hero-overlay"></div>
         <div className="relative z-10 max-w-5xl mx-auto text-center text-white pt-20">
-          <span className="text-[10px] font-black uppercase tracking-[0.8em] text-sand/60 mb-8 block">Waterberg Biosphere District</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.8em] text-sand/60 mb-8 block">{config.town.tagline}</span>
           <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">{config.town.name}<br/>Connect</h1>
 
           <div className="max-w-3xl mx-auto mb-16 px-4">
