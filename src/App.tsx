@@ -32,7 +32,7 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           onClick={() => onNavigate('home')}
         >
           <div className="w-10 h-10 bg-forest rounded-lg flex items-center justify-center mr-3 transition-all group-hover:bg-clay shadow-sm group-hover:rotate-12">
-            <span className="text-white font-serif font-bold text-xl italic">V</span>
+            <span className="text-white font-serif font-bold text-xl italic">{config.branding.faviconEmoji}</span>
           </div>
           <span className="text-xl font-serif font-bold tracking-tight text-forest">
             {config.town.name}<span className="text-clay">Connect</span>
@@ -67,7 +67,7 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
             transition: color 0.2s;
             white-space: nowrap;
           }
-          .nav-link:hover { color: #2d4a3e; }
+          .nav-link:hover { color: var(--color-forest); }
         `}</style>
       </div>
     </div>
@@ -486,17 +486,17 @@ const AddBusinessView: React.FC = () => {
         styles: {
           palette: {
             window: '#FDFBF7',
-            windowBorder: '#2d4a3e',
-            tabIcon: '#2d4a3e',
-            menuIcons: '#b87352',
-            textDark: '#2d4a3e',
+            windowBorder: config.branding.colors.primary,
+            tabIcon: config.branding.colors.primary,
+            menuIcons: config.branding.colors.secondary,
+            textDark: config.branding.colors.primary,
             textLight: '#FFFFFF',
-            link: '#b87352',
-            action: '#2d4a3e',
+            link: config.branding.colors.secondary,
+            action: config.branding.colors.primary,
             inactiveTabIcon: '#6b7280',
             error: '#EF4444',
-            inProgress: '#b87352',
-            complete: '#2d4a3e',
+            inProgress: config.branding.colors.secondary,
+            complete: config.branding.colors.primary,
             sourceBg: '#FDFBF7'
           }
         }
@@ -2379,6 +2379,14 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Inject town-specific colors as CSS variables
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--color-forest', config.branding.colors.primary);
+    root.style.setProperty('--color-clay', config.branding.colors.secondary);
+    root.style.setProperty('--color-sand', config.branding.colors.accent);
   }, []);
 
   const navigateTo = (page: Page, params: any = {}) => {

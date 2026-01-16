@@ -1235,18 +1235,18 @@ export const menlynConfig: TownConfig = {
 
   branding: {
     colors: {
-      primary: '#1e3a5f',    // Deep navy blue
-      secondary: '#c9a227',   // Gold
-      accent: '#f5f5f5',      // Light gray
+      primary: '#1e3a8a',    // Navy blue
+      secondary: '#f59e0b',   // Amber gold
+      accent: '#dbeafe',      // Light blue
     },
-    heroImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=1920',
+    heroImage: 'https://images.unsplash.com/photo-1577948000111-9c970dfe3743?auto=format&fit=crop&q=80&w=1920',
     faviconEmoji: 'M',
   },
 
   contact: {
-    whatsapp: '27123456789', // Update with actual number
+    whatsapp: '27688986081',
     email: 'hello@menlynconnect.co.za',
-    phone: '012 345 6789',
+    phone: '068 898 6081',
   },
 
   location: {

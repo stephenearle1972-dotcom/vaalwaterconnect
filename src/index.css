@@ -38,7 +38,7 @@ body {
 .btn-primary:hover {
   opacity: 0.95;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -10px rgba(45, 74, 62, 0.5);
+  box-shadow: 0 10px 20px -10px color-mix(in srgb, var(--color-forest) 50%, transparent);
 }
 
 .card-classy {
@@ -48,12 +48,12 @@ body {
 }
 .card-classy:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 40px -20px rgba(45, 74, 62, 0.2);
+  box-shadow: 0 20px 40px -20px color-mix(in srgb, var(--color-forest) 20%, transparent);
   border-color: var(--color-clay);
 }
 
 .hero-overlay {
-  background: linear-gradient(to bottom, rgba(45, 74, 62, 0.4), rgba(45, 74, 62, 0.85));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-forest) 40%, transparent), color-mix(in srgb, var(--color-forest) 85%, transparent));
 }
 
 .animate-fade {
