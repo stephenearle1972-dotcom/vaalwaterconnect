@@ -67,4 +67,113 @@ export type Page =
   | 'privacy'
   | 'disclaimer'
   | 'search'
-  | 'specials';
+  | 'specials'
+  | 'jobs'
+  | 'job-detail'
+  | 'events'
+  | 'event-detail'
+  | 'classifieds'
+  | 'classified-detail'
+  | 'property'
+  | 'property-detail'
+  | 'announcements'
+  | 'announcement-detail';
+
+export type JobType = 'full-time' | 'part-time' | 'contract' | 'casual';
+export type ApplicationMethod = 'email' | 'phone' | 'whatsapp' | 'website';
+
+export type Job = {
+  id: string;
+  title: string;
+  businessId: string;
+  businessName: string;
+  jobType: JobType;
+  sectorId: SectorId;
+  description: string;
+  requirements: string[];
+  salaryRange?: string;
+  location: string;
+  postedDate: string;
+  applicationMethod: ApplicationMethod;
+  applicationContact: string;
+  isActive: boolean;
+};
+
+export type EventType = 'market' | 'festival' | 'workshop' | 'community' | 'other';
+
+export type Event = {
+  id: string;
+  title: string;
+  organizerId: string | null;
+  organizerName: string;
+  eventType: EventType;
+  description: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  address: string;
+  ticketPrice?: string;
+  bookingLink?: string;
+  imageUrl: string;
+  isFeatured: boolean;
+};
+
+export type ClassifiedCategory = 'for-sale' | 'wanted' | 'services' | 'other';
+export type ClassifiedCondition = 'new' | 'used' | 'other';
+
+export type Classified = {
+  id: string;
+  title: string;
+  category: ClassifiedCategory;
+  subcategory: string;
+  description: string;
+  price?: string;
+  condition: ClassifiedCondition;
+  sellerName: string;
+  sellerContact: string;
+  location: string;
+  postedDate: string;
+  imageUrl?: string;
+  isActive: boolean;
+};
+
+export type ListingType = 'sale' | 'rent';
+export type PropertyType = 'house' | 'apartment' | 'land' | 'commercial' | 'farm';
+
+export type Property = {
+  id: string;
+  title: string;
+  listingType: ListingType;
+  propertyType: PropertyType;
+  bedrooms?: number;
+  bathrooms?: number;
+  size?: number;
+  price: string;
+  description: string;
+  address: string;
+  lat?: number;
+  lng?: number;
+  features: string[];
+  agentName: string;
+  agentContact: string;
+  postedDate: string;
+  imageUrls: string[];
+  isFeatured: boolean;
+};
+
+export type AnnouncementCategory = 'lost-found' | 'community-notice' | 'alert' | 'other';
+
+export type Announcement = {
+  id: string;
+  title: string;
+  category: AnnouncementCategory;
+  description: string;
+  contactName: string;
+  contactMethod: string;
+  location: string;
+  postedDate: string;
+  expiryDate: string;
+  imageUrl?: string;
+  isActive: boolean;
+};

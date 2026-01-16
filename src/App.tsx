@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { BUSINESSES, SECTORS } from './data';
-import { Business, SectorId, Page, Sector } from './types';
+import { BUSINESSES, SECTORS, JOBS, EVENTS, CLASSIFIEDS, PROPERTIES, ANNOUNCEMENTS } from './data';
+import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory } from './types';
 import config from './config.json';
 import L from 'leaflet';
 
@@ -38,6 +38,11 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           <button onClick={() => onNavigate('directory')} className="nav-link">Directory</button>
           <button onClick={() => onNavigate('specials')} className="nav-link">Specials</button>
           <button onClick={() => onNavigate('map')} className="nav-link">Map</button>
+          <button onClick={() => onNavigate('jobs')} className="nav-link">Jobs</button>
+          <button onClick={() => onNavigate('events')} className="nav-link">Events</button>
+          <button onClick={() => onNavigate('classifieds')} className="nav-link">Classifieds</button>
+          <button onClick={() => onNavigate('property')} className="nav-link">Property</button>
+          <button onClick={() => onNavigate('announcements')} className="nav-link">Notices</button>
           <button onClick={() => onNavigate('tourism')} className="nav-link">Tourism</button>
           <button onClick={() => onNavigate('pricing')} className="nav-link">Pricing</button>
           <button onClick={() => onNavigate('contact')} className="nav-link">Contact</button>
@@ -1333,6 +1338,1046 @@ const ContactView: React.FC = () => (
   </div>
 );
 
+// ============ JOBS BOARD ============
+const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [filterSector, setFilterSector] = useState<string>('all');
+  const activeJobs = JOBS.filter(j => j.isActive);
+  const filteredJobs = filterSector === 'all' ? activeJobs : activeJobs.filter(j => j.sectorId === filterSector);
+
+  const jobTypeLabels: Record<JobType, string> = {
+    'full-time': 'Full-Time',
+    'part-time': 'Part-Time',
+    'contract': 'Contract',
+    'casual': 'Casual'
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <div className="mb-16 text-center">
+        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">💼</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Jobs Board</h1>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find local employment opportunities in the Waterberg district.</p>
+      </div>
+
+      <div className="mb-12 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterSector('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterSector === 'all' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All Sectors
+        </button>
+        {SECTORS.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setFilterSector(s.id)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterSector === s.id ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+          >
+            {s.icon} {s.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8">
+        {filteredJobs.length > 0 ? filteredJobs.map(job => (
+          <div key={job.id} onClick={() => onNavigate('job-detail', { id: job.id })} className="card-classy p-8 rounded-[2.5rem] cursor-pointer group">
+            <div className="flex items-start justify-between mb-4">
+              <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                job.jobType === 'full-time' ? 'bg-forest/10 text-forest' :
+                job.jobType === 'part-time' ? 'bg-clay/10 text-clay' :
+                job.jobType === 'contract' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {jobTypeLabels[job.jobType]}
+              </span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{new Date(job.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>
+            </div>
+            <h3 className="text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mb-2">{job.title}</h3>
+            <p className="text-clay font-bold text-sm mb-3">{job.businessName}</p>
+            <p className="text-gray-400 text-sm font-light line-clamp-2 mb-4">{job.description}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">📍 {job.location}</span>
+              {job.salaryRange && <span className="text-[10px] font-black text-forest uppercase tracking-widest">{job.salaryRange}</span>}
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+            <p className="text-2xl font-serif text-gray-400 italic">No jobs found in this sector.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
+        <h2 className="text-3xl font-serif font-bold italic mb-4">Have a Job to Post?</h2>
+        <p className="text-sand/70 mb-8 font-light">Reach local talent by posting your vacancy on {config.site.name}.</p>
+        <a
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a job vacancy on the Jobs Board.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Post a Job via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const JobDetailView: React.FC<{ jobId: string, onNavigate: (page: Page, params?: any) => void }> = ({ jobId, onNavigate }) => {
+  const job = JOBS.find(j => j.id === jobId);
+  const sector = SECTORS.find(s => s.id === job?.sectorId);
+
+  if (!job) return (
+    <div className="py-40 text-center">
+      <h2 className="text-4xl font-serif font-bold text-forest italic">Job not found.</h2>
+      <button onClick={() => onNavigate('jobs')} className="mt-8 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Back to Jobs</button>
+    </div>
+  );
+
+  const jobTypeLabels: Record<JobType, string> = {
+    'full-time': 'Full-Time',
+    'part-time': 'Part-Time',
+    'contract': 'Contract',
+    'casual': 'Casual'
+  };
+
+  const getApplyLink = () => {
+    switch (job.applicationMethod) {
+      case 'email':
+        return `mailto:${job.applicationContact}?subject=Application: ${encodeURIComponent(job.title)}`;
+      case 'phone':
+        return `tel:${job.applicationContact}`;
+      case 'whatsapp':
+        return `https://wa.me/${job.applicationContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I am interested in the ${job.title} position.`)}`;
+      case 'website':
+        return job.applicationContact;
+      default:
+        return '#';
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('jobs')} className="hover:text-forest transition-colors">Jobs</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">{job.title}</span>
+      </nav>
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+          job.jobType === 'full-time' ? 'bg-forest/10 text-forest' :
+          job.jobType === 'part-time' ? 'bg-clay/10 text-clay' :
+          job.jobType === 'contract' ? 'bg-blue-100 text-blue-700' :
+          'bg-gray-100 text-gray-600'
+        }`}>
+          {jobTypeLabels[job.jobType]}
+        </span>
+        <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-sand text-forest">
+          {sector?.icon} {sector?.name}
+        </span>
+      </div>
+
+      <h1 className="text-5xl md:text-7xl font-serif font-bold text-forest italic mb-4">{job.title}</h1>
+      <p className="text-2xl text-clay font-bold mb-8">{job.businessName}</p>
+
+      <div className="flex flex-wrap gap-6 mb-12 text-sm">
+        <div className="flex items-center gap-2 text-gray-500">
+          <span>📍</span> {job.location}
+        </div>
+        {job.salaryRange && (
+          <div className="flex items-center gap-2 text-forest font-bold">
+            <span>💰</span> {job.salaryRange}
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-gray-400">
+          <span>📅</span> Posted {new Date(job.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+      </div>
+
+      <div className="bg-white p-10 rounded-[3rem] border border-[#e5e0d8] shadow-xl mb-10">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Job Description</h3>
+        <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">{job.description}</p>
+      </div>
+
+      <div className="bg-white p-10 rounded-[3rem] border border-[#e5e0d8] shadow-xl mb-10">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Requirements</h3>
+        <ul className="space-y-3">
+          {job.requirements.map((req, i) => (
+            <li key={i} className="flex items-start gap-3 text-gray-600">
+              <span className="text-clay font-bold mt-1">✓</span>
+              <span>{req}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="bg-forest p-10 rounded-[3rem] text-white text-center">
+        <h3 className="text-2xl font-serif font-bold italic mb-4">Ready to Apply?</h3>
+        <p className="text-sand/70 mb-6 font-light">Apply via {job.applicationMethod === 'email' ? 'email' : job.applicationMethod === 'phone' ? 'phone call' : job.applicationMethod === 'whatsapp' ? 'WhatsApp' : 'their website'}.</p>
+        <a
+          href={getApplyLink()}
+          target={job.applicationMethod === 'website' ? '_blank' : undefined}
+          rel={job.applicationMethod === 'website' ? 'noopener noreferrer' : undefined}
+          className="inline-flex items-center gap-3 bg-clay text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
+        >
+          Apply Now
+        </a>
+      </div>
+    </div>
+  );
+};
+
+// ============ EVENTS CALENDAR ============
+const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [filterType, setFilterType] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+
+  const upcomingEvents = EVENTS.filter(e => new Date(e.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const filteredEvents = filterType === 'all' ? upcomingEvents : upcomingEvents.filter(e => e.eventType === filterType);
+
+  const eventTypeLabels: Record<EventType, { label: string, icon: string }> = {
+    'market': { label: 'Market', icon: '🛒' },
+    'festival': { label: 'Festival', icon: '🎉' },
+    'workshop': { label: 'Workshop', icon: '🎓' },
+    'community': { label: 'Community', icon: '🤝' },
+    'other': { label: 'Other', icon: '📌' }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <div className="mb-16 text-center">
+        <div className="w-20 h-20 bg-clay/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">📅</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Events Calendar</h1>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover what's happening in the Waterberg district.</p>
+      </div>
+
+      <div className="mb-12 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterType('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === 'all' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All Events
+        </button>
+        {Object.entries(eventTypeLabels).map(([type, { label, icon }]) => (
+          <button
+            key={type}
+            onClick={() => setFilterType(type)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {filteredEvents.filter(e => e.isFeatured).length > 0 && (
+        <div className="mb-16">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-8 text-center">Featured Events</h2>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {filteredEvents.filter(e => e.isFeatured).map(event => (
+              <div key={event.id} onClick={() => onNavigate('event-detail', { id: event.id })} className="card-classy rounded-[3rem] overflow-hidden cursor-pointer group">
+                <div className="h-64 relative overflow-hidden">
+                  <img src={event.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={event.title} />
+                  <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-forest">{eventTypeLabels[event.eventType].icon} {eventTypeLabels[event.eventType].label}</span>
+                  </div>
+                  <div className="absolute top-6 right-6 bg-clay text-white px-4 py-2 rounded-full shadow-lg">
+                    <span className="text-[10px] font-black uppercase tracking-widest">Featured</span>
+                  </div>
+                </div>
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    <span>📅 {new Date(event.date).toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                    <span>🕐 {event.startTime} - {event.endTime}</span>
+                  </div>
+                  <h3 className="text-3xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mb-3">{event.title}</h3>
+                  <p className="text-gray-500 font-light line-clamp-2 mb-4">{event.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">📍 {event.location}</span>
+                    {event.ticketPrice && <span className="text-clay font-bold">{event.ticketPrice}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 mb-8 text-center">All Upcoming Events</h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredEvents.filter(e => !e.isFeatured).length > 0 ? filteredEvents.filter(e => !e.isFeatured).map(event => (
+          <div key={event.id} onClick={() => onNavigate('event-detail', { id: event.id })} className="card-classy p-6 rounded-[2rem] cursor-pointer group">
+            {event.imageUrl && (
+              <div className="h-40 rounded-2xl overflow-hidden mb-4">
+                <img src={event.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={event.title} />
+              </div>
+            )}
+            <span className="text-[9px] font-black uppercase tracking-widest text-clay">{eventTypeLabels[event.eventType].icon} {eventTypeLabels[event.eventType].label}</span>
+            <h3 className="text-xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mt-2 mb-3">{event.title}</h3>
+            <div className="space-y-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              <p>📅 {new Date(event.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })} | {event.startTime}</p>
+              <p>📍 {event.location}</p>
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+            <p className="text-2xl font-serif text-gray-400 italic">No upcoming events in this category.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-20 bg-clay/10 border border-clay/20 rounded-[3rem] p-12 text-center">
+        <h2 className="text-3xl font-serif font-bold text-forest italic mb-4">Hosting an Event?</h2>
+        <p className="text-gray-500 mb-8 font-light max-w-xl mx-auto">Get your event listed on {config.site.name} and reach the local community.</p>
+        <a
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post an event on the Events Calendar.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-forest transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Post an Event via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const EventDetailView: React.FC<{ eventId: string, onNavigate: (page: Page, params?: any) => void }> = ({ eventId, onNavigate }) => {
+  const event = EVENTS.find(e => e.id === eventId);
+
+  if (!event) return (
+    <div className="py-40 text-center">
+      <h2 className="text-4xl font-serif font-bold text-forest italic">Event not found.</h2>
+      <button onClick={() => onNavigate('events')} className="mt-8 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Back to Events</button>
+    </div>
+  );
+
+  const eventTypeLabels: Record<EventType, { label: string, icon: string }> = {
+    'market': { label: 'Market', icon: '🛒' },
+    'festival': { label: 'Festival', icon: '🎉' },
+    'workshop': { label: 'Workshop', icon: '🎓' },
+    'community': { label: 'Community', icon: '🤝' },
+    'other': { label: 'Other', icon: '📌' }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('events')} className="hover:text-forest transition-colors">Events</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">{event.title}</span>
+      </nav>
+
+      {event.imageUrl && (
+        <div className="h-[400px] rounded-[3rem] overflow-hidden mb-10 shadow-2xl">
+          <img src={event.imageUrl} className="w-full h-full object-cover" alt={event.title} />
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-forest/10 text-forest">
+          {eventTypeLabels[event.eventType].icon} {eventTypeLabels[event.eventType].label}
+        </span>
+        {event.isFeatured && (
+          <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-clay text-white">Featured</span>
+        )}
+      </div>
+
+      <h1 className="text-5xl md:text-7xl font-serif font-bold text-forest italic mb-4">{event.title}</h1>
+      <p className="text-xl text-clay font-bold mb-8">Hosted by {event.organizerName}</p>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-12">
+        <div className="bg-sand/30 p-6 rounded-2xl">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Date & Time</p>
+          <p className="text-lg font-bold text-forest">{new Date(event.date).toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <p className="text-gray-600">{event.startTime} - {event.endTime}</p>
+        </div>
+        <div className="bg-sand/30 p-6 rounded-2xl">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Location</p>
+          <p className="text-lg font-bold text-forest">{event.location}</p>
+          <p className="text-gray-600">{event.address}</p>
+        </div>
+      </div>
+
+      <div className="bg-white p-10 rounded-[3rem] border border-[#e5e0d8] shadow-xl mb-10">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">About This Event</h3>
+        <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">{event.description}</p>
+      </div>
+
+      <div className="bg-forest p-10 rounded-[3rem] text-white text-center">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+          {event.ticketPrice && (
+            <div className="text-center md:text-left">
+              <p className="text-sand/60 text-[10px] font-black uppercase tracking-widest">Ticket Price</p>
+              <p className="text-2xl font-bold">{event.ticketPrice}</p>
+            </div>
+          )}
+          {event.bookingLink ? (
+            <a
+              href={event.bookingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-clay text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
+            >
+              Get Tickets / Book Now
+            </a>
+          ) : (
+            <a
+              href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent(`Hi, I'm interested in the event: ${event.title} on ${event.date}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              More Info via WhatsApp
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============ CLASSIFIEDS ============
+const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const activeClassifieds = CLASSIFIEDS.filter(c => c.isActive);
+  const filteredClassifieds = filterCategory === 'all' ? activeClassifieds : activeClassifieds.filter(c => c.category === filterCategory);
+
+  const categoryLabels: Record<ClassifiedCategory, { label: string, icon: string }> = {
+    'for-sale': { label: 'For Sale', icon: '🏷️' },
+    'wanted': { label: 'Wanted', icon: '🔍' },
+    'services': { label: 'Services', icon: '🔧' },
+    'other': { label: 'Other', icon: '📋' }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <div className="mb-16 text-center">
+        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">🏷️</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Classifieds</h1>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Buy, sell, and find services in the Waterberg community.</p>
+      </div>
+
+      <div className="mb-12 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterCategory('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterCategory === 'all' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All Ads
+        </button>
+        {Object.entries(categoryLabels).map(([cat, { label, icon }]) => (
+          <button
+            key={cat}
+            onClick={() => setFilterCategory(cat)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterCategory === cat ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredClassifieds.length > 0 ? filteredClassifieds.map(item => (
+          <div key={item.id} onClick={() => onNavigate('classified-detail', { id: item.id })} className="card-classy rounded-[2rem] overflow-hidden cursor-pointer group">
+            {item.imageUrl && (
+              <div className="h-48 overflow-hidden">
+                <img src={item.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={item.title} />
+              </div>
+            )}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                  item.category === 'for-sale' ? 'bg-forest/10 text-forest' :
+                  item.category === 'wanted' ? 'bg-clay/10 text-clay' :
+                  item.category === 'services' ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {categoryLabels[item.category].icon} {categoryLabels[item.category].label}
+                </span>
+                <span className="text-[9px] font-bold text-gray-400">{new Date(item.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>
+              </div>
+              <h3 className="text-xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mb-2">{item.title}</h3>
+              <p className="text-gray-400 text-sm font-light line-clamp-2 mb-4">{item.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">📍 {item.location}</span>
+                {item.price && <span className="text-lg font-black text-clay">{item.price}</span>}
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+            <p className="text-2xl font-serif text-gray-400 italic">No classifieds found in this category.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
+        <h2 className="text-3xl font-serif font-bold italic mb-4">Post Your Ad</h2>
+        <p className="text-sand/70 mb-8 font-light">Have something to sell, looking for something, or offering a service?</p>
+        <a
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a classified ad.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Post an Ad via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const ClassifiedDetailView: React.FC<{ classifiedId: string, onNavigate: (page: Page, params?: any) => void }> = ({ classifiedId, onNavigate }) => {
+  const item = CLASSIFIEDS.find(c => c.id === classifiedId);
+
+  if (!item) return (
+    <div className="py-40 text-center">
+      <h2 className="text-4xl font-serif font-bold text-forest italic">Classified not found.</h2>
+      <button onClick={() => onNavigate('classifieds')} className="mt-8 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Back to Classifieds</button>
+    </div>
+  );
+
+  const categoryLabels: Record<ClassifiedCategory, { label: string, icon: string }> = {
+    'for-sale': { label: 'For Sale', icon: '🏷️' },
+    'wanted': { label: 'Wanted', icon: '🔍' },
+    'services': { label: 'Services', icon: '🔧' },
+    'other': { label: 'Other', icon: '📋' }
+  };
+
+  const conditionLabels = {
+    'new': 'New',
+    'used': 'Used',
+    'other': 'N/A'
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('classifieds')} className="hover:text-forest transition-colors">Classifieds</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">{item.title}</span>
+      </nav>
+
+      {item.imageUrl && (
+        <div className="h-[400px] rounded-[3rem] overflow-hidden mb-10 shadow-2xl">
+          <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.title} />
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+          item.category === 'for-sale' ? 'bg-forest/10 text-forest' :
+          item.category === 'wanted' ? 'bg-clay/10 text-clay' :
+          item.category === 'services' ? 'bg-blue-100 text-blue-700' :
+          'bg-gray-100 text-gray-600'
+        }`}>
+          {categoryLabels[item.category].icon} {categoryLabels[item.category].label}
+        </span>
+        <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-sand text-forest">
+          {item.subcategory}
+        </span>
+        {item.condition !== 'other' && (
+          <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-600">
+            {conditionLabels[item.condition]}
+          </span>
+        )}
+      </div>
+
+      <h1 className="text-5xl md:text-7xl font-serif font-bold text-forest italic mb-4">{item.title}</h1>
+
+      {item.price && (
+        <p className="text-4xl font-black text-clay mb-8">{item.price}</p>
+      )}
+
+      <div className="flex flex-wrap gap-6 mb-12 text-sm">
+        <div className="flex items-center gap-2 text-gray-500">
+          <span>📍</span> {item.location}
+        </div>
+        <div className="flex items-center gap-2 text-gray-400">
+          <span>📅</span> Posted {new Date(item.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+      </div>
+
+      <div className="bg-white p-10 rounded-[3rem] border border-[#e5e0d8] shadow-xl mb-10">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Description</h3>
+        <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">{item.description}</p>
+      </div>
+
+      <div className="bg-forest p-10 rounded-[3rem] text-white text-center">
+        <h3 className="text-2xl font-serif font-bold italic mb-2">Contact Seller</h3>
+        <p className="text-sand/70 mb-6 font-light">Posted by {item.sellerName}</p>
+        <a
+          href={`https://wa.me/${item.sellerContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in your ad: ${item.title}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Contact via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+// ============ PROPERTY LISTINGS ============
+const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterListing, setFilterListing] = useState<string>('all');
+
+  let filteredProperties = PROPERTIES;
+  if (filterType !== 'all') filteredProperties = filteredProperties.filter(p => p.propertyType === filterType);
+  if (filterListing !== 'all') filteredProperties = filteredProperties.filter(p => p.listingType === filterListing);
+
+  const propertyTypeLabels: Record<PropertyType, { label: string, icon: string }> = {
+    'house': { label: 'House', icon: '🏠' },
+    'apartment': { label: 'Apartment', icon: '🏢' },
+    'land': { label: 'Land', icon: '🌳' },
+    'commercial': { label: 'Commercial', icon: '🏪' },
+    'farm': { label: 'Farm', icon: '🚜' }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <div className="mb-16 text-center">
+        <div className="w-20 h-20 bg-clay/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">🏡</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Property</h1>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find your perfect property in the Waterberg region.</p>
+      </div>
+
+      <div className="mb-8 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterListing('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterListing === 'all' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All Listings
+        </button>
+        <button
+          onClick={() => setFilterListing('sale')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterListing === 'sale' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          For Sale
+        </button>
+        <button
+          onClick={() => setFilterListing('rent')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterListing === 'rent' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          To Rent
+        </button>
+      </div>
+
+      <div className="mb-12 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterType('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === 'all' ? 'bg-clay text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All Types
+        </button>
+        {Object.entries(propertyTypeLabels).map(([type, { label, icon }]) => (
+          <button
+            key={type}
+            onClick={() => setFilterType(type)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-clay text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {filteredProperties.filter(p => p.isFeatured).length > 0 && (
+        <div className="mb-16">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-8 text-center">Featured Properties</h2>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {filteredProperties.filter(p => p.isFeatured).map(property => (
+              <div key={property.id} onClick={() => onNavigate('property-detail', { id: property.id })} className="card-classy rounded-[3rem] overflow-hidden cursor-pointer group">
+                <div className="h-64 relative overflow-hidden">
+                  <img src={property.imageUrls[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={property.title} />
+                  <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-forest">{propertyTypeLabels[property.propertyType].icon} {propertyTypeLabels[property.propertyType].label}</span>
+                  </div>
+                  <div className={`absolute top-6 right-6 px-4 py-2 rounded-full shadow-lg ${property.listingType === 'sale' ? 'bg-forest text-white' : 'bg-clay text-white'}`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{property.listingType === 'sale' ? 'For Sale' : 'To Rent'}</span>
+                  </div>
+                </div>
+                <div className="p-8">
+                  <h3 className="text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mb-3">{property.title}</h3>
+                  <p className="text-3xl font-black text-clay mb-4">{property.price}</p>
+                  <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">
+                    {property.bedrooms && <span>🛏️ {property.bedrooms} Beds</span>}
+                    {property.bathrooms && <span>🚿 {property.bathrooms} Baths</span>}
+                    {property.size && <span>📐 {property.size.toLocaleString()} {property.propertyType === 'land' || property.propertyType === 'farm' ? 'm²' : 'm²'}</span>}
+                  </div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">📍 {property.address}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 mb-8 text-center">All Properties</h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredProperties.filter(p => !p.isFeatured).length > 0 ? filteredProperties.filter(p => !p.isFeatured).map(property => (
+          <div key={property.id} onClick={() => onNavigate('property-detail', { id: property.id })} className="card-classy rounded-[2rem] overflow-hidden cursor-pointer group">
+            <div className="h-48 relative overflow-hidden">
+              <img src={property.imageUrls[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={property.title} />
+              <div className={`absolute top-4 right-4 px-3 py-1 rounded-full shadow-lg ${property.listingType === 'sale' ? 'bg-forest text-white' : 'bg-clay text-white'}`}>
+                <span className="text-[9px] font-black uppercase tracking-widest">{property.listingType === 'sale' ? 'Sale' : 'Rent'}</span>
+              </div>
+            </div>
+            <div className="p-6">
+              <span className="text-[9px] font-black uppercase tracking-widest text-clay">{propertyTypeLabels[property.propertyType].icon} {propertyTypeLabels[property.propertyType].label}</span>
+              <h3 className="text-xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mt-2 mb-2">{property.title}</h3>
+              <p className="text-2xl font-black text-clay mb-3">{property.price}</p>
+              <div className="flex flex-wrap gap-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                {property.bedrooms && <span>🛏️ {property.bedrooms}</span>}
+                {property.bathrooms && <span>🚿 {property.bathrooms}</span>}
+                {property.size && <span>📐 {property.size.toLocaleString()}</span>}
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+            <p className="text-2xl font-serif text-gray-400 italic">No properties found matching your criteria.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
+        <h2 className="text-3xl font-serif font-bold italic mb-4">List Your Property</h2>
+        <p className="text-sand/70 mb-8 font-light">Selling or renting property in the Waterberg? Get it listed on {config.site.name}.</p>
+        <a
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to list a property.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          List Property via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const PropertyDetailView: React.FC<{ propertyId: string, onNavigate: (page: Page, params?: any) => void }> = ({ propertyId, onNavigate }) => {
+  const [selectedImage, setSelectedImage] = useState(0);
+  const property = PROPERTIES.find(p => p.id === propertyId);
+
+  if (!property) return (
+    <div className="py-40 text-center">
+      <h2 className="text-4xl font-serif font-bold text-forest italic">Property not found.</h2>
+      <button onClick={() => onNavigate('property')} className="mt-8 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Back to Properties</button>
+    </div>
+  );
+
+  const propertyTypeLabels: Record<PropertyType, { label: string, icon: string }> = {
+    'house': { label: 'House', icon: '🏠' },
+    'apartment': { label: 'Apartment', icon: '🏢' },
+    'land': { label: 'Land', icon: '🌳' },
+    'commercial': { label: 'Commercial', icon: '🏪' },
+    'farm': { label: 'Farm', icon: '🚜' }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('property')} className="hover:text-forest transition-colors">Property</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">{property.title}</span>
+      </nav>
+
+      {/* Photo Gallery */}
+      <div className="mb-10">
+        <div className="h-[500px] rounded-[3rem] overflow-hidden mb-4 shadow-2xl">
+          <img src={property.imageUrls[selectedImage]} className="w-full h-full object-cover" alt={property.title} />
+        </div>
+        {property.imageUrls.length > 1 && (
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {property.imageUrls.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedImage(i)}
+                className={`flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden transition-all ${selectedImage === i ? 'ring-4 ring-clay' : 'opacity-60 hover:opacity-100'}`}
+              >
+                <img src={url} className="w-full h-full object-cover" alt={`View ${i + 1}`} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2">
+          <div className="flex flex-wrap gap-3 mb-6">
+            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${property.listingType === 'sale' ? 'bg-forest text-white' : 'bg-clay text-white'}`}>
+              {property.listingType === 'sale' ? 'For Sale' : 'To Rent'}
+            </span>
+            <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-sand text-forest">
+              {propertyTypeLabels[property.propertyType].icon} {propertyTypeLabels[property.propertyType].label}
+            </span>
+            {property.isFeatured && (
+              <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-clay/20 text-clay">Featured</span>
+            )}
+          </div>
+
+          <h1 className="text-4xl md:text-6xl font-serif font-bold text-forest italic mb-4">{property.title}</h1>
+          <p className="text-4xl font-black text-clay mb-6">{property.price}</p>
+          <p className="text-gray-500 text-lg mb-8">📍 {property.address}</p>
+
+          <div className="flex flex-wrap gap-6 mb-10 p-6 bg-sand/30 rounded-2xl">
+            {property.bedrooms && (
+              <div className="text-center">
+                <p className="text-3xl font-black text-forest">{property.bedrooms}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Bedrooms</p>
+              </div>
+            )}
+            {property.bathrooms && (
+              <div className="text-center">
+                <p className="text-3xl font-black text-forest">{property.bathrooms}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Bathrooms</p>
+              </div>
+            )}
+            {property.size && (
+              <div className="text-center">
+                <p className="text-3xl font-black text-forest">{property.size.toLocaleString()}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">m²</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-8 rounded-[2rem] border border-[#e5e0d8] shadow-xl mb-8">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Description</h3>
+            <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">{property.description}</p>
+          </div>
+
+          {property.features.length > 0 && (
+            <div className="bg-white p-8 rounded-[2rem] border border-[#e5e0d8] shadow-xl">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Features</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {property.features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3 text-gray-600">
+                    <span className="text-clay">✓</span>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="lg:col-span-1">
+          <div className="sticky top-32">
+            <div className="bg-forest p-8 rounded-[2rem] text-white mb-6">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/50 mb-4">Contact Agent</h3>
+              <p className="text-2xl font-serif font-bold italic mb-6">{property.agentName}</p>
+              <a
+                href={`https://wa.me/${property.agentContact.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the property: ${property.title}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-3 bg-[#25D366] text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Contact Agent
+              </a>
+              <a
+                href={`tel:${property.agentContact}`}
+                className="w-full mt-4 inline-flex items-center justify-center gap-3 bg-white/10 text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-forest transition-all"
+              >
+                📞 Call Now
+              </a>
+            </div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+              Posted {new Date(property.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============ COMMUNITY ANNOUNCEMENTS ============
+const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const activeAnnouncements = ANNOUNCEMENTS.filter(a => a.isActive && new Date(a.expiryDate) >= new Date());
+  const filteredAnnouncements = filterCategory === 'all' ? activeAnnouncements : activeAnnouncements.filter(a => a.category === filterCategory);
+
+  const categoryLabels: Record<AnnouncementCategory, { label: string, icon: string, color: string }> = {
+    'lost-found': { label: 'Lost & Found', icon: '🔍', color: 'bg-blue-100 text-blue-700' },
+    'community-notice': { label: 'Community Notice', icon: '📢', color: 'bg-forest/10 text-forest' },
+    'alert': { label: 'Alert', icon: '⚠️', color: 'bg-red-100 text-red-700' },
+    'other': { label: 'Other', icon: '📋', color: 'bg-gray-100 text-gray-600' }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <div className="mb-16 text-center">
+        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">📢</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Announcements</h1>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Stay informed about community news, alerts, and lost & found.</p>
+      </div>
+
+      <div className="mb-12 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => setFilterCategory('all')}
+          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterCategory === 'all' ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+        >
+          All
+        </button>
+        {Object.entries(categoryLabels).map(([cat, { label, icon }]) => (
+          <button
+            key={cat}
+            onClick={() => setFilterCategory(cat)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filterCategory === cat ? 'bg-forest text-white' : 'bg-sand/50 text-gray-500 hover:bg-sand'}`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-6">
+        {filteredAnnouncements.length > 0 ? filteredAnnouncements.map(announcement => (
+          <div key={announcement.id} onClick={() => onNavigate('announcement-detail', { id: announcement.id })} className="card-classy p-8 rounded-[2rem] cursor-pointer group flex gap-6">
+            {announcement.imageUrl && (
+              <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden">
+                <img src={announcement.imageUrl} className="w-full h-full object-cover" alt={announcement.title} />
+              </div>
+            )}
+            <div className="flex-grow">
+              <div className="flex items-center gap-4 mb-3">
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${categoryLabels[announcement.category].color}`}>
+                  {categoryLabels[announcement.category].icon} {categoryLabels[announcement.category].label}
+                </span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{new Date(announcement.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>
+              </div>
+              <h3 className="text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors mb-2">{announcement.title}</h3>
+              <p className="text-gray-400 text-sm font-light line-clamp-2 mb-3">{announcement.description}</p>
+              <div className="flex items-center gap-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <span>📍 {announcement.location}</span>
+                <span>⏳ Expires {new Date(announcement.expiryDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+            <p className="text-2xl font-serif text-gray-400 italic">No announcements in this category.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-20 bg-clay/10 border border-clay/20 rounded-[3rem] p-12 text-center">
+        <h2 className="text-3xl font-serif font-bold text-forest italic mb-4">Have an Announcement?</h2>
+        <p className="text-gray-500 mb-8 font-light max-w-xl mx-auto">Lost something? Found something? Have a community notice to share?</p>
+        <a
+          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a community announcement.')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-forest transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Post Announcement via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const AnnouncementDetailView: React.FC<{ announcementId: string, onNavigate: (page: Page, params?: any) => void }> = ({ announcementId, onNavigate }) => {
+  const announcement = ANNOUNCEMENTS.find(a => a.id === announcementId);
+
+  if (!announcement) return (
+    <div className="py-40 text-center">
+      <h2 className="text-4xl font-serif font-bold text-forest italic">Announcement not found.</h2>
+      <button onClick={() => onNavigate('announcements')} className="mt-8 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Back to Announcements</button>
+    </div>
+  );
+
+  const categoryLabels: Record<AnnouncementCategory, { label: string, icon: string, color: string }> = {
+    'lost-found': { label: 'Lost & Found', icon: '🔍', color: 'bg-blue-100 text-blue-700' },
+    'community-notice': { label: 'Community Notice', icon: '📢', color: 'bg-forest/10 text-forest' },
+    'alert': { label: 'Alert', icon: '⚠️', color: 'bg-red-100 text-red-700' },
+    'other': { label: 'Other', icon: '📋', color: 'bg-gray-100 text-gray-600' }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('announcements')} className="hover:text-forest transition-colors">Announcements</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">{announcement.title}</span>
+      </nav>
+
+      {announcement.imageUrl && (
+        <div className="h-[300px] rounded-[3rem] overflow-hidden mb-10 shadow-2xl">
+          <img src={announcement.imageUrl} className="w-full h-full object-cover" alt={announcement.title} />
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${categoryLabels[announcement.category].color}`}>
+          {categoryLabels[announcement.category].icon} {categoryLabels[announcement.category].label}
+        </span>
+      </div>
+
+      <h1 className="text-5xl md:text-7xl font-serif font-bold text-forest italic mb-8">{announcement.title}</h1>
+
+      <div className="flex flex-wrap gap-6 mb-12 text-sm">
+        <div className="flex items-center gap-2 text-gray-500">
+          <span>📍</span> {announcement.location}
+        </div>
+        <div className="flex items-center gap-2 text-gray-400">
+          <span>📅</span> Posted {new Date(announcement.postedDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+        <div className="flex items-center gap-2 text-clay">
+          <span>⏳</span> Expires {new Date(announcement.expiryDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+      </div>
+
+      <div className="bg-white p-10 rounded-[3rem] border border-[#e5e0d8] shadow-xl mb-10">
+        <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">{announcement.description}</p>
+      </div>
+
+      <div className="bg-forest p-10 rounded-[3rem] text-white text-center">
+        <h3 className="text-2xl font-serif font-bold italic mb-2">Contact</h3>
+        <p className="text-sand/70 mb-6 font-light">{announcement.contactName}</p>
+        <a
+          href={`https://wa.me/${announcement.contactMethod.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'm contacting you about: ${announcement.title}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Contact via WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
 const FloatingWhatsApp: React.FC = () => (
   <a
     href={`https://wa.me/${waLinkNum}`}
@@ -1390,6 +2435,17 @@ export default function App() {
       case 'terms': return <LegalView type="terms" />;
       case 'privacy': return <LegalView type="privacy" />;
       case 'disclaimer': return <LegalView type="disclaimer" />;
+      // Community Features
+      case 'jobs': return <JobsView onNavigate={navigateTo} />;
+      case 'job-detail': return <JobDetailView jobId={navigation.params.id} onNavigate={navigateTo} />;
+      case 'events': return <EventsView onNavigate={navigateTo} />;
+      case 'event-detail': return <EventDetailView eventId={navigation.params.id} onNavigate={navigateTo} />;
+      case 'classifieds': return <ClassifiedsView onNavigate={navigateTo} />;
+      case 'classified-detail': return <ClassifiedDetailView classifiedId={navigation.params.id} onNavigate={navigateTo} />;
+      case 'property': return <PropertyView onNavigate={navigateTo} />;
+      case 'property-detail': return <PropertyDetailView propertyId={navigation.params.id} onNavigate={navigateTo} />;
+      case 'announcements': return <AnnouncementsView onNavigate={navigateTo} />;
+      case 'announcement-detail': return <AnnouncementDetailView announcementId={navigation.params.id} onNavigate={navigateTo} />;
       default: return <HomeView onNavigate={navigateTo} />;
     }
   };
