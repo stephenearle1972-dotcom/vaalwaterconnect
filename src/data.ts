@@ -20,13 +20,13 @@ export const SECTORS: Sector[] = [
 export const BUSINESSES: Business[] = [
   {
     id: '1',
-    name: 'Test Business Port Alfred',
+    name: 'Test Business Vaalwater',
     sectorId: 'food-drinks',
     subcategory: 'Cafe',
-    description: 'Test listing for Port Alfred Connect',
-    phone: '+27 46 624 1234',
+    description: 'Test listing for Vaalwater Connect',
+    phone: '+27 14 755 1234',
     email: 'test@example.com',
-    address: 'Beach Road, Port Alfred',
+    address: 'Main Road, Vaalwater',
     tier: 'standard',
   }
 ];
