@@ -422,27 +422,20 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
 const AboutView: React.FC = () => (
   <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
     <div className="mb-20">
-      <h1 className="text-7xl md:text-9xl font-serif font-bold text-forest mb-12 italic tracking-tighter">Our Story.</h1>
-      <p className="text-3xl font-serif italic text-clay leading-snug mb-16">Connecting the Waterberg Biosphere, one trusted business at a time.</p>
+      <h1 className="text-7xl md:text-9xl font-serif font-bold text-forest mb-12 italic tracking-tighter">{config.about.headline}</h1>
+      <p className="text-3xl font-serif italic text-clay leading-snug mb-16">{config.about.subheadline}</p>
       <div className="prose prose-2xl text-gray-600 font-light leading-relaxed space-y-8">
-        <p>
-          {siteName} was born from a simple observation: in our vast and beautiful Waterberg region, finding reliable services shouldn't feel like navigating the bush without a compass.
-        </p>
-        <p>
-          We are more than a directory; we are a digital bridge. Our mission is to provide boutique visibility to the master artisans, world-class lodges, and essential services that form the heartbeat of {config.town.name} and its surrounds.
-        </p>
-        <p>
-          Whether you're a local resident looking for a plumber or a traveler seeking the perfect safari escape, {siteName} ensures you find verified excellence with a hyper-local touch.
-        </p>
+        {config.about.paragraphs.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
       </div>
     </div>
     <div className="grid md:grid-cols-2 gap-10">
-      <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
-        <img src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="Bushveld" />
-      </div>
-      <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
-        <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="Farm" />
-      </div>
+      {config.about.images.map((imageUrl, index) => (
+        <div key={index} className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
+          <img src={imageUrl} className="w-full h-full object-cover" alt={`${config.town.name} ${index + 1}`} />
+        </div>
+      ))}
     </div>
   </div>
 );
@@ -2381,12 +2374,15 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Inject town-specific colors as CSS variables
+  // Inject town-specific colors and update document title
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--color-forest', config.branding.colors.primary);
     root.style.setProperty('--color-clay', config.branding.colors.secondary);
     root.style.setProperty('--color-sand', config.branding.colors.accent);
+
+    // Update document title
+    document.title = `${siteName} | Local Business Directory`;
   }, []);
 
   const navigateTo = (page: Page, params: any = {}) => {

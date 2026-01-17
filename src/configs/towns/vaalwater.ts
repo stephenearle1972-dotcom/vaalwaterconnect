@@ -57,6 +57,20 @@ export const vaalwaterConfig: TownConfig = {
     region: 'Limpopo',
   },
 
+  about: {
+    headline: 'Our Story.',
+    subheadline: 'Connecting the Waterberg Biosphere, one trusted business at a time.',
+    paragraphs: [
+      'Vaalwater Connect was born from a simple observation: in our vast and beautiful Waterberg region, finding reliable services shouldn\'t feel like navigating the bush without a compass.',
+      'We are more than a directory; we are a digital bridge. Our mission is to provide boutique visibility to the master artisans, world-class lodges, and essential services that form the heartbeat of Vaalwater and its surrounds.',
+      'Whether you\'re a local resident looking for a plumber or a traveler seeking the perfect safari escape, Vaalwater Connect ensures you find verified excellence with a hyper-local touch.',
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800',
+    ],
+  },
+
   branding: {
     colors: {
       primary: '#2d4a3e',    // Forest green

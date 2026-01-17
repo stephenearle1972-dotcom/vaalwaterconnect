@@ -1233,6 +1233,20 @@ export const menlynConfig: TownConfig = {
     region: 'Gauteng',
   },
 
+  about: {
+    headline: 'Our Story.',
+    subheadline: 'Connecting Pretoria East\'s thriving business community.',
+    paragraphs: [
+      'Menlyn Connect was created to serve one of South Africa\'s most dynamic urban centres. In the heart of Pretoria East, where business meets lifestyle, we bridge the gap between exceptional services and the people who need them.',
+      'We are the digital hub for Menlyn and surrounding areas - from Faerie Glen to Garsfontein, Waterkloof to Moreleta Park. Our mission is to showcase the premium businesses, professional services, and hidden gems that make this area thrive.',
+      'Whether you\'re searching for a trusted attorney, the perfect restaurant for a business lunch, or a reliable service provider, Menlyn Connect ensures you find verified quality with true local expertise.',
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800',
+    ],
+  },
+
   branding: {
     colors: {
       primary: '#1e3a8a',    // Navy blue

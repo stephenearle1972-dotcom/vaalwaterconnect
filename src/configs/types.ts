@@ -12,6 +12,14 @@ export interface TownConfig {
     region: string;
   };
 
+  // About page content
+  about: {
+    headline: string;
+    subheadline: string;
+    paragraphs: string[];
+    images: string[];
+  };
+
   // Branding
   branding: {
     colors: {
