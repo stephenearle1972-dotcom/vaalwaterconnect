@@ -81,7 +81,7 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
         <div className="md:col-span-2">
           <h4 className="text-white font-serif font-bold text-2xl mb-6 italic">{siteName}</h4>
           <p className="text-sm leading-relaxed max-w-sm text-sand/60 font-light">
-            Hyperlocal excellence for the Waterberg district. Connecting our community with integrity and boutique visibility.
+            Hyperlocal excellence for {config.town.tagline}. Connecting our community with integrity and boutique visibility.
           </p>
           <div className="mt-8 space-y-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-clay">Contact Us</p>
@@ -238,7 +238,7 @@ const MapView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({
     <div className="max-w-7xl mx-auto px-6 py-12 animate-fade">
       <div className="mb-12">
         <h1 className="text-6xl font-serif font-bold text-forest mb-4 italic">Business Map</h1>
-        <p className="text-xl text-gray-500 font-light">Explore the Waterberg registry geographically.</p>
+        <p className="text-xl text-gray-500 font-light">Explore the {config.town.name} registry geographically.</p>
       </div>
       <div className="h-[700px] w-full relative z-0">
         <div ref={mapRef} className="h-full w-full" />
@@ -332,7 +332,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
       <div className="text-center mb-16">
         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-clay mb-4 block">Our Partner Plans</span>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Simple Pricing.</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto mb-10">Elevate your business visibility in the Waterberg district. Choose the plan that fits your growth.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto mb-10">Elevate your business visibility in {config.town.name}. Choose the plan that fits your growth.</p>
 
         <div className="inline-flex items-center bg-sand/50 rounded-full p-1.5 border border-sand">
           <button
@@ -1038,7 +1038,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
       <p className="text-gray-600 mb-4">By accessing and using {siteName} ("the Platform"), you accept and agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use our services.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">2. Description of Service</h2>
-      <p className="text-gray-600 mb-4">{siteName} is a local business directory serving the {config.town.name} and Waterberg district of South Africa. We provide a platform for local businesses to showcase their services and for users to discover and connect with these businesses.</p>
+      <p className="text-gray-600 mb-4">{siteName} is a local business directory serving {config.town.name} and the {config.town.region} region of South Africa. We provide a platform for local businesses to showcase their services and for users to discover and connect with these businesses.</p>
 
       <h2 className="text-2xl font-serif font-bold text-forest mt-8 mb-4">3. User Responsibilities</h2>
       <p className="text-gray-600 mb-4">Users of the Platform agree to:</p>
@@ -1056,7 +1056,7 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
         <li>Provide accurate and truthful information about their services</li>
         <li>Maintain valid contact information</li>
         <li>Operate legally within South Africa</li>
-        <li>Have a physical presence or provide services in the {config.town.name}/Waterberg region</li>
+        <li>Have a physical presence or provide services in the {config.town.name} area</li>
         <li>Not engage in any illegal, harmful, or unethical business practices</li>
       </ul>
 
@@ -1295,8 +1295,8 @@ const ContactView: React.FC = () => (
         <span className="text-3xl">📍</span>
       </div>
       <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/50 mb-3">Location</h4>
-      <p className="text-2xl font-serif font-bold italic">{config.town.name}, Waterberg</p>
-      <p className="text-sand/70 mt-2 font-light">Limpopo Province, South Africa</p>
+      <p className="text-2xl font-serif font-bold italic">{config.town.name}, {config.town.region}</p>
+      <p className="text-sand/70 mt-2 font-light">{config.town.region} Province, South Africa</p>
     </div>
   </div>
 );
@@ -1321,7 +1321,7 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
           <span className="text-4xl">💼</span>
         </div>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Jobs Board</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find local employment opportunities in the Waterberg district.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find local employment opportunities in {config.town.name}.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -1518,7 +1518,7 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
           <span className="text-4xl">📅</span>
         </div>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Events Calendar</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover what's happening in the Waterberg district.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover what's happening in {config.town.name}.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -1730,7 +1730,7 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
           <span className="text-4xl">🏷️</span>
         </div>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Classifieds</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Buy, sell, and find services in the Waterberg community.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Buy, sell, and find services in the {config.town.name} community.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -1922,7 +1922,7 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
           <span className="text-4xl">🏡</span>
         </div>
         <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Property</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find your perfect property in the Waterberg region.</p>
+        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find your perfect property in {config.town.name}.</p>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-4 justify-center">
@@ -2025,7 +2025,7 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
 
       <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
         <h2 className="text-3xl font-serif font-bold italic mb-4">List Your Property</h2>
-        <p className="text-sand/70 mb-8 font-light">Selling or renting property in the Waterberg? Get it listed on {siteName}.</p>
+        <p className="text-sand/70 mb-8 font-light">Selling or renting property in {config.town.name}? Get it listed on {siteName}.</p>
         <a
           href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to list a property.')}`}
           target="_blank"
