@@ -189,3 +189,18 @@ export type Special = {
   icon: string;
   imageUrl: string;
 };
+
+export type EmergencyService = {
+  id: string;
+  town: string;
+  province: string;
+  category: string;
+  service_name: string;
+  primary_phone: string;
+  secondary_phone?: string;
+  whatsapp?: string;
+  ussd?: string;
+  email?: string;
+  hours: string;
+  coverage_area: string;
+};

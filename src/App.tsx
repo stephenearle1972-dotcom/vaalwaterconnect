@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory } from './types';
+import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory, EmergencyService } from './types';
 import config from './configs';
 import L from 'leaflet';
 
@@ -816,6 +816,259 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// Emergency Services CSV URL
+const EMERGENCY_SERVICES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSaY65eKywzkOD7O_-3RYXbe3lWShkASeR7EuK2lcv8E0ktarGhFsfYuv7tfvf6aSpbY8BHvM54Yy-t/pub?gid=1137836387&single=true&output=csv';
+
+// Category display config for emergency services
+const EMERGENCY_CATEGORY_CONFIG: Record<string, { emoji: string; order: number }> = {
+  'Emergency': { emoji: '🚨', order: 1 },
+  'Police': { emoji: '👮', order: 2 },
+  'Medical': { emoji: '🏥', order: 3 },
+  'Fire': { emoji: '🚒', order: 4 },
+  'Ambulance': { emoji: '🚑', order: 5 },
+  'Rescue': { emoji: '⛑️', order: 6 },
+  'Security': { emoji: '🔒', order: 7 },
+  'Wildlife': { emoji: '🦁', order: 8 },
+  'Utilities': { emoji: '⚡', order: 9 },
+};
+
+// Parse CSV text to EmergencyService array
+const parseEmergencyCSV = (csvText: string): EmergencyService[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Skip header row, parse data rows
+  return lines.slice(1).map(line => {
+    // Handle CSV with potential commas in quoted fields
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim()); // Push last value
+
+    return {
+      id: values[0] || '',
+      town: values[1] || '',
+      province: values[2] || '',
+      category: values[3] || '',
+      service_name: values[4] || '',
+      primary_phone: values[5] || '',
+      secondary_phone: values[6] || '',
+      whatsapp: values[7] || '',
+      ussd: values[8] || '',
+      email: values[9] || '',
+      hours: values[10] || '',
+      coverage_area: values[11] || '',
+    };
+  }).filter(service => service.id && service.service_name);
+};
+
+// Format phone number for tel: link
+const formatPhoneLink = (phone: string): string => {
+  if (!phone) return '';
+  // Remove spaces and special characters except + and digits
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  // Handle short codes (like 112, 10111)
+  if (cleaned.length <= 6) return `tel:${cleaned}`;
+  // Handle full numbers
+  return `tel:${cleaned}`;
+};
+
+const EmergencyServicesView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [services, setServices] = useState<EmergencyService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentTown = config.town.name;
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(EMERGENCY_SERVICES_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch emergency services');
+        const csvText = await response.text();
+        const allServices = parseEmergencyCSV(csvText);
+
+        // Filter by current town (case-insensitive match)
+        const townServices = allServices.filter(
+          service => service.town.toLowerCase() === currentTown.toLowerCase()
+        );
+
+        setServices(townServices);
+      } catch (err) {
+        setError('Unable to load emergency services. Please try again later.');
+        console.error('Emergency services fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, [currentTown]);
+
+  // Group services by category
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, EmergencyService[]> = {};
+    services.forEach(service => {
+      const category = service.category || 'Other';
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(service);
+    });
+    return groups;
+  }, [services]);
+
+  // Sort categories: Emergency first, then Police, Medical, Fire, then alphabetically
+  const sortedCategories = useMemo(() => {
+    return Object.keys(groupedServices).sort((a, b) => {
+      const orderA = EMERGENCY_CATEGORY_CONFIG[a]?.order ?? 100;
+      const orderB = EMERGENCY_CATEGORY_CONFIG[b]?.order ?? 100;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.localeCompare(b);
+    });
+  }, [groupedServices]);
+
+  const getCategoryEmoji = (category: string): string => {
+    return EMERGENCY_CATEGORY_CONFIG[category]?.emoji || '📞';
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+        <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
+        <span className="mx-3 opacity-30">/</span>
+        <button onClick={() => onNavigate('directory')} className="hover:text-forest transition-colors">Directory</button>
+        <span className="mx-3 opacity-30">/</span>
+        <span className="text-forest">Emergency Services</span>
+      </nav>
+
+      <div className="mb-8">
+        <h1 className="text-5xl md:text-6xl font-serif font-bold text-forest italic">Emergency Services</h1>
+        <p className="text-gray-500 mt-4 font-light">Critical contact numbers for {currentTown} and surrounding areas</p>
+      </div>
+
+      {/* Important notice */}
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-12 rounded-r-xl">
+        <p className="text-red-800 font-medium text-sm">
+          <span className="font-bold">In a life-threatening emergency, call 112 immediately.</span>
+          <br />
+          <span className="text-red-600 text-xs">All phone numbers are clickable on mobile devices.</span>
+        </p>
+      </div>
+
+      {loading && (
+        <div className="py-20 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forest"></div>
+          <p className="mt-4 text-gray-500 font-light">Loading emergency services...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="py-20 text-center bg-red-50 rounded-[3rem] border border-red-200">
+          <p className="text-xl text-red-600 font-medium">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 text-forest font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && services.length === 0 && (
+        <div className="py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+          <p className="text-2xl font-serif text-gray-400 italic">No emergency services listed for {currentTown} yet.</p>
+          <p className="mt-4 text-gray-500 text-sm">Emergency services are being added to this directory.</p>
+        </div>
+      )}
+
+      {!loading && !error && services.length > 0 && (
+        <div className="space-y-12">
+          {sortedCategories.map(category => (
+            <div key={category} className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-forest mb-6 flex items-center gap-3">
+                <span className="text-3xl">{getCategoryEmoji(category)}</span>
+                <span className="italic">{category}</span>
+              </h2>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {groupedServices[category].map(service => (
+                  <div
+                    key={service.id}
+                    className="bg-white border border-[#e5e0d8] rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow"
+                  >
+                    <h3 className="text-xl font-bold text-forest mb-3">{service.service_name}</h3>
+
+                    {/* Primary phone - prominent */}
+                    {service.primary_phone && (
+                      <a
+                        href={formatPhoneLink(service.primary_phone)}
+                        className="flex items-center gap-3 bg-forest text-white px-4 py-3 rounded-xl mb-3 hover:bg-clay transition-colors group"
+                      >
+                        <span className="text-xl">📞</span>
+                        <span className="font-bold text-lg tracking-wide">{service.primary_phone}</span>
+                      </a>
+                    )}
+
+                    {/* Secondary phone */}
+                    {service.secondary_phone && (
+                      <a
+                        href={formatPhoneLink(service.secondary_phone)}
+                        className="flex items-center gap-3 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg mb-3 hover:bg-gray-50 transition-colors text-sm"
+                      >
+                        <span>📱</span>
+                        <span className="font-medium">{service.secondary_phone}</span>
+                      </a>
+                    )}
+
+                    {/* WhatsApp if available */}
+                    {service.whatsapp && (
+                      <a
+                        href={`https://wa.me/${service.whatsapp.replace(/\D/g,'')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 border border-[#25D366] text-[#075e54] px-4 py-2 rounded-lg mb-3 hover:bg-green-50 transition-colors text-sm"
+                      >
+                        <span>💬</span>
+                        <span className="font-medium">WhatsApp</span>
+                      </a>
+                    )}
+
+                    {/* Hours */}
+                    {service.hours && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">Available:</span> {service.hours}
+                      </p>
+                    )}
+
+                    {/* Coverage area */}
+                    {service.coverage_area && (
+                      <p className="text-xs text-gray-400">
+                        Coverage: {service.coverage_area}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -2395,7 +2648,12 @@ export default function App() {
     switch (navigation.page) {
       case 'home': return <HomeView onNavigate={navigateTo} />;
       case 'directory': return <DirectoryView onNavigate={navigateTo} />;
-      case 'category': return <CategoryView sectorId={navigation.params.sector as SectorId} onNavigate={navigateTo} />;
+      case 'category':
+        // Use specialized EmergencyServicesView for emergency-services sector
+        if (navigation.params.sector === 'emergency-services') {
+          return <EmergencyServicesView onNavigate={navigateTo} />;
+        }
+        return <CategoryView sectorId={navigation.params.sector as SectorId} onNavigate={navigateTo} />;
       case 'business': return <BusinessDetailView businessId={navigation.params.id} onNavigate={navigateTo} />;
       case 'specials': return <SpecialsView onNavigate={navigateTo} />;
       case 'map': return <MapView onNavigate={navigateTo} />;
