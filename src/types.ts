@@ -42,6 +42,7 @@ export type Business = {
   facebook?: string;
   instagram?: string;
   address?: string;
+  town?: string;  // For multi-tenant filtering from Google Sheets
   lat?: number;
   lng?: number;
   tags?: string[];

@@ -774,9 +774,233 @@ const DirectoryView: React.FC<{ onNavigate: (page: Page, params?: any) => void }
   </div>
 );
 
+// Business Listings CSV URL (same as WhatsApp bot uses)
+const BUSINESS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv';
+
+// Map subcategory to sectorId for filtering
+const SUBCATEGORY_TO_SECTOR: Record<string, SectorId> = {
+  // Home Services
+  'plumbing': 'home-services',
+  'plumber': 'home-services',
+  'electrician': 'home-services',
+  'electrical': 'home-services',
+  'cleaning': 'home-services',
+  'cleaning services': 'home-services',
+  'gardening': 'home-services',
+  'handyman': 'home-services',
+  'pest control': 'home-services',
+  'locksmith': 'home-services',
+  'painting': 'home-services',
+  // Automotive
+  'mechanic': 'automotive',
+  'auto repair': 'automotive',
+  'car wash': 'automotive',
+  'panel beater': 'automotive',
+  'tyre': 'automotive',
+  'tires': 'automotive',
+  'car dealership': 'automotive',
+  // Health & Wellness
+  'doctor': 'health-wellness',
+  'gp': 'health-wellness',
+  'medical': 'health-wellness',
+  'clinic': 'health-wellness',
+  'dentist': 'health-wellness',
+  'pharmacy': 'health-wellness',
+  'physiotherapy': 'health-wellness',
+  'optometrist': 'health-wellness',
+  'gym': 'health-wellness',
+  'fitness': 'health-wellness',
+  'spa': 'health-wellness',
+  'beauty': 'health-wellness',
+  'hairdresser': 'health-wellness',
+  'salon': 'health-wellness',
+  // Food & Drinks
+  'restaurant': 'food-drinks',
+  'cafe': 'food-drinks',
+  'coffee shop': 'food-drinks',
+  'takeaway': 'food-drinks',
+  'fast food': 'food-drinks',
+  'bakery': 'food-drinks',
+  'butcher': 'food-drinks',
+  'catering': 'food-drinks',
+  // Shopping & Retail
+  'supermarket': 'shopping-retail',
+  'grocery': 'shopping-retail',
+  'clothing': 'shopping-retail',
+  'hardware': 'shopping-retail',
+  'furniture': 'shopping-retail',
+  'electronics': 'shopping-retail',
+  // Professional Services
+  'attorney': 'professional-services',
+  'lawyer': 'professional-services',
+  'accountant': 'professional-services',
+  'accounting': 'professional-services',
+  'insurance': 'professional-services',
+  'real estate': 'professional-services',
+  'estate agent': 'professional-services',
+  'it services': 'professional-services',
+  // Construction & Industrial
+  'construction': 'construction-industrial',
+  'building': 'construction-industrial',
+  'contractor': 'construction-industrial',
+  'renovation': 'construction-industrial',
+  'welding': 'construction-industrial',
+  // Education & Community
+  'school': 'education-community',
+  'tutoring': 'education-community',
+  'daycare': 'education-community',
+  'creche': 'education-community',
+  'church': 'education-community',
+  // Tourism & Hospitality
+  'lodge': 'tourism-hospitality',
+  'hotel': 'tourism-hospitality',
+  'guest house': 'tourism-hospitality',
+  'b&b': 'tourism-hospitality',
+  'safari': 'tourism-hospitality',
+  'game reserve': 'tourism-hospitality',
+  'tour': 'tourism-hospitality',
+  // Pets & Animals
+  'vet': 'pets-animals',
+  'veterinary': 'pets-animals',
+  'pet shop': 'pets-animals',
+  'pet grooming': 'pets-animals',
+  'kennel': 'pets-animals',
+  // Wildlife & Agriculture
+  'farm': 'wildlife-agriculture',
+  'farming': 'wildlife-agriculture',
+  'agricultural': 'wildlife-agriculture',
+  'wildlife': 'wildlife-agriculture',
+  'game': 'wildlife-agriculture',
+  // Daily Activities
+  'transport': 'daily-activities',
+  'taxi': 'daily-activities',
+  'courier': 'daily-activities',
+  // Informal Services
+  'informal': 'informal-services',
+};
+
+// Parse business CSV into Business objects
+const parseBusinessCSV = (csvText: string): Business[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+
+  // Find column indices
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const nameIdx = getIdx(['name', 'business_name', 'businessname']);
+  const subcatIdx = getIdx(['subcategory', 'category', 'type']);
+  const descIdx = getIdx(['description', 'desc']);
+  const phoneIdx = getIdx(['phone', 'telephone', 'tel']);
+  const waIdx = getIdx(['whatsapp', 'wa']);
+  const emailIdx = getIdx(['email', 'e-mail']);
+  const websiteIdx = getIdx(['website', 'web', 'url']);
+  const addressIdx = getIdx(['address', 'location', 'area']);
+  const townIdx = getIdx(['town', 'city', 'region']);
+  const imageIdx = getIdx(['image', 'imageurl', 'image_url', 'photo']);
+  const tierIdx = getIdx(['tier', 'plan', 'subscription']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line);
+    const subcategory = values[subcatIdx] || '';
+    const subcatLower = subcategory.toLowerCase();
+
+    // Determine sectorId from subcategory
+    let sectorId: SectorId = 'informal-services'; // default
+    for (const [key, sector] of Object.entries(SUBCATEGORY_TO_SECTOR)) {
+      if (subcatLower.includes(key)) {
+        sectorId = sector;
+        break;
+      }
+    }
+
+    return {
+      id: values[idIdx] || `csv-${index}`,
+      name: values[nameIdx] || 'Unnamed Business',
+      sectorId,
+      subcategory,
+      description: values[descIdx] || '',
+      phone: values[phoneIdx] || '',
+      whatsapp: values[waIdx] || '',
+      email: values[emailIdx] || '',
+      website: values[websiteIdx] || '',
+      address: values[addressIdx] || '',
+      town: values[townIdx] || '',
+      imageUrl: values[imageIdx] || '',
+      tier: (values[tierIdx] as any) || 'standard',
+    } as Business;
+  }).filter(b => b.name && b.name !== 'Unnamed Business');
+};
+
+// Helper to parse CSV line with quoted fields
+const parseCSVLine = (text: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+};
+
 const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, params?: any) => void }> = ({ sectorId, onNavigate }) => {
   const sector = SECTORS.find(s => s.id === sectorId);
-  const list = useMemo(() => BUSINESSES.filter(b => b.sectorId === sectorId), [sectorId]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentTown = config.town.name;
+
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(BUSINESS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch business listings');
+        const csvText = await response.text();
+        const allBusinesses = parseBusinessCSV(csvText);
+
+        // Filter by town (case-insensitive) AND sectorId
+        const filtered = allBusinesses.filter(b => {
+          const townMatch = !b.town || b.town.toLowerCase() === currentTown.toLowerCase();
+          const sectorMatch = b.sectorId === sectorId;
+          return townMatch && sectorMatch;
+        });
+
+        setBusinesses(filtered);
+      } catch (err) {
+        console.error('Business fetch error:', err);
+        setError('Unable to load listings. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinesses();
+  }, [sectorId, currentTown]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
@@ -790,32 +1014,68 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
 
       <div className="mb-16">
         <h1 className="text-6xl font-serif font-bold text-forest italic">{sector?.name} Registry</h1>
+        <p className="text-gray-500 mt-4 font-light">Local businesses in {currentTown}</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12">
-        {list.length > 0 ? list.map(b => (
-          <div key={b.id} onClick={() => onNavigate('business', { id: b.id })} className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8">
-            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl">
-              <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg transition-transform group-hover:scale-110" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                 <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
+      {loading && (
+        <div className="py-20 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forest"></div>
+          <p className="mt-4 text-gray-500 font-light">Loading listings...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="py-20 text-center bg-red-50 rounded-[3rem] border border-red-200">
+          <p className="text-xl text-red-600 font-medium">{error}</p>
+          <button onClick={() => window.location.reload()} className="mt-6 text-forest font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Try Again</button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="grid md:grid-cols-2 gap-12">
+          {businesses.length > 0 ? businesses.map(b => (
+            <div key={b.id} className="card-classy p-8 rounded-[2.5rem] group flex items-start gap-8">
+              <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl">
+                <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg" alt={b.name} />
               </div>
-              <h3 className="text-3xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
-              <p className="text-gray-400 text-sm mt-3 font-light leading-relaxed line-clamp-2">{b.description}</p>
-              <div className="mt-6">
-                <span className="text-[9px] font-black text-forest uppercase tracking-widest border-b border-forest/20 pb-1">View Profile</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
+                </div>
+                <h3 className="text-2xl font-serif font-bold text-forest italic">{b.name}</h3>
+                <p className="text-gray-400 text-sm mt-2 font-light leading-relaxed line-clamp-2">{b.description}</p>
+
+                <div className="mt-4 space-y-2">
+                  {b.phone && (
+                    <a href={`tel:${b.phone}`} className="flex items-center gap-2 text-sm text-forest hover:text-clay transition-colors">
+                      <span>📞</span> {b.phone}
+                    </a>
+                  )}
+                  {b.whatsapp && (
+                    <a href={`https://wa.me/${b.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#25D366] hover:text-[#128C7E] transition-colors">
+                      <span>💬</span> WhatsApp
+                    </a>
+                  )}
+                  {b.email && (
+                    <a href={`mailto:${b.email}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-clay transition-colors">
+                      <span>✉️</span> {b.email}
+                    </a>
+                  )}
+                  {b.address && (
+                    <p className="text-xs text-gray-400 mt-2">📍 {b.address}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )) : (
-          <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No listings in this sector yet.</p>
-            <button onClick={() => onNavigate('recommend')} className="mt-6 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Recommend a Business</button>
-          </div>
-        )}
-      </div>
+          )) : (
+            <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
+              <p className="text-2xl font-serif text-gray-400 italic">No listings in this category yet.</p>
+              <p className="text-gray-500 mt-2 text-sm">Be the first to add your business!</p>
+              <button onClick={() => onNavigate('recommend')} className="mt-6 text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Recommend a Business</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

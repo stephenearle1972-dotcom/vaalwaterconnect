@@ -10,42 +10,8 @@ import {
   VAALWATER_ANNOUNCEMENTS
 } from '../../data';
 
-// Vaalwater Specials - Bushveld/Safari focus
-const VAALWATER_SPECIALS: Special[] = [
-  {
-    id: 's1',
-    businessId: '1',
-    businessName: 'Waterberg Game Reserve',
-    title: 'Mid-Week Wilderness Escape',
-    offer: '30% Discount on Luxury Safari Suites',
-    validUntil: '30 September 2025',
-    description: 'Book a mid-week stay (Mon-Thu) and enjoy deep discounts on our premium suites. Includes 2 guided game drives per day.',
-    icon: '🦓',
-    imageUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 's2',
-    businessId: '11',
-    businessName: 'The Stoep Cafe',
-    title: 'Farmers Breakfast Special',
-    offer: 'Buy One, Get One Half Price',
-    validUntil: 'Every Saturday Morning',
-    description: 'The perfect start to your weekend. Bring a friend and enjoy our famous traditional breakfast platter. Valid 08:00 - 11:00.',
-    icon: '🍳',
-    imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800'
-  },
-  {
-    id: 's3',
-    businessId: '20',
-    businessName: 'Sunset Ridge Lodge',
-    title: 'Waterberg Stargazing Long Stay',
-    offer: 'Stay 4 Nights, Pay for 3',
-    validUntil: 'End of Year 2025',
-    description: 'Experience the pristine night skies of the Waterberg. Book a 4-night stay and the final night is on us. Perfect for family retreats.',
-    icon: '✨',
-    imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=800'
-  }
-];
+// Vaalwater Specials - Production ready (empty, will be populated from real businesses)
+const VAALWATER_SPECIALS: Special[] = [];
 
 export const vaalwaterConfig: TownConfig = {
   id: 'vaalwater',

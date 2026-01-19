@@ -130,6 +130,9 @@ async function handleQuery({ text, from, source }) {
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv";
 
+  // Town filtering - defaults to Vaalwater, can be overridden via env var
+  const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
+
   const res = await fetch(CSV_URL);
   const csv = await res.text();
 
@@ -142,19 +145,36 @@ async function handleQuery({ text, from, source }) {
 
   // Column helpers (safe lookup)
   const idx = (name) => headers.indexOf(name);
+  const idxAny = (...names) => {
+    for (const n of names) {
+      const i = headers.indexOf(n);
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
 
-  const subIdx = idx("subcategory");
-  const nameIdx = idx("name");
-  const phoneIdx = idx("phone");
-  const waIdx = idx("whatsapp");
-  const emailIdx = idx("email");
-  const descIdx = idx("description");
-  const areaIdx = idx("address"); // many of your rows use address / area text
+  const subIdx = idxAny("subcategory", "category", "type");
+  const nameIdx = idxAny("name", "business_name", "businessname");
+  const phoneIdx = idxAny("phone", "telephone", "tel");
+  const waIdx = idxAny("whatsapp", "wa");
+  const emailIdx = idxAny("email", "e-mail");
+  const descIdx = idxAny("description", "desc");
+  const areaIdx = idxAny("address", "location", "area");
+  const townIdx = idxAny("town", "city", "region");
 
-  // Search & rank (better than “includes query”)
+  // Filter rows by town (multi-tenant safety)
+  const townFilteredRows = townIdx !== -1
+    ? rows.filter((row) => {
+        const rowTown = (row[townIdx] || "").toLowerCase().trim();
+        // Include if town matches OR if town column is empty (for backwards compatibility)
+        return !rowTown || rowTown === CURRENT_TOWN;
+      })
+    : rows; // If no town column, show all rows
+
+  // Search & rank (better than "includes query")
   const tokens = normalize(searchTerm).split(" ").filter(Boolean);
 
-  const scored = rows
+  const scored = townFilteredRows
     .map((row) => {
       const hay = [
         row[subIdx],
@@ -184,24 +204,26 @@ async function handleQuery({ text, from, source }) {
     .slice(0, 6); // top results only
 
   if (scored.length === 0) {
+    const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
     return lang === "af"
-      ? `Jammer — geen lysinskrywing gevind vir “${searchTerm}”.\nAntwoord ADD om ’n besigheid by te voeg.`
-      : `Sorry — no listing found for “${searchTerm}”.\nReply ADD to submit a business.`;
+      ? `Jammer — geen lysinskrywing gevind vir "${searchTerm}" in ${townDisplay}.\nAntwoord ADD om 'n besigheid by te voeg.`
+      : `Sorry — no listing found for "${searchTerm}" in ${townDisplay}.\nReply ADD to submit a business.`;
   }
 
   // Build reply (language-aware header)
+  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
   const title =
     lang === "af"
-      ? `🔎 ${capitalizeAf(searchTerm)} in Vaalwater:`
-      : `🔎 ${capitalize(searchTerm)} in Vaalwater:`;
+      ? `🔎 ${capitalizeAf(searchTerm)} in ${townDisplay}:`
+      : `🔎 ${capitalize(searchTerm)} in ${townDisplay}:`;
 
   const cards = scored.map(({ row }) => {
-    const name = row[nameIdx] || "Unnamed";
-    const desc = row[descIdx] || "";
-    const phone = row[phoneIdx] || "";
-    const wa = row[waIdx] || "";
-    const email = row[emailIdx] || "";
-    const area = row[areaIdx] || "";
+    const name = (nameIdx !== -1 ? row[nameIdx] : "") || "Unnamed";
+    const desc = descIdx !== -1 ? row[descIdx] || "" : "";
+    const phone = phoneIdx !== -1 ? row[phoneIdx] || "" : "";
+    const wa = waIdx !== -1 ? row[waIdx] || "" : "";
+    const email = emailIdx !== -1 ? row[emailIdx] || "" : "";
+    const area = areaIdx !== -1 ? row[areaIdx] || "" : "";
 
     const lines = [];
     lines.push(`• ${name}`);
