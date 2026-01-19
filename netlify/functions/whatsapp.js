@@ -126,26 +126,41 @@ async function handleQuery({ text, from, source }) {
       : "Please send a single keyword, e.g. plumber, hairdresser, doctor, pharmacy.";
   }
 
-  // 5) Load CSV and search
-  const CSV_URL =
+  // 5) Load BOTH CSV sheets and search
+  const BUSINESS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv";
+  const EMERGENCY_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaY65eKywzkOD7O_-3RYXbe3lWShkASeR7EuK2lcv8E0ktarGhFsfYuv7tfvf6aSpbY8BHvM54Yy-t/pub?gid=1137836387&single=true&output=csv";
 
   // Town filtering - defaults to Vaalwater, can be overridden via env var
   const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
+  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
 
-  const res = await fetch(CSV_URL);
-  const csv = await res.text();
+  // Fetch both sheets in parallel
+  const [businessRes, emergencyRes] = await Promise.all([
+    fetch(BUSINESS_CSV_URL),
+    fetch(EMERGENCY_CSV_URL),
+  ]);
 
-  const { headers, rows } = parseCSV(csv);
-  if (!headers.length || !rows.length) {
+  const businessCsv = await businessRes.text();
+  const emergencyCsv = await emergencyRes.text();
+
+  // Parse both CSVs
+  const businessData = parseCSV(businessCsv);
+  const emergencyData = parseCSV(emergencyCsv);
+
+  // Check if we have any data
+  if (!businessData.rows.length && !emergencyData.rows.length) {
     return lang === "af"
       ? "Jammer — die lys is tydelik onbeskikbaar. Probeer weer later."
       : "Sorry — the directory is temporarily unavailable. Please try again later.";
   }
 
-  // Column helpers (safe lookup)
-  const idx = (name) => headers.indexOf(name);
-  const idxAny = (...names) => {
+  // Search tokens
+  const tokens = normalize(searchTerm).split(" ").filter(Boolean);
+
+  // Helper to find column index
+  const idxAny = (headers, ...names) => {
     for (const n of names) {
       const i = headers.indexOf(n);
       if (i !== -1) return i;
@@ -153,86 +168,150 @@ async function handleQuery({ text, from, source }) {
     return -1;
   };
 
-  const subIdx = idxAny("subcategory", "category", "type");
-  const nameIdx = idxAny("name", "business_name", "businessname");
-  const phoneIdx = idxAny("phone", "telephone", "tel");
-  const waIdx = idxAny("whatsapp", "wa");
-  const emailIdx = idxAny("email", "e-mail");
-  const descIdx = idxAny("description", "desc");
-  const areaIdx = idxAny("address", "location", "area");
-  const townIdx = idxAny("town", "city", "region");
+  // =====================
+  // Search Business Sheet
+  // =====================
+  let businessResults = [];
+  if (businessData.headers.length && businessData.rows.length) {
+    const bh = businessData.headers;
+    const subIdx = idxAny(bh, "subcategory", "category", "type");
+    const nameIdx = idxAny(bh, "name", "business_name");
+    const phoneIdx = idxAny(bh, "phone", "telephone");
+    const waIdx = idxAny(bh, "whatsapp", "wa");
+    const emailIdx = idxAny(bh, "email");
+    const descIdx = idxAny(bh, "description", "desc");
+    const areaIdx = idxAny(bh, "address", "location", "area");
+    const townIdx = idxAny(bh, "town", "city", "region");
+    const tagsIdx = idxAny(bh, "tags", "keywords");
 
-  // Filter rows by town (multi-tenant safety)
-  const townFilteredRows = townIdx !== -1
-    ? rows.filter((row) => {
-        const rowTown = (row[townIdx] || "").toLowerCase().trim();
-        // Include if town matches OR if town column is empty (for backwards compatibility)
-        return !rowTown || rowTown === CURRENT_TOWN;
+    // Filter by town
+    const townFiltered = townIdx !== -1
+      ? businessData.rows.filter((row) => {
+          const rowTown = (row[townIdx] || "").toLowerCase().trim();
+          return !rowTown || rowTown === CURRENT_TOWN;
+        })
+      : businessData.rows;
+
+    businessResults = townFiltered
+      .map((row) => {
+        const hay = [
+          row[subIdx], row[nameIdx], row[descIdx], row[areaIdx], row[tagsIdx]
+        ].filter(Boolean).join(" ").toLowerCase();
+
+        let score = 0;
+        for (const t of tokens) {
+          if (hay.includes(t)) score += 2;
+        }
+        const sub = (row[subIdx] || "").toLowerCase();
+        if (sub && tokens.some((t) => sub.includes(t))) score += 2;
+
+        return {
+          score,
+          source: "business",
+          name: row[nameIdx] || "Unnamed",
+          desc: row[descIdx] || "",
+          phone: row[phoneIdx] || "",
+          wa: row[waIdx] || "",
+          email: row[emailIdx] || "",
+          area: row[areaIdx] || "",
+        };
       })
-    : rows; // If no town column, show all rows
+      .filter((x) => x.score > 0);
+  }
 
-  // Search & rank (better than "includes query")
-  const tokens = normalize(searchTerm).split(" ").filter(Boolean);
+  // ======================
+  // Search Emergency Sheet
+  // ======================
+  let emergencyResults = [];
+  if (emergencyData.headers.length && emergencyData.rows.length) {
+    const eh = emergencyData.headers;
+    const nameIdx = idxAny(eh, "service_name", "name");
+    const catIdx = idxAny(eh, "category", "subcategory");
+    const phoneIdx = idxAny(eh, "primary_phone", "phone");
+    const phone2Idx = idxAny(eh, "secondary_phone");
+    const waIdx = idxAny(eh, "whatsapp", "wa");
+    const emailIdx = idxAny(eh, "email");
+    const hoursIdx = idxAny(eh, "hours");
+    const areaIdx = idxAny(eh, "coverage_area", "address", "area");
+    const townIdx = idxAny(eh, "town", "city");
+    const keywordsIdx = idxAny(eh, "keywords", "tags");
+    const notesIdx = idxAny(eh, "notes", "description");
+    const statusIdx = idxAny(eh, "status");
 
-  const scored = townFilteredRows
-    .map((row) => {
-      const hay = [
-        row[subIdx],
-        row[nameIdx],
-        row[descIdx],
-        row[emailIdx],
-        row[areaIdx],
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+    // Filter by town and active status
+    const townFiltered = emergencyData.rows.filter((row) => {
+      const rowTown = (row[townIdx] || "").toLowerCase().trim();
+      const status = (row[statusIdx] || "").toLowerCase().trim();
+      const townMatch = !rowTown || rowTown === CURRENT_TOWN;
+      const isActive = !status || status === "active";
+      return townMatch && isActive;
+    });
 
-      let score = 0;
-      for (const t of tokens) {
-        if (!t) continue;
-        if (hay.includes(t)) score += 2;
-      }
+    emergencyResults = townFiltered
+      .map((row) => {
+        const hay = [
+          row[nameIdx], row[catIdx], row[keywordsIdx], row[notesIdx], row[areaIdx]
+        ].filter(Boolean).join(" ").toLowerCase();
 
-      // small bonus if subcategory matches strongly
-      const sub = (row[subIdx] || "").toLowerCase();
-      if (sub && tokens.some((t) => sub.includes(t))) score += 2;
+        let score = 0;
+        for (const t of tokens) {
+          if (hay.includes(t)) score += 3; // Boost emergency matches
+        }
+        const cat = (row[catIdx] || "").toLowerCase();
+        if (cat && tokens.some((t) => cat.includes(t))) score += 3;
 
-      return { row, score };
-    })
-    .filter((x) => x.score > 0)
+        // Build phone string (primary + secondary)
+        let phone = row[phoneIdx] || "";
+        if (row[phone2Idx]) phone += ` / ${row[phone2Idx]}`;
+
+        // Build description from notes + hours
+        let desc = row[notesIdx] || "";
+        if (row[hoursIdx]) desc = desc ? `${desc} (${row[hoursIdx]})` : `Hours: ${row[hoursIdx]}`;
+
+        return {
+          score,
+          source: "emergency",
+          name: row[nameIdx] || "Unnamed",
+          desc,
+          phone,
+          wa: row[waIdx] || "",
+          email: row[emailIdx] || "",
+          area: row[areaIdx] || "",
+          category: row[catIdx] || "",
+        };
+      })
+      .filter((x) => x.score > 0);
+  }
+
+  // =====================
+  // Merge & Rank Results
+  // =====================
+  const allResults = [...emergencyResults, ...businessResults]
     .sort((a, b) => b.score - a.score)
-    .slice(0, 6); // top results only
+    .slice(0, 6); // Top 6 results
 
-  if (scored.length === 0) {
-    const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
+  if (allResults.length === 0) {
     return lang === "af"
       ? `Jammer — geen lysinskrywing gevind vir "${searchTerm}" in ${townDisplay}.\nAntwoord ADD om 'n besigheid by te voeg.`
       : `Sorry — no listing found for "${searchTerm}" in ${townDisplay}.\nReply ADD to submit a business.`;
   }
 
   // Build reply (language-aware header)
-  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
   const title =
     lang === "af"
       ? `🔎 ${capitalizeAf(searchTerm)} in ${townDisplay}:`
       : `🔎 ${capitalize(searchTerm)} in ${townDisplay}:`;
 
-  const cards = scored.map(({ row }) => {
-    const name = (nameIdx !== -1 ? row[nameIdx] : "") || "Unnamed";
-    const desc = descIdx !== -1 ? row[descIdx] || "" : "";
-    const phone = phoneIdx !== -1 ? row[phoneIdx] || "" : "";
-    const wa = waIdx !== -1 ? row[waIdx] || "" : "";
-    const email = emailIdx !== -1 ? row[emailIdx] || "" : "";
-    const area = areaIdx !== -1 ? row[areaIdx] || "" : "";
-
+  const cards = allResults.map((r) => {
     const lines = [];
-    lines.push(`• ${name}`);
-    if (desc) lines.push(desc);
-    if (phone) lines.push(`📞 ${formatPhone(phone)}`);
-    if (wa) lines.push(`💬 WhatsApp: ${formatPhone(wa)}`);
-    if (email) lines.push(`✉️ ${email}`);
-    if (area) lines.push(`📍 ${area}`);
-
+    // Add emoji prefix for emergency services
+    const prefix = r.source === "emergency" ? "🚨 " : "• ";
+    lines.push(`${prefix}${r.name}`);
+    if (r.desc) lines.push(r.desc);
+    if (r.phone) lines.push(`📞 ${formatPhone(r.phone)}`);
+    if (r.wa) lines.push(`💬 WhatsApp: ${formatPhone(r.wa)}`);
+    if (r.email) lines.push(`✉️ ${r.email}`);
+    if (r.area) lines.push(`📍 ${r.area}`);
     return lines.join("\n");
   });
 
