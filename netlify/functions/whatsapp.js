@@ -309,25 +309,24 @@ async function handleQuery({ text, from, source }) {
     lines.push(`${prefix}*${r.name}*`);
     if (r.desc) lines.push(r.desc);
 
-    // Format phone number(s) with "Call:" label for tap-to-dial clarity
+    // Format phone number(s) - clean format for easy copy/dial
     if (r.phone) {
-      // Check if multiple phones (separated by /)
-      if (r.phone.includes("/")) {
-        const phones = r.phone.split("/").map(p => p.trim()).filter(Boolean);
-        if (phones.length >= 1) lines.push(`📞 Call: ${formatPhone(phones[0])}`);
-        if (phones.length >= 2) lines.push(`📞 Alt: ${formatPhone(phones[1])}`);
-      } else {
-        lines.push(`📞 Call: ${formatPhone(r.phone)}`);
-      }
+      const formatted = formatPhone(r.phone);
+      lines.push(`📞 ${formatted}`);
     }
 
-    if (r.wa) lines.push(`💬 WhatsApp: ${formatPhone(r.wa)}`);
+    if (r.wa) lines.push(`💬 wa.me/${formatPhone(r.wa).replace(/\D/g, "")}`);
     if (r.email) lines.push(`✉️ ${r.email}`);
     if (r.area) lines.push(`📍 ${r.area}`);
     return lines.join("\n");
   });
 
-  return `${title}\n\n${cards.join("\n\n")}`;
+  // Add dialing hint at the end
+  const hint = lang === "af"
+    ? "\n\n_Kopieer nommer → plak in Dialer om te bel_"
+    : "\n\n_Copy number → paste in Dialer to call_";
+
+  return `${title}\n\n${cards.join("\n\n")}${hint}`;
 }
 
 // ======================================================
@@ -584,11 +583,10 @@ function normalize(s) {
 }
 
 /**
- * Format phone number for WhatsApp tap-to-dial
- * - Short codes (≤6 digits): Keep as-is, bold
- * - SA numbers starting with 0: Convert to +27 with spacing
- * - Already +27: Add spacing for readability
- * - Multiple numbers separated by /: Format each
+ * Format phone number for WhatsApp display
+ * - Keep numbers clean and readable (no bold - it interferes with tap detection)
+ * - Convert SA numbers to local format (easier to dial)
+ * - Short codes stay as-is
  */
 function formatPhone(s) {
   const raw = String(s || "").trim();
@@ -597,7 +595,7 @@ function formatPhone(s) {
   // Handle multiple numbers separated by /
   if (raw.includes("/")) {
     const parts = raw.split("/").map((p) => formatSinglePhone(p.trim()));
-    return parts.filter(Boolean).join(" / ");
+    return parts.filter(Boolean).join("  •  ");
   }
 
   return formatSinglePhone(raw);
@@ -609,50 +607,43 @@ function formatSinglePhone(s) {
 
   // Remove all non-digit characters except + for analysis
   const digitsOnly = raw.replace(/[^\d]/g, "");
-  const hasPlus = raw.startsWith("+");
 
-  // Short codes (≤6 digits like 112, 10111, 10177, 082911): Keep as-is, make bold
+  // Short codes (≤6 digits like 112, 10111, 10177): Keep as-is
   if (digitsOnly.length <= 6) {
-    return `*${raw}*`;
+    return raw;
   }
 
-  // Toll-free / share-call (starts with 08): Format with spaces
+  // Toll-free / share-call (starts with 08): Keep local format, add dashes
   if (digitsOnly.startsWith("08") && digitsOnly.length === 10) {
-    // 0800 or 0860 numbers: 0800 111 660 or 0860 037 566
-    const formatted = digitsOnly.replace(/(\d{4})(\d{3})(\d{3})/, "$1 $2 $3");
-    return `*${formatted}*`;
+    return digitsOnly.replace(/(\d{4})(\d{3})(\d{3})/, "$1-$2-$3");
   }
 
-  // Already international format (+27...): Add spacing
-  if (hasPlus && digitsOnly.startsWith("27")) {
-    const localPart = digitsOnly.slice(2); // Remove 27
-    const formatted = formatLocalNumber(localPart);
-    return `*+27 ${formatted}*`;
+  // Convert +27 to 0 format (local dialing is easier)
+  if (digitsOnly.startsWith("27") && digitsOnly.length >= 11) {
+    const localPart = "0" + digitsOnly.slice(2);
+    return formatLocalWithDashes(localPart);
   }
 
-  // South African number starting with 0: Convert to +27
-  if (digitsOnly.startsWith("0") && digitsOnly.length >= 9) {
-    const localPart = digitsOnly.slice(1); // Remove leading 0
-    const formatted = formatLocalNumber(localPart);
-    return `*+27 ${formatted}*`;
+  // SA number starting with 0: Format with dashes
+  if (digitsOnly.startsWith("0") && digitsOnly.length >= 10) {
+    return formatLocalWithDashes(digitsOnly);
   }
 
-  // Fallback: Just bold the original
-  return `*${raw}*`;
+  // Fallback: return as-is
+  return raw;
 }
 
-function formatLocalNumber(digits) {
-  // Format SA local number: XX XXX XXXX or XXX XXX XXXX
-  if (digits.length === 9) {
-    // Landline: 14 755 3839
-    return digits.replace(/(\d{2})(\d{3})(\d{4})/, "$1 $2 $3");
-  }
+function formatLocalWithDashes(digits) {
+  // Format SA local number with dashes for easy reading/copying
+  // Landline (10 digits): 014-755-3839
+  // Mobile (10 digits): 082-555-0101
   if (digits.length === 10) {
-    // Mobile: 82 555 0101
-    return digits.replace(/(\d{2})(\d{3})(\d{4})/, "$1 $2 $3");
+    return digits.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
   }
-  // Fallback: return as-is with some spacing
-  return digits.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+  if (digits.length === 11) {
+    return digits.replace(/(\d{4})(\d{3})(\d{4})/, "$1-$2-$3");
+  }
+  return digits;
 }
 
 function capitalize(str) {
