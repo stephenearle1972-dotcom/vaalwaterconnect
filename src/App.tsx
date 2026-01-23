@@ -1142,18 +1142,18 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
   }, [sectorId, currentTown]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16 md:py-24 animate-fade">
+      <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-6 sm:mb-12 flex-wrap">
         <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
-        <span className="mx-3 opacity-30">/</span>
+        <span className="mx-2 sm:mx-3 opacity-30">/</span>
         <button onClick={() => onNavigate('directory')} className="hover:text-forest transition-colors">Directory</button>
-        <span className="mx-3 opacity-30">/</span>
+        <span className="mx-2 sm:mx-3 opacity-30">/</span>
         <span className="text-forest">{sector?.name}</span>
       </nav>
 
-      <div className="mb-16">
-        <h1 className="text-6xl font-serif font-bold text-forest italic">{sector?.name} Registry</h1>
-        <p className="text-gray-500 mt-4 font-light">Local businesses in {currentTown}</p>
+      <div className="mb-8 sm:mb-16">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif font-bold text-forest italic">{sector?.name} Registry</h1>
+        <p className="text-gray-500 mt-2 sm:mt-4 font-light text-sm sm:text-base">Local businesses in {currentTown}</p>
       </div>
 
       {loading && (
@@ -1171,14 +1171,14 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
       )}
 
       {!loading && !error && (
-        <div className="grid md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 md:gap-12">
           {businesses.length > 0 ? businesses.map(b => (
             <div
               key={b.id}
               onClick={() => onNavigate('business', { id: b.id })}
-              className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8 hover:shadow-2xl transition-shadow"
+              className="card-classy p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] cursor-pointer group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 md:gap-8 hover:shadow-2xl transition-shadow"
             >
-              <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100" style={{ clipPath: 'inset(0 round 1rem)' }}>
+              <div className="w-full sm:w-32 md:w-40 h-48 sm:h-32 md:h-40 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100" style={{ clipPath: 'inset(0 round 0.75rem)' }}>
                 <img
                   src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
                   className="w-full h-full object-cover object-center"
@@ -1186,17 +1186,17 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
                   alt={b.name}
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0 w-full">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
                 <p className="text-gray-400 text-sm mt-2 font-light leading-relaxed line-clamp-2">{b.description}</p>
 
                 <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
                   {b.phone && (
                     <a href={`tel:${b.phone}`} className="flex items-center gap-2 text-sm text-forest hover:text-clay transition-colors">
-                      <span>📞</span> {b.phone}
+                      <span>📞</span> <span className="truncate">{b.phone}</span>
                     </a>
                   )}
                   {b.whatsapp && (
@@ -1206,11 +1206,11 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
                   )}
                   {b.email && (
                     <a href={`mailto:${b.email}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-clay transition-colors">
-                      <span>✉️</span> {b.email}
+                      <span>✉️</span> <span className="truncate">{b.email}</span>
                     </a>
                   )}
                   {b.address && (
-                    <p className="text-xs text-gray-400 mt-2">📍 {b.address}</p>
+                    <p className="text-xs text-gray-400 mt-2 truncate">📍 {b.address}</p>
                   )}
                 </div>
               </div>
@@ -1522,22 +1522,22 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="grid lg:grid-cols-12 gap-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16 md:py-24 animate-fade">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-20">
         <div className="lg:col-span-8">
-          <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-12">
+          <nav className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-6 sm:mb-12 flex-wrap">
             <button onClick={() => onNavigate('home')} className="hover:text-forest transition-colors">Home</button>
-            <span className="mx-3 opacity-30">/</span>
+            <span className="mx-2 sm:mx-3 opacity-30">/</span>
             <button onClick={() => onNavigate('category', { sector: business.sectorId })} className="hover:text-forest transition-colors">{sector?.name}</button>
           </nav>
 
-          <h1 className="text-6xl md:text-9xl font-serif font-bold text-forest mb-6 italic tracking-tighter">{business.name}</h1>
-          <div className="flex gap-4 mb-12">
-            <span className="bg-sand text-forest px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{business.subcategory}</span>
-            <span className="bg-forest text-sand px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-forest mb-4 sm:mb-6 italic tracking-tighter leading-tight">{business.name}</h1>
+          <div className="flex flex-wrap gap-2 sm:gap-4 mb-6 sm:mb-12">
+            <span className="bg-sand text-forest px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.subcategory}</span>
+            <span className="bg-forest text-sand px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          <div className="relative isolate overflow-hidden rounded-[3rem] shadow-2xl mb-16 h-[350px] md:h-[450px] w-full bg-gray-100" style={{ clipPath: 'inset(0 round 3rem)' }}>
+          <div className="relative isolate overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 h-[220px] sm:h-[300px] md:h-[400px] w-full bg-gray-100" style={{ clipPath: 'inset(0 round 1rem)' }}>
              <img
                src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
                className="w-full h-full object-cover object-center"
@@ -1545,43 +1545,43 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
                alt={business.name}
              />
           </div>
-          
-          <div className="prose prose-2xl max-w-none text-gray-700 leading-relaxed mb-20">
-            <div className="whitespace-pre-line font-light text-xl">
+
+          <div className="prose prose-lg sm:prose-xl md:prose-2xl max-w-none text-gray-700 leading-relaxed mb-8 sm:mb-20">
+            <div className="whitespace-pre-line font-light text-base sm:text-lg md:text-xl">
               {business.description}
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-4">
-          <div className="sticky top-32 space-y-8">
-            <div className="bg-[#fcf9f2] p-12 rounded-[3rem] border border-[#e5e0d8] shadow-2xl">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-300 mb-12 text-center">Business Contact</h4>
-              <div className="space-y-6">
+          <div className="lg:sticky lg:top-32 space-y-4 sm:space-y-8">
+            <div className="bg-[#fcf9f2] p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] border border-[#e5e0d8] shadow-xl sm:shadow-2xl">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-gray-300 mb-6 sm:mb-12 text-center">Business Contact</h4>
+              <div className="space-y-3 sm:space-y-6">
                 {business.phone && (
-                  <a href={`tel:${business.phone}`} className="w-full bg-forest text-white py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest shadow-xl transition-transform hover:scale-105">Call Official Line</a>
+                  <a href={`tel:${business.phone}`} className="w-full bg-forest text-white py-4 sm:py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest shadow-xl transition-transform hover:scale-105">Call Official Line</a>
                 )}
                 {business.whatsapp && (
-                  <a href={`https://wa.me/${business.whatsapp.replace(/\D/g,'')}`} className="w-full border-2 border-[#25D366] text-[#075e54] py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest transition-transform hover:scale-105">WhatsApp Chat</a>
+                  <a href={`https://wa.me/${business.whatsapp.replace(/\D/g,'')}`} className="w-full border-2 border-[#25D366] text-[#075e54] py-4 sm:py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest transition-transform hover:scale-105">WhatsApp Chat</a>
                 )}
                 {business.website && (
-                  <a href={business.website} target="_blank" rel="noopener noreferrer" className="w-full border border-gray-200 text-gray-600 py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest hover:bg-forest hover:text-white transition-all">Visit Website</a>
+                  <a href={business.website} target="_blank" rel="noopener noreferrer" className="w-full border border-gray-200 text-gray-600 py-4 sm:py-5 rounded-xl block text-center font-black text-[10px] uppercase tracking-widest hover:bg-forest hover:text-white transition-all">Visit Website</a>
                 )}
-                <div className="flex gap-4">
-                  {business.facebook && <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="flex-1 bg-blue-600 text-white py-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors">Facebook</a>}
-                  {business.instagram && <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="flex-1 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white py-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity">Instagram</a>}
+                <div className="flex gap-2 sm:gap-4">
+                  {business.facebook && <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="flex-1 bg-blue-600 text-white py-3 sm:py-4 rounded-xl text-center text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors">Facebook</a>}
+                  {business.instagram && <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="flex-1 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white py-3 sm:py-4 rounded-xl text-center text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity">Instagram</a>}
                 </div>
               </div>
-              
-              <div className="mt-12 pt-10 border-t border-[#e5e0d8] space-y-6">
-                 {business.email && <a href={`mailto:${business.email}`} className="block text-sm text-gray-500 text-center font-light underline decoration-sand decoration-2 hover:text-clay transition-colors">{business.email}</a>}
+
+              <div className="mt-6 sm:mt-12 pt-6 sm:pt-10 border-t border-[#e5e0d8] space-y-4 sm:space-y-6">
+                 {business.email && <a href={`mailto:${business.email}`} className="block text-sm text-gray-500 text-center font-light underline decoration-sand decoration-2 hover:text-clay transition-colors break-all">{business.email}</a>}
                  {business.address && <div className="text-sm text-gray-400 text-center font-light italic leading-relaxed">{business.address}</div>}
               </div>
             </div>
-            
-            <button onClick={() => onNavigate('map')} className="w-full p-8 bg-sand/30 border border-sand rounded-[2.5rem] flex items-center justify-between group hover:bg-sand/50 transition-all">
+
+            <button onClick={() => onNavigate('map')} className="w-full p-4 sm:p-8 bg-sand/30 border border-sand rounded-2xl sm:rounded-[2.5rem] flex items-center justify-between group hover:bg-sand/50 transition-all">
                <span className="text-[10px] font-black uppercase tracking-widest text-forest">View on Map</span>
-               <span className="text-2xl group-hover:translate-x-2 transition-transform">📍</span>
+               <span className="text-xl sm:text-2xl group-hover:translate-x-2 transition-transform">📍</span>
             </button>
           </div>
         </div>
