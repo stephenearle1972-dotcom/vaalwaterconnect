@@ -668,8 +668,8 @@ const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: an
       <div className="grid md:grid-cols-2 gap-12">
         {results.length > 0 ? results.map(b => (
           <div key={b.id} onClick={() => onNavigate('business', { id: b.id })} className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8">
-            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl">
-              <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg transition-transform group-hover:scale-110" />
+            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl relative">
+              <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="absolute inset-0 w-full h-full object-cover shadow-lg transition-transform group-hover:scale-110" alt={b.name} />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -1056,8 +1056,8 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
               onClick={() => onNavigate('business', { id: b.id })}
               className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8 hover:shadow-2xl transition-shadow"
             >
-              <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl">
-                <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg group-hover:scale-105 transition-transform" alt={b.name} />
+              <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl relative">
+                <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="absolute inset-0 w-full h-full object-cover shadow-lg group-hover:scale-105 transition-transform" alt={b.name} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -1410,8 +1410,8 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
             <span className="bg-forest text-sand px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          <div className="relative overflow-hidden rounded-[4rem] shadow-3xl mb-16 h-[550px]">
-             <img src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover" alt={business.name} />
+          <div className="relative overflow-hidden rounded-[4rem] shadow-3xl mb-16 h-[400px] md:h-[550px] w-full max-w-full">
+             <img src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="absolute inset-0 w-full h-full object-cover" alt={business.name} />
           </div>
           
           <div className="prose prose-2xl max-w-none text-gray-700 leading-relaxed mb-20">
