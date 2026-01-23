@@ -317,7 +317,12 @@ async function handleQuery({ text, from, source }) {
 
     if (r.wa) lines.push(`💬 wa.me/${formatPhone(r.wa).replace(/\D/g, "")}`);
     if (r.email) lines.push(`✉️ ${r.email}`);
-    if (r.area) lines.push(`📍 ${r.area}`);
+    if (r.area) {
+      // Make location clickable with Google Maps link
+      const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(r.area)}`;
+      lines.push(`📍 ${r.area}`);
+      lines.push(`🗺️ ${mapsUrl}`);
+    }
     return lines.join("\n");
   });
 

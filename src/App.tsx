@@ -23,40 +23,94 @@ const waLinkNum = config.contact.whatsapp;
 // Computed site name (e.g., "Vaalwater Connect")
 const siteName = `${config.town.name} Connect`;
 
-const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => (
-  <nav className="bg-white/90 backdrop-blur-md border-b border-[#e5e0d8] sticky top-0 z-50">
-    <div className="max-w-7xl mx-auto px-6 lg:px-8">
-      <div className="flex justify-between h-20 items-center">
-        <div 
-          className="flex-shrink-0 flex items-center cursor-pointer group" 
-          onClick={() => onNavigate('home')}
-        >
-          <div className="w-10 h-10 bg-forest rounded-lg flex items-center justify-center mr-3 transition-all group-hover:bg-clay shadow-sm group-hover:rotate-12">
-            <span className="text-white font-serif font-bold text-xl italic">{config.branding.faviconEmoji}</span>
-          </div>
-          <span className="text-xl font-serif font-bold tracking-tight text-forest">
-            {config.town.name}<span className="text-clay">Connect</span>
-          </span>
-        </div>
-        <div className="hidden md:flex space-x-4 lg:space-x-5 items-center">
-          <button onClick={() => onNavigate('home')} className="nav-link">Home</button>
-          <button onClick={() => onNavigate('directory')} className="nav-link">Directory</button>
-          <button onClick={() => onNavigate('specials')} className="nav-link">Specials</button>
-          <button onClick={() => onNavigate('map')} className="nav-link">Map</button>
-          <button onClick={() => onNavigate('jobs')} className="nav-link">Jobs</button>
-          <button onClick={() => onNavigate('events')} className="nav-link">Events</button>
-          <button onClick={() => onNavigate('classifieds')} className="nav-link">Classifieds</button>
-          <button onClick={() => onNavigate('property')} className="nav-link">Property</button>
-          <button onClick={() => onNavigate('announcements')} className="nav-link">Notices</button>
-          <button onClick={() => onNavigate('pricing')} className="nav-link">Pricing</button>
-          <button onClick={() => onNavigate('contact')} className="nav-link">Contact</button>
-          <button
-            onClick={() => onNavigate('add-business')} 
-            className="btn-primary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest ml-2"
+const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleNavClick = (page: Page, params?: any) => {
+    setMobileMenuOpen(false);
+    onNavigate(page, params);
+  };
+
+  return (
+    <nav className="bg-white/90 backdrop-blur-md border-b border-[#e5e0d8] sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 sm:h-20 items-center">
+          <div
+            className="flex-shrink-0 flex items-center cursor-pointer group"
+            onClick={() => handleNavClick('home')}
           >
-            Add Business
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-forest rounded-lg flex items-center justify-center mr-2 sm:mr-3 transition-all group-hover:bg-clay shadow-sm group-hover:rotate-12">
+              <span className="text-white font-serif font-bold text-lg sm:text-xl italic">{config.branding.faviconEmoji}</span>
+            </div>
+            <span className="text-lg sm:text-xl font-serif font-bold tracking-tight text-forest">
+              {config.town.name}<span className="text-clay">Connect</span>
+            </span>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden lg:flex space-x-4 xl:space-x-5 items-center">
+            <button onClick={() => handleNavClick('home')} className="nav-link">Home</button>
+            <button onClick={() => handleNavClick('directory')} className="nav-link">Directory</button>
+            <button onClick={() => handleNavClick('specials')} className="nav-link">Specials</button>
+            <button onClick={() => handleNavClick('map')} className="nav-link">Map</button>
+            <button onClick={() => handleNavClick('jobs')} className="nav-link">Jobs</button>
+            <button onClick={() => handleNavClick('events')} className="nav-link">Events</button>
+            <button onClick={() => handleNavClick('classifieds')} className="nav-link">Classifieds</button>
+            <button onClick={() => handleNavClick('property')} className="nav-link">Property</button>
+            <button onClick={() => handleNavClick('announcements')} className="nav-link">Notices</button>
+            <button onClick={() => handleNavClick('pricing')} className="nav-link">Pricing</button>
+            <button onClick={() => handleNavClick('contact')} className="nav-link">Contact</button>
+            <button
+              onClick={() => handleNavClick('add-business')}
+              className="btn-primary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest ml-2"
+            >
+              Add Business
+            </button>
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-[#e5e0d8] py-4 animate-fade">
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => handleNavClick('home')} className="mobile-nav-link">Home</button>
+              <button onClick={() => handleNavClick('directory')} className="mobile-nav-link">Directory</button>
+              <button onClick={() => handleNavClick('specials')} className="mobile-nav-link">Specials</button>
+              <button onClick={() => handleNavClick('map')} className="mobile-nav-link">Map</button>
+              <button onClick={() => handleNavClick('jobs')} className="mobile-nav-link">Jobs</button>
+              <button onClick={() => handleNavClick('events')} className="mobile-nav-link">Events</button>
+              <button onClick={() => handleNavClick('classifieds')} className="mobile-nav-link">Classifieds</button>
+              <button onClick={() => handleNavClick('property')} className="mobile-nav-link">Property</button>
+              <button onClick={() => handleNavClick('announcements')} className="mobile-nav-link">Notices</button>
+              <button onClick={() => handleNavClick('pricing')} className="mobile-nav-link">Pricing</button>
+              <button onClick={() => handleNavClick('contact')} className="mobile-nav-link">Contact</button>
+              <button
+                onClick={() => handleNavClick('add-business')}
+                className="col-span-2 btn-primary py-3 rounded-lg text-[10px] font-black uppercase tracking-widest mt-2"
+              >
+                Add Business
+              </button>
+            </div>
+          </div>
+        )}
+
         <style>{`
           .nav-link {
             font-size: 10px;
@@ -68,11 +122,27 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
             white-space: nowrap;
           }
           .nav-link:hover { color: var(--color-forest); }
+          .mobile-nav-link {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #374151;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            transition: all 0.2s;
+            text-align: center;
+          }
+          .mobile-nav-link:hover, .mobile-nav-link:active {
+            background: var(--color-forest);
+            color: white;
+          }
         `}</style>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) => (
   <footer className="bg-forest text-sand py-20">
@@ -194,37 +264,68 @@ const SpecialsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
 const MapView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch businesses from CSV
   useEffect(() => {
-    if (mapRef.current && !leafletMap.current) {
+    const fetchBusinesses = async () => {
+      try {
+        const response = await fetch(BUSINESS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const allBusinesses = parseBusinessCSV(csvText);
+        setBusinesses(allBusinesses);
+      } catch (err) {
+        console.error('Map business fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBusinesses();
+  }, []);
+
+  // Initialize map and add markers when businesses are loaded
+  useEffect(() => {
+    if (!mapRef.current || loading) return;
+
+    // Initialize map if not already
+    if (!leafletMap.current) {
       leafletMap.current = L.map(mapRef.current).setView([config.location.center.lat, config.location.center.lng], config.location.zoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(leafletMap.current);
-
-      BUSINESSES.forEach(b => {
-        if (b.lat && b.lng) {
-          const marker = L.marker([b.lat, b.lng]).addTo(leafletMap.current!);
-          
-          const popupContent = document.createElement('div');
-          popupContent.className = 'p-4 text-center';
-          popupContent.innerHTML = `
-            <h3 class="font-serif font-bold text-lg text-forest mb-2 italic">${b.name}</h3>
-            <p class="text-[10px] font-black uppercase tracking-widest text-clay mb-3">${b.subcategory || ''}</p>
-            <button id="marker-btn-${b.id}" class="bg-forest text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">View Details</button>
-          `;
-          
-          marker.bindPopup(popupContent);
-          
-          marker.on('popupopen', () => {
-            document.getElementById(`marker-btn-${b.id}`)?.addEventListener('click', () => {
-              onNavigate('business', { id: b.id });
-            });
-          });
-        }
-      });
     }
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add markers for businesses with coordinates
+    businesses.forEach(b => {
+      if (b.lat && b.lng && leafletMap.current) {
+        const marker = L.marker([b.lat, b.lng]).addTo(leafletMap.current);
+        markersRef.current.push(marker);
+
+        const popupContent = document.createElement('div');
+        popupContent.className = 'p-4 text-center';
+        popupContent.innerHTML = `
+          <h3 class="font-serif font-bold text-lg text-forest mb-2 italic">${b.name}</h3>
+          <p class="text-[10px] font-black uppercase tracking-widest text-clay mb-3">${b.subcategory || ''}</p>
+          <button id="marker-btn-${b.id}" class="bg-forest text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">View Details</button>
+        `;
+
+        marker.bindPopup(popupContent);
+
+        marker.on('popupopen', () => {
+          document.getElementById(`marker-btn-${b.id}`)?.addEventListener('click', () => {
+            onNavigate('business', { id: b.id });
+          });
+        });
+      }
+    });
 
     return () => {
       if (leafletMap.current) {
@@ -232,16 +333,28 @@ const MapView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({
         leafletMap.current = null;
       }
     };
-  }, [onNavigate]);
+  }, [businesses, loading, onNavigate]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 animate-fade">
-      <div className="mb-12">
-        <h1 className="text-6xl font-serif font-bold text-forest mb-4 italic">Business Map</h1>
-        <p className="text-xl text-gray-500 font-light">Explore the {config.town.name} registry geographically.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade">
+      <div className="mb-8 sm:mb-12">
+        <h1 className="text-4xl sm:text-6xl font-serif font-bold text-forest mb-4 italic">Business Map</h1>
+        <p className="text-lg sm:text-xl text-gray-500 font-light">Explore the {config.town.name} registry geographically.</p>
+        {!loading && businesses.length > 0 && (
+          <p className="text-sm text-gray-400 mt-2">{businesses.filter(b => b.lat && b.lng).length} businesses on map</p>
+        )}
       </div>
-      <div className="h-[700px] w-full relative z-0">
-        <div ref={mapRef} className="h-full w-full" />
+      <div className="h-[400px] sm:h-[500px] md:h-[700px] w-full relative z-0">
+        {loading ? (
+          <div className="h-full w-full flex items-center justify-center bg-gray-100 rounded-2xl">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+              <p className="mt-2 text-gray-500">Loading map...</p>
+            </div>
+          </div>
+        ) : (
+          <div ref={mapRef} className="h-full w-full rounded-2xl overflow-hidden" />
+        )}
       </div>
     </div>
   );
@@ -918,6 +1031,8 @@ const parseBusinessCSV = (csvText: string): Business[] => {
   const facebookIdx = getIdx(['facebook', 'fb']);
   const instagramIdx = getIdx(['instagram', 'ig', 'insta']);
   const featuredIdx = getIdx(['isfeatured', 'is_featured', 'featured']);
+  const latIdx = getIdx(['lat', 'latitude']);
+  const lngIdx = getIdx(['lng', 'longitude', 'lon']);
 
   return lines.slice(1).map((line, index) => {
     const values = parseCSVLine(line);
@@ -955,6 +1070,8 @@ const parseBusinessCSV = (csvText: string): Business[] => {
       instagram: values[instagramIdx] || '',
       address: values[addressIdx] || '',
       town: values[townIdx] || '',
+      lat: values[latIdx] ? parseFloat(values[latIdx]) : undefined,
+      lng: values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
       imageUrl: values[imageIdx] || '',
       tier: (values[tierIdx] as any) || 'standard',
       isFeatured: values[featuredIdx]?.toLowerCase() === 'true',
