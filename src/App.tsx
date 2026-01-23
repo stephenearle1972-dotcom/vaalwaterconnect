@@ -775,7 +775,7 @@ const DirectoryView: React.FC<{ onNavigate: (page: Page, params?: any) => void }
 );
 
 // Business Listings CSV URL (same as WhatsApp bot uses)
-const BUSINESS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTNITdJfiUo5LgobfGBnvUwWV416BdFF56fOjjAXdvVneYCZe6mlL2dZ6ZeR9w7JA/pub?gid=864428363&single=true&output=csv';
+const BUSINESS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv';
 
 // Map subcategory to sectorId for filtering
 const SUBCATEGORY_TO_SECTOR: Record<string, SectorId> = {
