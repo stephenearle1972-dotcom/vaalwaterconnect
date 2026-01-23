@@ -1051,18 +1051,22 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
       {!loading && !error && (
         <div className="grid md:grid-cols-2 gap-12">
           {businesses.length > 0 ? businesses.map(b => (
-            <div key={b.id} className="card-classy p-8 rounded-[2.5rem] group flex items-start gap-8">
+            <div
+              key={b.id}
+              onClick={() => onNavigate('business', { id: b.id })}
+              className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8 hover:shadow-2xl transition-shadow"
+            >
               <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl">
-                <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg" alt={b.name} />
+                <img src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'} className="w-full h-full object-cover shadow-lg group-hover:scale-105 transition-transform" alt={b.name} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-forest italic">{b.name}</h3>
+                <h3 className="text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
                 <p className="text-gray-400 text-sm mt-2 font-light leading-relaxed line-clamp-2">{b.description}</p>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
                   {b.phone && (
                     <a href={`tel:${b.phone}`} className="flex items-center gap-2 text-sm text-forest hover:text-clay transition-colors">
                       <span>📞</span> {b.phone}
