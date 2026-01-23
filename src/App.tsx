@@ -859,6 +859,8 @@ const SUBCATEGORY_TO_SECTOR: Record<string, SectorId> = {
   'safari': 'tourism-hospitality',
   'game reserve': 'tourism-hospitality',
   'tour': 'tourism-hospitality',
+  'photography': 'tourism-hospitality',
+  'photo': 'tourism-hospitality',
   // Pets & Animals
   'vet': 'pets-animals',
   'veterinary': 'pets-animals',
@@ -896,6 +898,7 @@ const parseBusinessCSV = (csvText: string): Business[] => {
   };
 
   const idIdx = getIdx(['id']);
+  const sectorIdx = getIdx(['sectorid', 'sector_id', 'sector']);
   const nameIdx = getIdx(['name', 'business_name', 'businessname']);
   const subcatIdx = getIdx(['subcategory', 'category', 'type']);
   const descIdx = getIdx(['description', 'desc']);
@@ -907,18 +910,29 @@ const parseBusinessCSV = (csvText: string): Business[] => {
   const townIdx = getIdx(['town', 'city', 'region']);
   const imageIdx = getIdx(['image', 'imageurl', 'image_url', 'photo']);
   const tierIdx = getIdx(['tier', 'plan', 'subscription']);
+  const facebookIdx = getIdx(['facebook', 'fb']);
+  const instagramIdx = getIdx(['instagram', 'ig', 'insta']);
+  const featuredIdx = getIdx(['isfeatured', 'is_featured', 'featured']);
 
   return lines.slice(1).map((line, index) => {
     const values = parseCSVLine(line);
     const subcategory = values[subcatIdx] || '';
     const subcatLower = subcategory.toLowerCase();
+    const explicitSectorId = values[sectorIdx]?.trim().toLowerCase() as SectorId;
 
-    // Determine sectorId from subcategory
+    // Use explicit sectorId from CSV if valid, otherwise derive from subcategory
     let sectorId: SectorId = 'informal-services'; // default
-    for (const [key, sector] of Object.entries(SUBCATEGORY_TO_SECTOR)) {
-      if (subcatLower.includes(key)) {
-        sectorId = sector;
-        break;
+    const validSectorIds: SectorId[] = ['home-services', 'automotive', 'health-wellness', 'food-drinks', 'shopping-retail', 'professional-services', 'construction-industrial', 'education-community', 'tourism-hospitality', 'pets-animals', 'wildlife-agriculture', 'daily-activities', 'emergency-services', 'informal-services'];
+
+    if (explicitSectorId && validSectorIds.includes(explicitSectorId)) {
+      sectorId = explicitSectorId;
+    } else {
+      // Fallback: derive from subcategory
+      for (const [key, sector] of Object.entries(SUBCATEGORY_TO_SECTOR)) {
+        if (subcatLower.includes(key)) {
+          sectorId = sector;
+          break;
+        }
       }
     }
 
@@ -932,10 +946,13 @@ const parseBusinessCSV = (csvText: string): Business[] => {
       whatsapp: values[waIdx] || '',
       email: values[emailIdx] || '',
       website: values[websiteIdx] || '',
+      facebook: values[facebookIdx] || '',
+      instagram: values[instagramIdx] || '',
       address: values[addressIdx] || '',
       town: values[townIdx] || '',
       imageUrl: values[imageIdx] || '',
       tier: (values[tierIdx] as any) || 'standard',
+      isFeatured: values[featuredIdx]?.toLowerCase() === 'true',
     } as Business;
   }).filter(b => b.name && b.name !== 'Unnamed Business');
 };
@@ -1334,8 +1351,37 @@ const EmergencyServicesView: React.FC<{ onNavigate: (page: Page, params?: any) =
 };
 
 const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page, params?: any) => void }> = ({ businessId, onNavigate }) => {
-  const business = BUSINESSES.find(b => b.id === businessId);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(BUSINESS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const allBusinesses = parseBusinessCSV(csvText);
+        const found = allBusinesses.find(b => b.id === businessId);
+        setBusiness(found || null);
+      } catch (err) {
+        console.error('Business fetch error:', err);
+        setBusiness(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBusiness();
+  }, [businessId]);
+
   const sector = SECTORS.find(s => s.id === business?.sectorId);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forest"></div>
+      <p className="mt-4 text-gray-500 font-light">Loading business...</p>
+    </div>
+  );
 
   if (!business) return (
     <div className="py-40 text-center">
