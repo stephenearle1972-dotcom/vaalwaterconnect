@@ -1176,42 +1176,28 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
             <div
               key={b.id}
               onClick={() => onNavigate('business', { id: b.id })}
-              className="card-classy p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] cursor-pointer group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 md:gap-8 hover:shadow-2xl transition-shadow"
+              className="card-classy p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] cursor-pointer group hover:shadow-2xl transition-shadow"
             >
-              <div className="relative w-full sm:w-32 md:w-40 h-48 sm:h-32 md:h-40 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100">
-                <img
-                  src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  alt={b.name}
-                />
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
               </div>
-              <div className="flex-1 min-w-0 w-full">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-black text-clay uppercase tracking-widest">{b.subcategory}</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
-                <p className="text-gray-400 text-sm mt-2 font-light leading-relaxed line-clamp-2">{b.description}</p>
+              <h3 className="text-xl sm:text-2xl font-serif font-bold text-forest italic group-hover:text-clay transition-colors">{b.name}</h3>
+              <p className="text-gray-400 text-sm mt-2 font-light leading-relaxed line-clamp-2">{b.description}</p>
 
-                <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
-                  {b.phone && (
-                    <a href={`tel:${b.phone}`} className="flex items-center gap-2 text-sm text-forest hover:text-clay transition-colors">
-                      <span>📞</span> <span className="truncate">{b.phone}</span>
-                    </a>
-                  )}
-                  {b.whatsapp && (
-                    <a href={`https://wa.me/${b.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#25D366] hover:text-[#128C7E] transition-colors">
-                      <span>💬</span> WhatsApp
-                    </a>
-                  )}
-                  {b.email && (
-                    <a href={`mailto:${b.email}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-clay transition-colors">
-                      <span>✉️</span> <span className="truncate">{b.email}</span>
-                    </a>
-                  )}
-                  {b.address && (
-                    <p className="text-xs text-gray-400 mt-2 truncate">📍 {b.address}</p>
-                  )}
-                </div>
+              <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+                {b.phone && (
+                  <a href={`tel:${b.phone}`} className="flex items-center gap-2 text-sm text-forest hover:text-clay transition-colors">
+                    <span>📞</span> <span className="truncate">{b.phone}</span>
+                  </a>
+                )}
+                {b.whatsapp && (
+                  <a href={`https://wa.me/${b.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#25D366] hover:text-[#128C7E] transition-colors">
+                    <span>💬</span> WhatsApp
+                  </a>
+                )}
+                {b.address && (
+                  <p className="text-xs text-gray-400 mt-2 truncate">📍 {b.address}</p>
+                )}
               </div>
             </div>
           )) : (

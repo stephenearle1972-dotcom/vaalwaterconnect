@@ -219,6 +219,8 @@ async function handleQuery({ text, from, source }) {
     const tagsIdx = idxAny(bh, "tags", "keywords");
     const latIdx = idxAny(bh, "lat", "latitude");
     const lngIdx = idxAny(bh, "lng", "longitude", "lon");
+    const featuredIdx = idxAny(bh, "isFeatured", "featured");
+    const tierIdx = idxAny(bh, "tier");
 
     // Filter by town
     const townFiltered = townIdx !== -1
@@ -240,6 +242,15 @@ async function handleQuery({ text, from, source }) {
         }
         const sub = (row[subIdx] || "").toLowerCase();
         if (sub && tokens.some((t) => sub.includes(t))) score += 2;
+
+        // Boost for featured businesses
+        const isFeatured = featuredIdx !== -1 &&
+          (row[featuredIdx] || "").toLowerCase() === "true";
+        if (isFeatured) score += 10;
+
+        // Boost for premium/hospitality tier
+        const tier = tierIdx !== -1 ? (row[tierIdx] || "").toLowerCase() : "";
+        if (tier === "premium" || tier === "hospitality") score += 5;
 
         return {
           score,
@@ -324,9 +335,11 @@ async function handleQuery({ text, from, source }) {
   // =====================
   // Merge & Rank Results
   // =====================
-  const allResults = [...emergencyResults, ...businessResults]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6); // Top 6 results
+  const allSorted = [...emergencyResults, ...businessResults]
+    .sort((a, b) => b.score - a.score);
+
+  const totalCount = allSorted.length;
+  const allResults = allSorted.slice(0, 3); // Top 3 results only
 
   if (allResults.length === 0) {
     return lang === "af"
@@ -361,12 +374,19 @@ async function handleQuery({ text, from, source }) {
     return lines.join("\n");
   });
 
-  // Add dialing hint at the end
+  // Add dialing hint
   const hint = lang === "af"
     ? "\n\n_Kopieer nommer → plak in Dialer om te bel_"
     : "\n\n_Copy number → paste in Dialer to call_";
 
-  const textReply = `${title}\n\n${cards.join("\n\n")}${hint}`;
+  // Add footer if more results exist
+  const footer = totalCount > 3
+    ? (lang === "af"
+        ? `\n\n_Wys top 3 van ${totalCount} resultate. Besoek vaalwaterconnect.co.za vir volledige gids_`
+        : `\n\n_Showing top 3 of ${totalCount} results. Visit vaalwaterconnect.co.za for full directory_`)
+    : "";
+
+  const textReply = `${title}\n\n${cards.join("\n\n")}${hint}${footer}`;
 
   // Check if the top result has location data for tappable map pin
   const topResult = allResults[0];
