@@ -28,7 +28,9 @@ export async function handler(event) {
         from: null,
         source: "web",
       });
-      return textResponse(reply);
+      // Handle structured response (text + location)
+      const textBody = reply && typeof reply === "object" ? reply.text : reply;
+      return textResponse(textBody);
     }
 
     // -----------------------------
@@ -63,11 +65,17 @@ export async function handler(event) {
     // -----------------------------
     const sendUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
 
-    const payload = {
+    // Check if reply is an object with location data
+    const hasLocation = reply && typeof reply === "object" && reply.location;
+    const textBody = hasLocation ? reply.text : reply;
+    const locationData = hasLocation ? reply.location : null;
+
+    // Send text message first
+    const textPayload = {
       messaging_product: "whatsapp",
       to: from,
       type: "text",
-      text: { body: reply },
+      text: { body: textBody },
     };
 
     const sendRes = await fetch(sendUrl, {
@@ -76,12 +84,38 @@ export async function handler(event) {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(textPayload),
     });
 
     const sendText = await sendRes.text();
     console.log("META_SEND_STATUS", sendRes.status);
     console.log("META_SEND_BODY", sendText);
+
+    // If we have location data for the top result, send a location message
+    if (locationData && locationData.latitude && locationData.longitude) {
+      const locationPayload = {
+        messaging_product: "whatsapp",
+        to: from,
+        type: "location",
+        location: {
+          latitude: String(locationData.latitude),
+          longitude: String(locationData.longitude),
+          name: locationData.name || "",
+          address: locationData.address || "",
+        },
+      };
+
+      const locRes = await fetch(sendUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(locationPayload),
+      });
+
+      console.log("LOCATION_SEND_STATUS", locRes.status);
+    }
 
     return textResponse("OK");
   } catch (err) {
@@ -183,6 +217,8 @@ async function handleQuery({ text, from, source }) {
     const areaIdx = idxAny(bh, "address", "location", "area");
     const townIdx = idxAny(bh, "town", "city", "region");
     const tagsIdx = idxAny(bh, "tags", "keywords");
+    const latIdx = idxAny(bh, "lat", "latitude");
+    const lngIdx = idxAny(bh, "lng", "longitude", "lon");
 
     // Filter by town
     const townFiltered = townIdx !== -1
@@ -214,6 +250,8 @@ async function handleQuery({ text, from, source }) {
           wa: row[waIdx] || "",
           email: row[emailIdx] || "",
           area: row[areaIdx] || "",
+          lat: latIdx !== -1 && row[latIdx] ? parseFloat(row[latIdx]) : null,
+          lng: lngIdx !== -1 && row[lngIdx] ? parseFloat(row[lngIdx]) : null,
         };
       })
       .filter((x) => x.score > 0);
@@ -328,7 +366,23 @@ async function handleQuery({ text, from, source }) {
     ? "\n\n_Kopieer nommer → plak in Dialer om te bel_"
     : "\n\n_Copy number → paste in Dialer to call_";
 
-  return `${title}\n\n${cards.join("\n\n")}${hint}`;
+  const textReply = `${title}\n\n${cards.join("\n\n")}${hint}`;
+
+  // Check if the top result has location data for tappable map pin
+  const topResult = allResults[0];
+  if (topResult && topResult.lat && topResult.lng && !isNaN(topResult.lat) && !isNaN(topResult.lng)) {
+    return {
+      text: textReply,
+      location: {
+        latitude: topResult.lat,
+        longitude: topResult.lng,
+        name: topResult.name,
+        address: topResult.area || "",
+      },
+    };
+  }
+
+  return textReply;
 }
 
 // ======================================================

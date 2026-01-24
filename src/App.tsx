@@ -1178,11 +1178,10 @@ const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, para
               onClick={() => onNavigate('business', { id: b.id })}
               className="card-classy p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] cursor-pointer group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 md:gap-8 hover:shadow-2xl transition-shadow"
             >
-              <div className="w-full sm:w-32 md:w-40 h-48 sm:h-32 md:h-40 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100" style={{ clipPath: 'inset(0 round 0.75rem)' }}>
+              <div className="relative w-full sm:w-32 md:w-40 h-48 sm:h-32 md:h-40 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100">
                 <img
                   src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
-                  className="w-full h-full object-cover object-center"
-                  style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                   alt={b.name}
                 />
               </div>
@@ -1537,11 +1536,10 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
             <span className="bg-forest text-sand px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          <div className="relative isolate overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 h-[220px] sm:h-[300px] md:h-[400px] w-full bg-gray-100" style={{ clipPath: 'inset(0 round 1rem)' }}>
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 h-[220px] sm:h-[300px] md:h-[400px] w-full bg-gray-100">
              <img
                src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
-               className="w-full h-full object-cover object-center"
-               style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+               className="absolute inset-0 w-full h-full object-cover"
                alt={business.name}
              />
           </div>
