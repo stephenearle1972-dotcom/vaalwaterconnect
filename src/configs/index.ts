@@ -2,12 +2,14 @@ import { TownConfig, DEFAULT_PRICING } from './types';
 import { vaalwaterConfig } from './towns/vaalwater';
 import { menlynConfig } from './towns/menlyn';
 import { portAlfredConfig } from './towns/port-alfred';
+import { modimolleConfig } from './towns/modimolle';
 
 // Registry of all available town configs
 const townConfigs: Record<string, TownConfig> = {
   vaalwater: vaalwaterConfig,
   menlyn: menlynConfig,
   'port-alfred': portAlfredConfig,
+  modimolle: modimolleConfig,
 };
 
 // Domain to town mapping
