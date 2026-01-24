@@ -1522,12 +1522,33 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
             <span className="bg-forest text-sand px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 h-[220px] sm:h-[300px] md:h-[400px] w-full bg-gray-100">
-             <img
-               src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
-               className="absolute inset-0 w-full h-full object-cover"
-               alt={business.name}
-             />
+          {/* Robust image container - handles ANY aspect ratio, ANY size */}
+          <div
+            className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 w-full bg-gray-200"
+            style={{
+              // Fluid height: scales with viewport, clamped between min/max
+              height: 'clamp(200px, 35vw, 400px)',
+              // Prevent any content from escaping
+              isolation: 'isolate',
+            }}
+          >
+            <img
+              src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
+              alt={business.name}
+              loading="lazy"
+              // Inline styles guarantee these properties apply regardless of CSS cascade
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                // Prevent image from breaking out
+                maxWidth: 'none',
+              }}
+            />
           </div>
 
           <div className="prose prose-lg sm:prose-xl md:prose-2xl max-w-none text-gray-700 leading-relaxed mb-8 sm:mb-20">

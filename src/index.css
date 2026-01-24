@@ -15,6 +15,18 @@ html, body {
   max-width: 100vw;
 }
 
+/* Global image containment - prevents ANY image from breaking layout */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Images inside relative containers should fill and crop */
+.relative > img,
+[style*="position: relative"] > img {
+  max-width: none; /* Override when explicitly positioned */
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--color-bg);
