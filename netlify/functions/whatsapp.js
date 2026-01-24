@@ -236,21 +236,26 @@ async function handleQuery({ text, from, source }) {
           row[subIdx], row[nameIdx], row[descIdx], row[areaIdx], row[tagsIdx]
         ].filter(Boolean).join(" ").toLowerCase();
 
-        let score = 0;
+        // Calculate keyword match score first
+        let keywordScore = 0;
         for (const t of tokens) {
-          if (hay.includes(t)) score += 2;
+          if (hay.includes(t)) keywordScore += 2;
         }
         const sub = (row[subIdx] || "").toLowerCase();
-        if (sub && tokens.some((t) => sub.includes(t))) score += 2;
+        if (sub && tokens.some((t) => sub.includes(t))) keywordScore += 2;
 
-        // Boost for featured businesses
-        const isFeatured = featuredIdx !== -1 &&
-          (row[featuredIdx] || "").toLowerCase() === "true";
-        if (isFeatured) score += 10;
+        // Only apply boosts if there's a keyword match
+        let score = keywordScore;
+        if (keywordScore > 0) {
+          // Boost for featured businesses
+          const isFeatured = featuredIdx !== -1 &&
+            (row[featuredIdx] || "").toLowerCase() === "true";
+          if (isFeatured) score += 10;
 
-        // Boost for premium/hospitality tier
-        const tier = tierIdx !== -1 ? (row[tierIdx] || "").toLowerCase() : "";
-        if (tier === "premium" || tier === "hospitality") score += 5;
+          // Boost for premium/hospitality tier
+          const tier = tierIdx !== -1 ? (row[tierIdx] || "").toLowerCase() : "";
+          if (tier === "premium" || tier === "hospitality") score += 5;
+        }
 
         return {
           score,
