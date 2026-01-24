@@ -29,7 +29,8 @@ export interface TownConfig {
     };
     logo?: string;
     heroImage: string;
-    faviconEmoji: string; // Used for the "V" logo letter
+    faviconEmoji: string; // The letter shown in favicon (e.g., "V", "M", "P")
+    faviconColor?: string; // Background color for favicon (defaults to primary if not set)
   };
 
   // Contact information

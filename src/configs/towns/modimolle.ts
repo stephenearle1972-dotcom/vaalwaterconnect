@@ -34,6 +34,7 @@ export const modimolleConfig: TownConfig = {
     },
     heroImage: '', // Will use CSS gradient as placeholder
     faviconEmoji: 'M',
+    faviconColor: '#8B7355', // Waterberg brown for favicon
   },
 
   contact: {

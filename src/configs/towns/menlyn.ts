@@ -65,6 +65,7 @@ export const menlynConfig: TownConfig = {
     },
     heroImage: 'https://images.unsplash.com/photo-1577948000111-9c970dfe3743?auto=format&fit=crop&q=80&w=1920',
     faviconEmoji: 'M',
+    faviconColor: '#0d9488', // Teal for favicon
   },
 
   contact: {

@@ -45,6 +45,7 @@ export const vaalwaterConfig: TownConfig = {
     },
     heroImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&q=80&w=1920',
     faviconEmoji: 'V',
+    faviconColor: '#2d5016', // Deep green for favicon
   },
 
   contact: {

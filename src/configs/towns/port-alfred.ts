@@ -34,6 +34,7 @@ export const portAlfredConfig: TownConfig = {
     },
     heroImage: '', // Will use CSS gradient as placeholder
     faviconEmoji: 'P',
+    faviconColor: '#1e6091', // Navy blue for favicon
   },
 
   contact: {

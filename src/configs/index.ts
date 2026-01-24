@@ -56,6 +56,7 @@ function createDynamicConfig(townName: string): TownConfig {
       },
       heroImage: '',
       faviconEmoji: firstLetter,
+      faviconColor: '#2d4a3e', // Default to primary green
     },
     contact: {
       whatsapp: '',
