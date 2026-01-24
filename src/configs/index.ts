@@ -1,4 +1,4 @@
-import { TownConfig } from './types';
+import { TownConfig, DEFAULT_PRICING } from './types';
 import { vaalwaterConfig } from './towns/vaalwater';
 import { menlynConfig } from './towns/menlyn';
 
@@ -20,16 +20,79 @@ const domainMap: Record<string, string> = {
 };
 
 /**
+ * Creates a dynamic config for towns without predefined configs.
+ * Uses VITE_TOWN for the town name and applies sensible defaults.
+ */
+function createDynamicConfig(townName: string): TownConfig {
+  const slug = townName.toLowerCase().replace(/\s+/g, '-');
+  const firstLetter = townName.charAt(0).toUpperCase();
+
+  return {
+    id: slug,
+    slug: slug,
+    town: {
+      name: townName,
+      tagline: 'Local Business Directory',
+      region: 'South Africa',
+    },
+    about: {
+      headline: `Welcome to ${townName} Connect`,
+      subheadline: 'Your local business directory',
+      paragraphs: [
+        `${townName} Connect is your hyperlocal directory for businesses and services in ${townName}.`,
+        'We connect residents with trusted local providers.',
+      ],
+      images: [],
+    },
+    branding: {
+      colors: {
+        primary: '#2d4a3e',   // Forest green (default)
+        secondary: '#b87352', // Clay
+        accent: '#e8e2d6',    // Sand
+      },
+      heroImage: '',
+      faviconEmoji: firstLetter,
+    },
+    contact: {
+      whatsapp: '',
+      email: `hello@${slug}connect.co.za`,
+      phone: '',
+    },
+    location: {
+      center: { lat: -29.0, lng: 24.0 }, // Rough center of South Africa
+      zoom: 10,
+    },
+    pricing: DEFAULT_PRICING,
+    data: {
+      sectors: vaalwaterConfig.data.sectors, // Reuse sector definitions
+      businesses: [],
+      jobs: [],
+      events: [],
+      classifieds: [],
+      properties: [],
+      announcements: [],
+      specials: [],
+    },
+  };
+}
+
+/**
  * Detects which town config to use based on:
- * 1. VITE_TOWN environment variable (highest priority)
+ * 1. VITE_TOWN environment variable (highest priority - supports ANY town name)
  * 2. Current domain (for production)
  * 3. Falls back to 'vaalwater' (default)
  */
-function detectTown(): string {
+function detectTown(): string | { dynamic: true; name: string } {
   // 1. Check environment variable (useful for development and build-time config)
   const envTown = import.meta.env.VITE_TOWN;
-  if (envTown && townConfigs[envTown]) {
-    return envTown;
+  if (envTown) {
+    // If there's a predefined config for this town, use it
+    const normalizedEnvTown = envTown.toLowerCase().replace(/\s+/g, '-');
+    if (townConfigs[normalizedEnvTown]) {
+      return normalizedEnvTown;
+    }
+    // Otherwise, return the town name for dynamic config creation
+    return { dynamic: true, name: envTown };
   }
 
   // 2. Check domain (for production multi-tenant)
@@ -56,8 +119,14 @@ function detectTown(): string {
  * Get the current town's configuration
  */
 export function getTownConfig(): TownConfig {
-  const townId = detectTown();
-  return townConfigs[townId] || vaalwaterConfig;
+  const townResult = detectTown();
+
+  // Handle dynamic town (from VITE_TOWN env var without predefined config)
+  if (typeof townResult === 'object' && townResult.dynamic) {
+    return createDynamicConfig(townResult.name);
+  }
+
+  return townConfigs[townResult] || vaalwaterConfig;
 }
 
 /**
