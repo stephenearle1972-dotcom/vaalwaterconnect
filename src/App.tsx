@@ -1522,31 +1522,22 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
             <span className="bg-forest text-sand px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          {/* Robust image container - handles ANY aspect ratio, ANY size */}
+          {/* Image container - shows COMPLETE image, no cropping */}
           <div
-            className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 w-full bg-gray-200"
-            style={{
-              // Fluid height: scales with viewport, clamped between min/max
-              height: 'clamp(200px, 35vw, 400px)',
-              // Prevent any content from escaping
-              isolation: 'isolate',
-            }}
+            className="flex items-center justify-center rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 w-full bg-sand/30"
+            style={{ minHeight: '200px' }}
           >
             <img
               src={business.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
               alt={business.name}
               loading="lazy"
-              // Inline styles guarantee these properties apply regardless of CSS cascade
+              className="rounded-2xl sm:rounded-[2rem] md:rounded-[3rem]"
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-                // Prevent image from breaking out
-                maxWidth: 'none',
+                maxWidth: '100%',
+                maxHeight: '500px',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
               }}
             />
           </div>
