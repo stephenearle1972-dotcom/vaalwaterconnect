@@ -77,22 +77,22 @@ function createDynamicConfig(townName: string): TownConfig {
 }
 
 /**
- * Detects which town config to use based on:
+ * Get the current town's configuration based on:
  * 1. VITE_TOWN environment variable (highest priority - supports ANY town name)
  * 2. Current domain (for production)
  * 3. Falls back to 'vaalwater' (default)
  */
-function detectTown(): string | { dynamic: true; name: string } {
+export function getTownConfig(): TownConfig {
   // 1. Check environment variable (useful for development and build-time config)
-  const envTown = import.meta.env.VITE_TOWN;
+  const envTown = import.meta.env.VITE_TOWN as string | undefined;
   if (envTown) {
-    // If there's a predefined config for this town, use it
+    // Check if there's a predefined config for this town
     const normalizedEnvTown = envTown.toLowerCase().replace(/\s+/g, '-');
     if (townConfigs[normalizedEnvTown]) {
-      return normalizedEnvTown;
+      return townConfigs[normalizedEnvTown];
     }
-    // Otherwise, return the town name for dynamic config creation
-    return { dynamic: true, name: envTown };
+    // No predefined config - create a dynamic one using the town name
+    return createDynamicConfig(envTown);
   }
 
   // 2. Check domain (for production multi-tenant)
@@ -101,32 +101,18 @@ function detectTown(): string | { dynamic: true; name: string } {
 
     // Check exact domain match
     if (domainMap[hostname]) {
-      return domainMap[hostname];
+      return townConfigs[domainMap[hostname]];
     }
 
     // Check subdomain patterns (e.g., vaalwater.townconnect.co.za)
     const subdomain = hostname.split('.')[0];
     if (townConfigs[subdomain]) {
-      return subdomain;
+      return townConfigs[subdomain];
     }
   }
 
   // 3. Default to Vaalwater
-  return 'vaalwater';
-}
-
-/**
- * Get the current town's configuration
- */
-export function getTownConfig(): TownConfig {
-  const townResult = detectTown();
-
-  // Handle dynamic town (from VITE_TOWN env var without predefined config)
-  if (typeof townResult === 'object' && townResult.dynamic) {
-    return createDynamicConfig(townResult.name);
-  }
-
-  return townConfigs[townResult] || vaalwaterConfig;
+  return vaalwaterConfig;
 }
 
 /**
