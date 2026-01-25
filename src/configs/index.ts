@@ -3,6 +3,7 @@ import { vaalwaterConfig } from './towns/vaalwater';
 import { menlynConfig } from './towns/menlyn';
 import { portAlfredConfig } from './towns/port-alfred';
 import { modimolleConfig } from './towns/modimolle';
+import { bloubergConfig } from './towns/blouberg';
 
 // Registry of all available town configs
 const townConfigs: Record<string, TownConfig> = {
@@ -10,6 +11,7 @@ const townConfigs: Record<string, TownConfig> = {
   menlyn: menlynConfig,
   'port-alfred': portAlfredConfig,
   modimolle: modimolleConfig,
+  blouberg: bloubergConfig,
 };
 
 // Domain to town mapping
