@@ -761,15 +761,55 @@ const AddBusinessView: React.FC = () => {
 };
 
 const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: any) => void }> = ({ query, onNavigate }) => {
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+  const currentTown = config.town.name;
+
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const response = await fetch(BUSINESS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const allBusinesses = parseBusinessCSV(csvText);
+        // Filter by town
+        const townBusinesses = allBusinesses.filter(b => {
+          if (!b.town) return true;
+          return b.town.toLowerCase() === currentTown.toLowerCase();
+        });
+        setBusinesses(townBusinesses);
+      } catch (err) {
+        console.error('Search fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBusinesses();
+  }, [currentTown]);
+
   const results = useMemo(() => {
     const q = query.toLowerCase();
-    return BUSINESSES.filter(b => 
-      b.name.toLowerCase().includes(q) || 
-      b.description.toLowerCase().includes(q) || 
+    return businesses.filter(b =>
+      b.name.toLowerCase().includes(q) ||
+      b.description.toLowerCase().includes(q) ||
       b.subcategory?.toLowerCase().includes(q) ||
       b.tags?.some(t => t.toLowerCase().includes(q))
     );
-  }, [query]);
+  }, [query, businesses]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
+        <div className="mb-16">
+          <h1 className="text-6xl font-serif font-bold text-forest mb-4 italic">Searching...</h1>
+          <p className="text-xl text-gray-500 font-light">Looking for "{query}"</p>
+        </div>
+        <div className="flex justify-center py-20">
+          <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
@@ -857,6 +897,15 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
           <div className="flex flex-wrap justify-center gap-4">
             <button onClick={() => onNavigate('directory')} className="bg-white text-forest px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Browse Directory</button>
             <button onClick={() => onNavigate('map')} className="bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Live Map</button>
+            <a
+              href="https://wa.me/27836669298?text=Hi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+              Ask on WhatsApp
+            </a>
           </div>
         </div>
       </section>
