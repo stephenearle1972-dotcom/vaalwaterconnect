@@ -905,7 +905,7 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
                 className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
-                Ask on WhatsApp
+                🔍 Search via WhatsApp
               </a>
             )}
             <a
