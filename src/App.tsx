@@ -725,6 +725,21 @@ declare global {
   }
 }
 
+// Tier prices for PayFast payment
+const TIER_PRICES: Record<string, number> = {
+  micro: 50,
+  standard: 199,
+  premium: 349,
+  enterprise: 599,
+};
+
+const TIER_NAMES: Record<string, string> = {
+  micro: 'Micro',
+  standard: 'Standard',
+  premium: 'Premium',
+  enterprise: 'Enterprise / Lodge',
+};
+
 const AddBusinessView: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -788,22 +803,63 @@ const AddBusinessView: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.popiaConsent) return;
+    if (!formData.popiaConsent || !formData.tier || !formData.phone || !formData.address) return;
 
     const form = e.target as HTMLFormElement;
     const formDataToSend = new FormData(form);
     formDataToSend.append('photos', uploadedImages.join(', '));
 
     try {
+      // Submit to Netlify Forms first
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(formDataToSend as any).toString()
       });
-      setSubmitted(true);
+
+      // Then redirect to PayFast
+      const paymentId = `${config.town.name.toUpperCase()}-${Date.now()}`;
+      const amount = TIER_PRICES[formData.tier] || 50;
+      const tierName = TIER_NAMES[formData.tier] || 'Micro';
+
+      const payFastForm = document.createElement('form');
+      payFastForm.method = 'POST';
+      payFastForm.action = PAYFAST_URL;
+
+      const fields: Record<string, string> = {
+        merchant_id: PAYFAST_MERCHANT_ID,
+        merchant_key: PAYFAST_MERCHANT_KEY,
+        return_url: `${window.location.origin}/#payment-success`,
+        cancel_url: `${window.location.origin}/#payment-cancelled`,
+        notify_url: `${window.location.origin}/.netlify/functions/payfast-itn`,
+        name_first: formData.businessName.split(' ')[0] || formData.businessName,
+        name_last: formData.businessName.split(' ').slice(1).join(' ') || 'Business',
+        email_address: formData.email,
+        m_payment_id: paymentId,
+        amount: amount.toString(),
+        item_name: `${config.town.name}Connect ${tierName} Plan - Monthly`,
+        item_description: `Business listing for ${formData.businessName}`,
+        custom_str1: formData.businessName,
+        custom_str2: `${formData.tier} Monthly`,
+        custom_str3: config.town.name,
+        custom_str4: formData.phone,
+        custom_str5: formData.address,
+      };
+
+      for (const [key, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        payFastForm.appendChild(input);
+      }
+
+      document.body.appendChild(payFastForm);
+      payFastForm.submit();
+
     } catch (error) {
       console.error('Form submission error:', error);
-      setSubmitted(true);
+      alert('There was an error submitting your application. Please try again.');
     }
   };
 
@@ -848,8 +904,8 @@ const AddBusinessView: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan</label>
-            <select name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan *</label>
+            <select required name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
               <option value="micro">Micro (R50/month) - First month free!</option>
               <option value="standard">Standard (R199/month)</option>
               <option value="premium">Premium (R349/month)</option>
@@ -863,12 +919,12 @@ const AddBusinessView: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
-            <input type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number *</label>
+            <input required type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
           </div>
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</label>
-            <input type="text" name="address" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Street, Town" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address *</label>
+            <input required type="text" name="address" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Street, Town" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
           </div>
         </div>
         <div className="space-y-4">
@@ -918,8 +974,9 @@ const AddBusinessView: React.FC = () => {
             <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">I confirm the above information is accurate and agree to the processing of my data according to POPIA.</span>
           </label>
         </div>
-        <button type="submit" className="w-full bg-forest text-white py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl transition-all hover:scale-[1.01] active:scale-[0.99]">
-          Apply for Listing
+        <button type="submit" className="w-full bg-forest text-white py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+          Submit & Pay
         </button>
       </form>
     </div>
