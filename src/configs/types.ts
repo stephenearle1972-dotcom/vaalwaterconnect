@@ -38,6 +38,7 @@ export interface TownConfig {
     whatsapp: string;  // Without + prefix, e.g., "27688986081"
     email: string;
     phone: string;     // Display format
+    botWhatsApp?: string; // WhatsApp bot number for directory search (only if bot is available)
   };
 
   // Map settings
