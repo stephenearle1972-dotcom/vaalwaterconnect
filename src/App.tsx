@@ -4,6 +4,7 @@ import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Ann
 import config from './configs';
 import L from 'leaflet';
 import { BotIcon } from './components/icons/BotIcon';
+import { ChatWidget } from './components/ChatWidget';
 
 // Get data from the current town's config
 const { sectors: SECTORS, businesses: BUSINESSES, jobs: JOBS, events: EVENTS, classifieds: CLASSIFIEDS, properties: PROPERTIES, announcements: ANNOUNCEMENTS } = config.data;
@@ -4865,6 +4866,10 @@ export default function App() {
       <main className="flex-grow">{renderContent()}</main>
       <Footer onNavigate={navigateTo} />
       <FloatingBotButton />
+      <ChatWidget
+        assistantUrl="https://vaalwater-assistant.netlify.app"
+        brandColor={config.branding.colors.secondary}
+      />
     </div>
   );
 }
