@@ -20,13 +20,29 @@ const townConfigs: Record<string, TownConfig> = {
 
 // Domain to town mapping
 const domainMap: Record<string, string> = {
+  // Production domains
   'vaalwaterconnect.co.za': 'vaalwater',
   'www.vaalwaterconnect.co.za': 'vaalwater',
   'menlynconnect.co.za': 'menlyn',
   'www.menlynconnect.co.za': 'menlyn',
+  'portalfredconnect.co.za': 'port-alfred',
+  'www.portalfredconnect.co.za': 'port-alfred',
+  'modimolleconnect.co.za': 'modimolle',
+  'www.modimolleconnect.co.za': 'modimolle',
+  'bloubergconnect.co.za': 'blouberg',
+  'www.bloubergconnect.co.za': 'blouberg',
+  'parklandsconnect.co.za': 'parklands',
+  'www.parklandsconnect.co.za': 'parklands',
+  'garsfonteinconnect.co.za': 'garsfontein',
+  'www.garsfonteinconnect.co.za': 'garsfontein',
   // Netlify preview domains
   'vaalwaterconnect.netlify.app': 'vaalwater',
   'menlynconnect.netlify.app': 'menlyn',
+  'portalfredconnect.netlify.app': 'port-alfred',
+  'modimolleconnect.netlify.app': 'modimolle',
+  'bloubergconnect.netlify.app': 'blouberg',
+  'parklandsconnect.netlify.app': 'parklands',
+  'garsfonteinconnect.netlify.app': 'garsfontein',
 };
 
 /**
