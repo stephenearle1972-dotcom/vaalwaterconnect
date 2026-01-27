@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory, EmergencyService, SubmissionType } from './types';
+import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ClassifiedCondition, ListingType, PropertyType, AnnouncementCategory, EmergencyService, SubmissionType, ApplicationMethod } from './types';
 import config from './configs';
 import L from 'leaflet';
 
@@ -1997,6 +1997,13 @@ const DirectoryView: React.FC<{ onNavigate: (page: Page, params?: any) => void }
 const DEFAULT_BUSINESS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv';
 const BUSINESS_CSV_URL = import.meta.env.VITE_SHEET_CSV_URL || DEFAULT_BUSINESS_CSV_URL;
 
+// Community Listings CSV URLs - each tab has its own URL
+const EVENTS_CSV_URL = import.meta.env.VITE_EVENTS_CSV_URL || '';
+const JOBS_CSV_URL = import.meta.env.VITE_JOBS_CSV_URL || '';
+const CLASSIFIEDS_CSV_URL = import.meta.env.VITE_CLASSIFIEDS_CSV_URL || '';
+const PROPERTY_CSV_URL = import.meta.env.VITE_PROPERTY_CSV_URL || '';
+const NOTICES_CSV_URL = import.meta.env.VITE_NOTICES_CSV_URL || '';
+
 // Map subcategory to sectorId for filtering
 const SUBCATEGORY_TO_SECTOR: Record<string, SectorId> = {
   // Home Services
@@ -2205,6 +2212,303 @@ const parseCSVLine = (text: string): string[] => {
   }
   result.push(current.trim());
   return result;
+};
+
+// Parse Events CSV into Event objects
+const parseEventsCSV = (csvText: string): Event[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const titleIdx = getIdx(['title', 'name']);
+  const organizerIdx = getIdx(['organizer_name', 'organizer', 'organiser']);
+  const typeIdx = getIdx(['event_type', 'type']);
+  const descIdx = getIdx(['description', 'desc']);
+  const dateIdx = getIdx(['date', 'event_date']);
+  const startIdx = getIdx(['start_time', 'start']);
+  const endIdx = getIdx(['end_time', 'end']);
+  const locationIdx = getIdx(['location', 'venue']);
+  const addressIdx = getIdx(['address']);
+  const priceIdx = getIdx(['ticket_price', 'price']);
+  const bookingIdx = getIdx(['booking_link', 'booking_url', 'link']);
+  const imageIdx = getIdx(['image_url', 'image', 'photo']);
+  const featuredIdx = getIdx(['is_featured', 'featured']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line).map(v => v.replace(/^"|"$/g, ''));
+    const eventType = (values[typeIdx] || 'other').toLowerCase() as EventType;
+    const validTypes: EventType[] = ['market', 'festival', 'workshop', 'community', 'other'];
+
+    return {
+      id: values[idIdx] || `event-${index}`,
+      title: values[titleIdx] || '',
+      organizerId: null,
+      organizerName: values[organizerIdx] || '',
+      eventType: validTypes.includes(eventType) ? eventType : 'other',
+      description: values[descIdx] || '',
+      date: values[dateIdx] || '',
+      startTime: values[startIdx] || '',
+      endTime: values[endIdx] || '',
+      location: values[locationIdx] || '',
+      address: values[addressIdx] || '',
+      ticketPrice: values[priceIdx] || undefined,
+      bookingLink: values[bookingIdx] || undefined,
+      imageUrl: values[imageIdx] || '',
+      isFeatured: values[featuredIdx]?.toLowerCase() === 'true',
+    } as Event;
+  }).filter(e => e.title && e.date);
+};
+
+// Parse Jobs CSV into Job objects
+const parseJobsCSV = (csvText: string): Job[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const titleIdx = getIdx(['title', 'job_title']);
+  const businessIdx = getIdx(['business_name', 'company', 'employer']);
+  const typeIdx = getIdx(['job_type', 'type', 'employment_type']);
+  const sectorIdx = getIdx(['sector_id', 'sector']);
+  const descIdx = getIdx(['description', 'desc']);
+  const reqIdx = getIdx(['requirements', 'qualifications']);
+  const salaryIdx = getIdx(['salary_range', 'salary']);
+  const locationIdx = getIdx(['location']);
+  const methodIdx = getIdx(['application_method', 'apply_method']);
+  const contactIdx = getIdx(['application_contact', 'contact', 'apply_contact']);
+  const dateIdx = getIdx(['posted_date', 'date']);
+  const activeIdx = getIdx(['is_active', 'active', 'status']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line).map(v => v.replace(/^"|"$/g, ''));
+    const jobType = (values[typeIdx] || 'full-time').toLowerCase().replace(' ', '-') as JobType;
+    const validTypes: JobType[] = ['full-time', 'part-time', 'contract', 'casual'];
+    const appMethod = (values[methodIdx] || 'phone').toLowerCase() as ApplicationMethod;
+    const validMethods: ApplicationMethod[] = ['email', 'phone', 'whatsapp', 'website'];
+
+    const requirementsStr = values[reqIdx] || '';
+    const requirements = requirementsStr ? requirementsStr.split(/[;,]/).map(r => r.trim()).filter(Boolean) : [];
+
+    const statusVal = values[activeIdx]?.toLowerCase();
+    const isActive = statusVal === 'true' || statusVal === 'active' || statusVal === 'yes' || statusVal === '1';
+
+    return {
+      id: values[idIdx] || `job-${index}`,
+      title: values[titleIdx] || '',
+      businessId: `biz-${index}`,
+      businessName: values[businessIdx] || '',
+      jobType: validTypes.includes(jobType) ? jobType : 'full-time',
+      sectorId: (values[sectorIdx] || 'professional-services') as SectorId,
+      description: values[descIdx] || '',
+      requirements,
+      salaryRange: values[salaryIdx] || undefined,
+      location: values[locationIdx] || '',
+      postedDate: values[dateIdx] || new Date().toISOString().split('T')[0],
+      applicationMethod: validMethods.includes(appMethod) ? appMethod : 'phone',
+      applicationContact: values[contactIdx] || '',
+      isActive,
+    } as Job;
+  }).filter(j => j.title && j.businessName);
+};
+
+// Parse Classifieds CSV into Classified objects
+const parseClassifiedsCSV = (csvText: string): Classified[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const titleIdx = getIdx(['title', 'name']);
+  const catIdx = getIdx(['category']);
+  const subcatIdx = getIdx(['subcategory', 'sub_category']);
+  const descIdx = getIdx(['description', 'desc']);
+  const priceIdx = getIdx(['price']);
+  const condIdx = getIdx(['condition']);
+  const sellerIdx = getIdx(['seller_name', 'seller', 'name']);
+  const phoneIdx = getIdx(['seller_phone', 'phone', 'contact']);
+  const emailIdx = getIdx(['seller_email', 'email']);
+  const locationIdx = getIdx(['location']);
+  const imageIdx = getIdx(['image_url', 'image', 'photo']);
+  const dateIdx = getIdx(['posted_date', 'date']);
+  const activeIdx = getIdx(['is_active', 'active', 'status']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line).map(v => v.replace(/^"|"$/g, ''));
+    const category = (values[catIdx] || 'other').toLowerCase().replace(' ', '-') as ClassifiedCategory;
+    const validCats: ClassifiedCategory[] = ['for-sale', 'wanted', 'services', 'other'];
+    const condition = (values[condIdx] || 'used').toLowerCase() as ClassifiedCondition;
+    const validConds: ClassifiedCondition[] = ['new', 'used', 'other'];
+
+    const statusVal = values[activeIdx]?.toLowerCase();
+    const isActive = statusVal === 'true' || statusVal === 'active' || statusVal === 'yes' || statusVal === '1';
+
+    return {
+      id: values[idIdx] || `classified-${index}`,
+      title: values[titleIdx] || '',
+      category: validCats.includes(category) ? category : 'other',
+      subcategory: values[subcatIdx] || '',
+      description: values[descIdx] || '',
+      price: values[priceIdx] || undefined,
+      condition: validConds.includes(condition) ? condition : 'used',
+      sellerName: values[sellerIdx] || '',
+      sellerContact: values[phoneIdx] || values[emailIdx] || '',
+      location: values[locationIdx] || '',
+      postedDate: values[dateIdx] || new Date().toISOString().split('T')[0],
+      imageUrl: values[imageIdx] || undefined,
+      isActive,
+    } as Classified;
+  }).filter(c => c.title);
+};
+
+// Parse Property CSV into Property objects
+const parsePropertyCSV = (csvText: string): Property[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const titleIdx = getIdx(['title', 'name']);
+  const listingIdx = getIdx(['listing_type', 'type']);
+  const propTypeIdx = getIdx(['property_type', 'prop_type']);
+  const priceIdx = getIdx(['price']);
+  const bedsIdx = getIdx(['bedrooms', 'beds']);
+  const bathsIdx = getIdx(['bathrooms', 'baths']);
+  const sizeIdx = getIdx(['size', 'sqm', 'area']);
+  const descIdx = getIdx(['description', 'desc']);
+  const addressIdx = getIdx(['address', 'location']);
+  const latIdx = getIdx(['lat', 'latitude']);
+  const lngIdx = getIdx(['lng', 'longitude']);
+  const featuresIdx = getIdx(['features', 'amenities']);
+  const agentIdx = getIdx(['agent_name', 'agent', 'seller']);
+  const agentPhoneIdx = getIdx(['agent_phone', 'phone', 'contact']);
+  const agentEmailIdx = getIdx(['agent_email', 'email']);
+  const imageIdx = getIdx(['image_urls', 'images', 'image_url', 'photos']);
+  const dateIdx = getIdx(['posted_date', 'date']);
+  const featuredIdx = getIdx(['is_featured', 'featured']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line).map(v => v.replace(/^"|"$/g, ''));
+    const listingType = (values[listingIdx] || 'sale').toLowerCase() as ListingType;
+    const validListings: ListingType[] = ['sale', 'rent'];
+    const propType = (values[propTypeIdx] || 'house').toLowerCase() as PropertyType;
+    const validPropTypes: PropertyType[] = ['house', 'apartment', 'land', 'commercial', 'farm'];
+
+    const featuresStr = values[featuresIdx] || '';
+    const features = featuresStr ? featuresStr.split(/[;,]/).map(f => f.trim()).filter(Boolean) : [];
+
+    const imagesStr = values[imageIdx] || '';
+    const imageUrls = imagesStr ? imagesStr.split(/[;,]/).map(u => u.trim()).filter(Boolean) : [];
+
+    return {
+      id: values[idIdx] || `property-${index}`,
+      title: values[titleIdx] || '',
+      listingType: validListings.includes(listingType) ? listingType : 'sale',
+      propertyType: validPropTypes.includes(propType) ? propType : 'house',
+      bedrooms: values[bedsIdx] ? parseInt(values[bedsIdx]) : undefined,
+      bathrooms: values[bathsIdx] ? parseInt(values[bathsIdx]) : undefined,
+      size: values[sizeIdx] ? parseInt(values[sizeIdx]) : undefined,
+      price: values[priceIdx] || '',
+      description: values[descIdx] || '',
+      address: values[addressIdx] || '',
+      lat: values[latIdx] ? parseFloat(values[latIdx]) : undefined,
+      lng: values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
+      features,
+      agentName: values[agentIdx] || '',
+      agentContact: values[agentPhoneIdx] || values[agentEmailIdx] || '',
+      postedDate: values[dateIdx] || new Date().toISOString().split('T')[0],
+      imageUrls,
+      isFeatured: values[featuredIdx]?.toLowerCase() === 'true',
+    } as Property;
+  }).filter(p => p.title && p.price);
+};
+
+// Parse Notices CSV into Announcement objects
+const parseNoticesCSV = (csvText: string): Announcement[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+  const getIdx = (names: string[]): number => {
+    for (const name of names) {
+      const idx = headers.indexOf(name.toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const idIdx = getIdx(['id']);
+  const titleIdx = getIdx(['title', 'name']);
+  const catIdx = getIdx(['category']);
+  const descIdx = getIdx(['description', 'desc']);
+  const contactIdx = getIdx(['contact_name', 'contact', 'name']);
+  const phoneIdx = getIdx(['contact_phone', 'phone']);
+  const emailIdx = getIdx(['contact_email', 'email']);
+  const locationIdx = getIdx(['location']);
+  const imageIdx = getIdx(['image_url', 'image', 'photo']);
+  const dateIdx = getIdx(['posted_date', 'date']);
+  const expiryIdx = getIdx(['expiry_date', 'expiry', 'expires']);
+  const activeIdx = getIdx(['is_active', 'active', 'status']);
+
+  return lines.slice(1).map((line, index) => {
+    const values = parseCSVLine(line).map(v => v.replace(/^"|"$/g, ''));
+    const category = (values[catIdx] || 'other').toLowerCase().replace(' ', '-') as AnnouncementCategory;
+    const validCats: AnnouncementCategory[] = ['lost-found', 'community-notice', 'alert', 'other'];
+
+    const statusVal = values[activeIdx]?.toLowerCase();
+    const isActive = statusVal === 'true' || statusVal === 'active' || statusVal === 'yes' || statusVal === '1';
+
+    return {
+      id: values[idIdx] || `notice-${index}`,
+      title: values[titleIdx] || '',
+      category: validCats.includes(category) ? category : 'other',
+      description: values[descIdx] || '',
+      contactName: values[contactIdx] || '',
+      contactMethod: values[phoneIdx] || values[emailIdx] || '',
+      location: values[locationIdx] || '',
+      postedDate: values[dateIdx] || new Date().toISOString().split('T')[0],
+      expiryDate: values[expiryIdx] || '',
+      imageUrl: values[imageIdx] || undefined,
+      isActive,
+    } as Announcement;
+  }).filter(a => a.title);
 };
 
 const CategoryView: React.FC<{ sectorId: SectorId, onNavigate: (page: Page, params?: any) => void }> = ({ sectorId, onNavigate }) => {
@@ -3097,7 +3401,32 @@ const ContactView: React.FC = () => (
 // ============ JOBS BOARD ============
 const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [filterSector, setFilterSector] = useState<string>('all');
-  const activeJobs = JOBS.filter(j => j.isActive);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!JOBS_CSV_URL) {
+        setJobs(JOBS); // Fallback to config data
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(JOBS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseJobsCSV(csvText);
+        setJobs(parsed.length > 0 ? parsed : JOBS);
+      } catch {
+        setJobs(JOBS); // Fallback to config data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const activeJobs = jobs.filter(j => j.isActive);
   const filteredJobs = filterSector === 'all' ? activeJobs : activeJobs.filter(j => j.sectorId === filterSector);
 
   const jobTypeLabels: Record<JobType, string> = {
@@ -3188,8 +3517,39 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
 };
 
 const JobDetailView: React.FC<{ jobId: string, onNavigate: (page: Page, params?: any) => void }> = ({ jobId, onNavigate }) => {
-  const job = JOBS.find(j => j.id === jobId);
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      if (!JOBS_CSV_URL) {
+        setJob(JOBS.find(j => j.id === jobId) || null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(JOBS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseJobsCSV(csvText);
+        setJob(parsed.find(j => j.id === jobId) || JOBS.find(j => j.id === jobId) || null);
+      } catch {
+        setJob(JOBS.find(j => j.id === jobId) || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [jobId]);
+
   const sector = SECTORS.find(s => s.id === job?.sectorId);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin mx-auto"></div>
+      <p className="mt-4 text-gray-500">Loading...</p>
+    </div>
+  );
 
   if (!job) return (
     <div className="py-40 text-center">
@@ -3298,8 +3658,32 @@ const JobDetailView: React.FC<{ jobId: string, onNavigate: (page: Page, params?:
 const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const upcomingEvents = EVENTS.filter(e => new Date(e.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!EVENTS_CSV_URL) {
+        setEvents(EVENTS);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(EVENTS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseEventsCSV(csvText);
+        setEvents(parsed.length > 0 ? parsed : EVENTS);
+      } catch {
+        setEvents(EVENTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const upcomingEvents = events.filter(e => new Date(e.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const filteredEvents = filterType === 'all' ? upcomingEvents : upcomingEvents.filter(e => e.eventType === filterType);
 
   const eventTypeLabels: Record<EventType, { label: string, icon: string }> = {
@@ -3418,7 +3802,37 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
 };
 
 const EventDetailView: React.FC<{ eventId: string, onNavigate: (page: Page, params?: any) => void }> = ({ eventId, onNavigate }) => {
-  const event = EVENTS.find(e => e.id === eventId);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!EVENTS_CSV_URL) {
+        setEvent(EVENTS.find(e => e.id === eventId) || null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(EVENTS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseEventsCSV(csvText);
+        setEvent(parsed.find(e => e.id === eventId) || EVENTS.find(e => e.id === eventId) || null);
+      } catch {
+        setEvent(EVENTS.find(e => e.id === eventId) || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvent();
+  }, [eventId]);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin mx-auto"></div>
+      <p className="mt-4 text-gray-500">Loading...</p>
+    </div>
+  );
 
   if (!event) return (
     <div className="py-40 text-center">
@@ -3518,7 +3932,32 @@ const EventDetailView: React.FC<{ eventId: string, onNavigate: (page: Page, para
 // ============ CLASSIFIEDS ============
 const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const activeClassifieds = CLASSIFIEDS.filter(c => c.isActive);
+  const [classifieds, setClassifieds] = useState<Classified[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClassifieds = async () => {
+      if (!CLASSIFIEDS_CSV_URL) {
+        setClassifieds(CLASSIFIEDS);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(CLASSIFIEDS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseClassifiedsCSV(csvText);
+        setClassifieds(parsed.length > 0 ? parsed : CLASSIFIEDS);
+      } catch {
+        setClassifieds(CLASSIFIEDS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClassifieds();
+  }, []);
+
+  const activeClassifieds = classifieds.filter(c => c.isActive);
   const filteredClassifieds = filterCategory === 'all' ? activeClassifieds : activeClassifieds.filter(c => c.category === filterCategory);
 
   const categoryLabels: Record<ClassifiedCategory, { label: string, icon: string }> = {
@@ -3615,7 +4054,37 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
 };
 
 const ClassifiedDetailView: React.FC<{ classifiedId: string, onNavigate: (page: Page, params?: any) => void }> = ({ classifiedId, onNavigate }) => {
-  const item = CLASSIFIEDS.find(c => c.id === classifiedId);
+  const [item, setItem] = useState<Classified | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClassified = async () => {
+      if (!CLASSIFIEDS_CSV_URL) {
+        setItem(CLASSIFIEDS.find(c => c.id === classifiedId) || null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(CLASSIFIEDS_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseClassifiedsCSV(csvText);
+        setItem(parsed.find(c => c.id === classifiedId) || CLASSIFIEDS.find(c => c.id === classifiedId) || null);
+      } catch {
+        setItem(CLASSIFIEDS.find(c => c.id === classifiedId) || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClassified();
+  }, [classifiedId]);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin mx-auto"></div>
+      <p className="mt-4 text-gray-500">Loading...</p>
+    </div>
+  );
 
   if (!item) return (
     <div className="py-40 text-center">
@@ -3713,8 +4182,32 @@ const ClassifiedDetailView: React.FC<{ classifiedId: string, onNavigate: (page: 
 const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterListing, setFilterListing] = useState<string>('all');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  let filteredProperties = PROPERTIES;
+  useEffect(() => {
+    const fetchProperties = async () => {
+      if (!PROPERTY_CSV_URL) {
+        setProperties(PROPERTIES);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(PROPERTY_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parsePropertyCSV(csvText);
+        setProperties(parsed.length > 0 ? parsed : PROPERTIES);
+      } catch {
+        setProperties(PROPERTIES);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProperties();
+  }, []);
+
+  let filteredProperties = properties;
   if (filterType !== 'all') filteredProperties = filteredProperties.filter(p => p.propertyType === filterType);
   if (filterListing !== 'all') filteredProperties = filteredProperties.filter(p => p.listingType === filterListing);
 
@@ -3859,7 +4352,37 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
 
 const PropertyDetailView: React.FC<{ propertyId: string, onNavigate: (page: Page, params?: any) => void }> = ({ propertyId, onNavigate }) => {
   const [selectedImage, setSelectedImage] = useState(0);
-  const property = PROPERTIES.find(p => p.id === propertyId);
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProperty = async () => {
+      if (!PROPERTY_CSV_URL) {
+        setProperty(PROPERTIES.find(p => p.id === propertyId) || null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(PROPERTY_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parsePropertyCSV(csvText);
+        setProperty(parsed.find(p => p.id === propertyId) || PROPERTIES.find(p => p.id === propertyId) || null);
+      } catch {
+        setProperty(PROPERTIES.find(p => p.id === propertyId) || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProperty();
+  }, [propertyId]);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin mx-auto"></div>
+      <p className="mt-4 text-gray-500">Loading...</p>
+    </div>
+  );
 
   if (!property) return (
     <div className="py-40 text-center">
@@ -3999,7 +4522,32 @@ const PropertyDetailView: React.FC<{ propertyId: string, onNavigate: (page: Page
 // ============ COMMUNITY ANNOUNCEMENTS ============
 const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const activeAnnouncements = ANNOUNCEMENTS.filter(a => a.isActive && new Date(a.expiryDate) >= new Date());
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      if (!NOTICES_CSV_URL) {
+        setAnnouncements(ANNOUNCEMENTS);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(NOTICES_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseNoticesCSV(csvText);
+        setAnnouncements(parsed.length > 0 ? parsed : ANNOUNCEMENTS);
+      } catch {
+        setAnnouncements(ANNOUNCEMENTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
+  const activeAnnouncements = announcements.filter(a => a.isActive && new Date(a.expiryDate) >= new Date());
   const filteredAnnouncements = filterCategory === 'all' ? activeAnnouncements : activeAnnouncements.filter(a => a.category === filterCategory);
 
   const categoryLabels: Record<AnnouncementCategory, { label: string, icon: string, color: string }> = {
@@ -4091,7 +4639,37 @@ const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => vo
 };
 
 const AnnouncementDetailView: React.FC<{ announcementId: string, onNavigate: (page: Page, params?: any) => void }> = ({ announcementId, onNavigate }) => {
-  const announcement = ANNOUNCEMENTS.find(a => a.id === announcementId);
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      if (!NOTICES_CSV_URL) {
+        setAnnouncement(ANNOUNCEMENTS.find(a => a.id === announcementId) || null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(NOTICES_CSV_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const csvText = await response.text();
+        const parsed = parseNoticesCSV(csvText);
+        setAnnouncement(parsed.find(a => a.id === announcementId) || ANNOUNCEMENTS.find(a => a.id === announcementId) || null);
+      } catch {
+        setAnnouncement(ANNOUNCEMENTS.find(a => a.id === announcementId) || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnnouncement();
+  }, [announcementId]);
+
+  if (loading) return (
+    <div className="py-40 text-center">
+      <div className="w-12 h-12 border-4 border-forest/20 border-t-forest rounded-full animate-spin mx-auto"></div>
+      <p className="mt-4 text-gray-500">Loading...</p>
+    </div>
+  );
 
   if (!announcement) return (
     <div className="py-40 text-center">
