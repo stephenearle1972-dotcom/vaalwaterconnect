@@ -41,6 +41,7 @@ export const parklandsConfig: TownConfig = {
     whatsapp: '',
     email: 'hello@parklandsconnect.co.za',
     phone: '',
+    botWhatsApp: '27836669298', // Shared WhatsApp bot for directory search
   },
 
   location: {

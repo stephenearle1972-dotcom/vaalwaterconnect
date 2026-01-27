@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ClassifiedCondition, ListingType, PropertyType, AnnouncementCategory, EmergencyService, SubmissionType, ApplicationMethod } from './types';
 import config from './configs';
 import L from 'leaflet';
+import { BotIcon } from './components/icons/BotIcon';
 
 // Get data from the current town's config
 const { sectors: SECTORS, businesses: BUSINESSES, jobs: JOBS, events: EVENTS, classifieds: CLASSIFIEDS, properties: PROPERTIES, announcements: ANNOUNCEMENTS } = config.data;
@@ -320,15 +321,15 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
 );
 
 const SectorGrid: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
     {SECTORS.map(cat => (
-      <button 
-        key={cat.id} 
-        onClick={() => onNavigate('category', { sector: cat.id })} 
-        className="card-classy p-8 rounded-3xl flex flex-col items-center group transition-all"
+      <button
+        key={cat.id}
+        onClick={() => onNavigate('category', { sector: cat.id })}
+        className="card-classy p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl flex flex-col items-center group transition-all"
       >
-        <span className="text-4xl mb-4 transition-transform group-hover:scale-110">{cat.icon}</span>
-        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">{cat.name}</span>
+        <span className="text-3xl sm:text-4xl mb-2 sm:mb-4 transition-transform group-hover:scale-110">{cat.icon}</span>
+        <span className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest text-center leading-tight">{cat.name}</span>
       </button>
     ))}
   </div>
@@ -339,34 +340,34 @@ const SpecialsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
   const specials = config.data.specials;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="mb-20 text-center">
-        <span className="text-[10px] font-black uppercase tracking-[0.6em] text-clay mb-4 block">Limited Time Offers</span>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Local Specials.</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover exclusive deals from our trusted partners in {config.town.name}.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="mb-12 sm:mb-16 md:mb-20 text-center">
+        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.6em] text-clay mb-3 sm:mb-4 block">Limited Time Offers</span>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Local Specials.</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover exclusive deals from our trusted partners in {config.town.name}.</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-10">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-10">
         {specials.map((special) => (
-          <div key={special.id} className="card-classy rounded-[3rem] overflow-hidden flex flex-col group">
-            <div className="h-64 relative overflow-hidden">
+          <div key={special.id} className="card-classy rounded-2xl sm:rounded-[3rem] overflow-hidden flex flex-col group">
+            <div className="h-48 sm:h-56 md:h-64 relative overflow-hidden">
                <img src={special.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={special.businessName} />
-               <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-forest">{special.icon} {special.businessName}</span>
+               <div className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-white/90 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-forest">{special.icon} {special.businessName}</span>
                </div>
             </div>
-            <div className="p-10 flex flex-col flex-grow">
-               <h3 className="text-3xl font-serif font-bold text-forest mb-4 italic leading-tight">{special.title}</h3>
-               <div className="mb-6 p-4 bg-clay/5 rounded-2xl border border-clay/10">
-                  <p className="text-clay font-black text-lg uppercase tracking-tight">{special.offer}</p>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Valid until: {special.validUntil}</p>
+            <div className="p-5 sm:p-6 md:p-10 flex flex-col flex-grow">
+               <h3 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-forest mb-3 sm:mb-4 italic leading-tight">{special.title}</h3>
+               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-clay/5 rounded-xl sm:rounded-2xl border border-clay/10">
+                  <p className="text-clay font-black text-sm sm:text-base md:text-lg uppercase tracking-tight">{special.offer}</p>
+                  <p className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Valid until: {special.validUntil}</p>
                </div>
-               <p className="text-gray-500 font-light leading-relaxed mb-10 flex-grow">
+               <p className="text-gray-500 font-light leading-relaxed mb-6 sm:mb-8 md:mb-10 flex-grow text-sm sm:text-base">
                  {special.description}
                </p>
-               <button 
+               <button
                 onClick={() => onNavigate('business', { id: special.businessId })}
-                className="w-full bg-forest text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-clay transition-colors"
+                className="w-full bg-forest text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] shadow-xl hover:bg-clay transition-colors"
                >
                  View Deal Details
                </button>
@@ -375,14 +376,14 @@ const SpecialsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
         ))}
       </div>
 
-      <div className="mt-24 bg-sand/30 rounded-[3rem] p-16 text-center border border-sand">
-         <h2 className="text-4xl font-serif font-bold text-forest italic mb-6">Promote Your Specials</h2>
-         <p className="text-gray-500 max-w-xl mx-auto mb-10 text-lg font-light">
+      <div className="mt-12 sm:mt-16 md:mt-24 bg-sand/30 rounded-2xl sm:rounded-[3rem] p-6 sm:p-10 md:p-16 text-center border border-sand">
+         <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Promote Your Specials</h2>
+         <p className="text-gray-500 max-w-xl mx-auto mb-6 sm:mb-8 md:mb-10 text-sm sm:text-base md:text-lg font-light">
            Are you a {config.town.name} business with a special offer? Listings on our Specials page are included in our Annual Essential and Lodge partner plans.
          </p>
-         <button 
+         <button
            onClick={() => onNavigate('pricing')}
-           className="bg-forest text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105"
+           className="bg-forest text-white px-6 sm:px-10 md:px-12 py-4 sm:py-5 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105"
          >
            Upgrade Your Listing
          </button>
@@ -636,31 +637,31 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="text-center mb-16">
-        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-clay mb-4 block">Our Partner Plans</span>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Simple Pricing.</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto mb-10">Elevate your business visibility in {config.town.name}. Choose the plan that fits your growth.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="text-center mb-10 sm:mb-16">
+        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-clay mb-3 sm:mb-4 block">Our Partner Plans</span>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Simple Pricing.</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto mb-6 sm:mb-10">Elevate your business visibility in {config.town.name}. Choose the plan that fits your growth.</p>
 
-        <div className="inline-flex items-center bg-sand/50 rounded-full p-1.5 border border-sand">
+        <div className="inline-flex items-center bg-sand/50 rounded-full p-1 sm:p-1.5 border border-sand">
           <button
             onClick={() => setIsAnnual(false)}
-            className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${!isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
+            className={`px-4 sm:px-6 md:px-8 py-2 sm:py-3 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${!isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
           >
             Monthly
           </button>
           <button
             onClick={() => setIsAnnual(true)}
-            className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
+            className={`px-4 sm:px-6 md:px-8 py-2 sm:py-3 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${isAnnual ? 'bg-forest text-white shadow-lg' : 'text-gray-500 hover:text-forest'}`}
           >
-            Annual <span className="text-clay ml-1">(Save 1 month)</span>
+            Annual <span className="text-clay ml-1 hidden sm:inline">(Save 1 month)</span>
           </button>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
         {tiers.map((tier) => (
-          <div key={tier.name} className={`relative p-8 rounded-[2.5rem] card-classy flex flex-col h-full ${tier.highlighted ? 'border-clay shadow-3xl scale-105 z-10 bg-[#fdfbf7]' : 'bg-white'}`}>
+          <div key={tier.name} className={`relative p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] card-classy flex flex-col h-full ${tier.highlighted ? 'border-clay shadow-3xl md:scale-105 z-10 bg-[#fdfbf7]' : 'bg-white'}`}>
             {tier.badge && (
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-clay text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] shadow-lg whitespace-nowrap">
                 {tier.badge}
@@ -704,19 +705,19 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         ))}
       </div>
 
-      <div className="mt-20 bg-forest rounded-[3rem] p-12 md:p-16 text-center text-white shadow-2xl overflow-hidden relative">
+      <div className="mt-12 sm:mt-16 md:mt-20 bg-forest rounded-2xl sm:rounded-[3rem] p-6 sm:p-10 md:p-12 lg:p-16 text-center text-white shadow-2xl overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-clay/10 rounded-full -ml-20 -mb-20 blur-3xl"></div>
 
-        <h2 className="text-3xl md:text-4xl font-serif font-bold italic mb-6 relative z-10">Ready to grow your business?</h2>
-        <p className="text-sand/70 max-w-xl mx-auto mb-10 text-lg font-light relative z-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold italic mb-4 sm:mb-6 relative z-10">Ready to grow your business?</h2>
+        <p className="text-sand/70 max-w-xl mx-auto mb-6 sm:mb-8 md:mb-10 text-sm sm:text-base md:text-lg font-light relative z-10">
           Get in touch via WhatsApp and we'll help you choose the perfect plan for your business needs.
         </p>
         <a
           href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent(`Hi, I'm interested in listing my business on ${siteName}.`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:bg-white hover:text-[#075e54] relative z-10"
+          className="inline-flex items-center gap-2 sm:gap-3 bg-[#25D366] text-white px-6 sm:px-10 md:px-12 py-4 sm:py-5 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-xl transition-all hover:bg-white hover:text-[#075e54] relative z-10"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Chat on WhatsApp
@@ -829,19 +830,19 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
 };
 
 const AboutView: React.FC = () => (
-  <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
-    <div className="mb-20">
-      <h1 className="text-7xl md:text-9xl font-serif font-bold text-forest mb-12 italic tracking-tighter">{config.about.headline}</h1>
-      <p className="text-3xl font-serif italic text-clay leading-snug mb-16">{config.about.subheadline}</p>
-      <div className="prose prose-2xl text-gray-600 font-light leading-relaxed space-y-8">
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+    <div className="mb-12 sm:mb-16 md:mb-20">
+      <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-9xl font-serif font-bold text-forest mb-6 sm:mb-8 md:mb-12 italic tracking-tighter">{config.about.headline}</h1>
+      <p className="text-xl sm:text-2xl md:text-3xl font-serif italic text-clay leading-snug mb-8 sm:mb-12 md:mb-16">{config.about.subheadline}</p>
+      <div className="prose prose-lg sm:prose-xl md:prose-2xl text-gray-600 font-light leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
         {config.about.paragraphs.map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
         ))}
       </div>
     </div>
-    <div className="grid md:grid-cols-2 gap-10">
+    <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
       {config.about.images.map((imageUrl, index) => (
-        <div key={index} className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
+        <div key={index} className="aspect-square rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
           <img src={imageUrl} className="w-full h-full object-cover" alt={`${config.town.name} ${index + 1}`} />
         </div>
       ))}
@@ -1929,79 +1930,70 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
 
   return (
     <div className="animate-fade">
-      <section className="relative h-[850px] flex items-center justify-center px-6 overflow-hidden">
+      <section className="relative min-h-[600px] sm:min-h-[700px] md:min-h-[850px] flex items-center justify-center px-4 sm:px-6 overflow-hidden py-12 sm:py-16">
         <img src={config.branding.heroImage} className="absolute inset-0 w-full h-full object-cover scale-105" alt={config.town.name} />
         <div className="absolute inset-0 hero-overlay"></div>
-        <div className="relative z-10 max-w-5xl mx-auto text-center text-white pt-20">
-          <span className="text-[10px] font-black uppercase tracking-[0.8em] text-sand/60 mb-8 block">{config.town.tagline}</span>
-          <h1 className="text-7xl md:text-9xl font-serif font-bold mb-12 italic tracking-tighter leading-tight">{config.town.name}<br/>Connect</h1>
+        <div className="relative z-10 max-w-5xl mx-auto text-center text-white pt-8 sm:pt-12 md:pt-20">
+          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] sm:tracking-[0.8em] text-sand/60 mb-4 sm:mb-8 block">{config.town.tagline}</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-9xl font-serif font-bold mb-6 sm:mb-8 md:mb-12 italic tracking-tighter leading-tight">{config.town.name}<br/>Connect</h1>
 
-          <div className="max-w-3xl mx-auto mb-16 px-4">
+          <div className="max-w-3xl mx-auto mb-8 sm:mb-12 md:mb-16 px-2 sm:px-4">
             <form onSubmit={handleSearch} className="relative group">
                <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`where can i find... in ${config.town.name}?`} 
-                className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-full py-8 pl-10 pr-28 text-2xl font-serif italic text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-2xl"
+                placeholder={`where can i find... in ${config.town.name}?`}
+                className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-full py-4 sm:py-6 md:py-8 pl-4 sm:pl-6 md:pl-10 pr-14 sm:pr-20 md:pr-28 text-base sm:text-lg md:text-2xl font-serif italic text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-2xl"
                />
-               <button 
+               <button
                 type="submit"
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-white text-forest p-5 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-white text-forest p-3 sm:p-4 md:p-5 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
                >
-                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                </button>
             </form>
-            <div className="flex justify-center gap-6 mt-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-sand/40">Popular Search:</p>
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4 md:gap-6 mt-4 sm:mt-6">
+              <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-sand/40 hidden sm:block">Popular:</p>
               <button onClick={() => onNavigate('search', { q: 'Lodge' })} className="text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">Lodges</button>
               <button onClick={() => onNavigate('search', { q: 'Doctor' })} className="text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">Medical</button>
               <button onClick={() => onNavigate('search', { q: 'Cafe' })} className="text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">Dining</button>
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <button onClick={() => onNavigate('directory')} className="bg-white text-forest px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Browse Directory</button>
-            <button onClick={() => onNavigate('map')} className="bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Live Map</button>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
+            <button onClick={() => onNavigate('directory')} className="bg-white text-forest px-5 sm:px-7 md:px-10 py-3 sm:py-4 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Browse Directory</button>
+            <button onClick={() => onNavigate('map')} className="bg-clay text-white px-5 sm:px-7 md:px-10 py-3 sm:py-4 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105">Live Map</button>
             {config.contact.botWhatsApp && (
               <a
                 href={`https://wa.me/${config.contact.botWhatsApp}?text=Hi`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
+                className="bg-[#25D366] hover:bg-[#128C7E] text-white px-5 sm:px-7 md:px-10 py-3 sm:py-4 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-1 sm:gap-2"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
-                🔍 Search via WhatsApp
+                <BotIcon className="w-4 h-4 sm:w-5 sm:h-5" color="white" />
+                Ask the Bot
               </a>
             )}
-            <a
-              href={`https://wa.me/${waLinkNum}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#25D366] hover:bg-[#128C7E] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              WhatsApp Us
-            </a>
           </div>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-32">
-        <div className="mb-20 text-center">
-          <h2 className="text-5xl font-serif font-bold text-forest italic mb-4">Discover Local Sectors</h2>
-          <p className="text-gray-400 font-light">Explore the verified listings in our district.</p>
-          <div className="w-20 h-1 bg-clay mx-auto mt-6"></div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 md:py-32">
+        <div className="mb-12 sm:mb-16 md:mb-20 text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-forest italic mb-4">Discover Local Sectors</h2>
+          <p className="text-gray-400 font-light text-sm sm:text-base">Explore the verified listings in our district.</p>
+          <div className="w-16 sm:w-20 h-1 bg-clay mx-auto mt-4 sm:mt-6"></div>
         </div>
         <SectorGrid onNavigate={onNavigate} />
       </section>
 
-      <section className="bg-sand/20 py-32 border-y border-sand/50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-           <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-clay mb-6">Partnership</h3>
-           <h2 className="text-4xl md:text-6xl font-serif font-bold text-forest italic mb-10 leading-tight">Ready to elevate your visibility?</h2>
-           <p className="text-xl text-gray-500 font-light mb-12 max-w-2xl mx-auto">Join the local registry starting from just R 300 per month. Get 2 months free when you go annual.</p>
-           <button onClick={() => onNavigate('pricing')} className="bg-forest text-white px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105">View Partner Plans</button>
+      <section className="bg-sand/20 py-16 sm:py-24 md:py-32 border-y border-sand/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+           <h3 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-clay mb-4 sm:mb-6">Partnership</h3>
+           <h2 className="text-2xl sm:text-4xl md:text-6xl font-serif font-bold text-forest italic mb-6 sm:mb-10 leading-tight">Ready to elevate your visibility?</h2>
+           <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light mb-8 sm:mb-12 max-w-2xl mx-auto">Join the local registry starting from just R 300 per month. Get 2 months free when you go annual.</p>
+           <button onClick={() => onNavigate('pricing')} className="bg-forest text-white px-6 sm:px-10 md:px-12 py-4 sm:py-5 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105">View Partner Plans</button>
         </div>
       </section>
     </div>
@@ -2009,10 +2001,10 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
 };
 
 const DirectoryView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => (
-  <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-    <div className="mb-16">
-      <h1 className="text-6xl font-serif font-bold text-forest mb-4 italic">Directory Hub</h1>
-      <p className="text-xl text-gray-500 font-light">Select a sector to view local businesses and services.</p>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+    <div className="mb-10 sm:mb-12 md:mb-16">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-forest mb-3 sm:mb-4 italic">Directory Hub</h1>
+      <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light">Select a sector to view local businesses and services.</p>
     </div>
     <SectorGrid onNavigate={onNavigate} />
   </div>
@@ -3360,65 +3352,68 @@ const LegalView: React.FC<{ type: 'terms' | 'privacy' | 'disclaimer' }> = ({ typ
 };
 
 const ContactView: React.FC = () => (
-  <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
-    <div className="text-center mb-16">
-      <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Get in Touch</h1>
-      <p className="text-xl text-gray-500 font-light">Questions about our registry or need to update your listing? We're here to help.</p>
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+    <div className="text-center mb-10 sm:mb-12 md:mb-16">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-forest mb-4 sm:mb-6 italic">Get in Touch</h1>
+      <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light">Questions about our registry or need to update your listing? We're here to help.</p>
     </div>
 
-    <div className="mb-12">
+    <div className="mb-8 sm:mb-10 md:mb-12">
       <a
         href={`https://wa.me/${waLinkNum}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="block w-full bg-[#25D366] hover:bg-[#128C7E] text-white p-8 rounded-3xl shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+        className="block w-full bg-[#25D366] hover:bg-[#128C7E] text-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
       >
-        <div className="flex items-center justify-center gap-4">
-          <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div className="flex items-center justify-center gap-3 sm:gap-4">
+          {/* Person/Chat Icon to distinguish from Bot */}
+          <svg className="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
           <div className="text-left">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70 mb-1">Preferred Contact Method</p>
-            <p className="text-3xl font-serif font-bold">WhatsApp Us</p>
-            <p className="text-lg font-light mt-1">{formatWhatsApp(config.contact.whatsapp)}</p>
+            <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/70 mb-1">Chat with a Human</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-serif font-bold">WhatsApp Us</p>
+            <p className="text-sm sm:text-base md:text-lg font-light mt-1">{formatWhatsApp(config.contact.whatsapp)}</p>
           </div>
         </div>
       </a>
     </div>
 
-    <div className="grid md:grid-cols-2 gap-8">
+    <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
       <a
         href={`mailto:${config.contact.email}`}
-        className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
+        className="p-5 sm:p-7 md:p-10 bg-sand/20 rounded-2xl sm:rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
       >
         <div className="text-center">
-          <div className="w-16 h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-forest/20 transition-colors">
-            <span className="text-3xl">✉️</span>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:bg-forest/20 transition-colors">
+            <span className="text-2xl sm:text-3xl">✉️</span>
           </div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Email Us</h4>
-          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">{config.contact.email}</p>
+          <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-clay mb-2 sm:mb-3">Email Us</h4>
+          <p className="text-sm sm:text-base md:text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors break-all">{config.contact.email}</p>
         </div>
       </a>
 
       <a
         href={`tel:${config.contact.whatsapp}`}
-        className="p-10 bg-sand/20 rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
+        className="p-5 sm:p-7 md:p-10 bg-sand/20 rounded-2xl sm:rounded-3xl border border-sand hover:bg-sand/40 transition-all group"
       >
         <div className="text-center">
-          <div className="w-16 h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-forest/20 transition-colors">
-            <span className="text-3xl">📞</span>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:bg-forest/20 transition-colors">
+            <span className="text-2xl sm:text-3xl">📞</span>
           </div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-3">Call Us</h4>
-          <p className="text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">{formatWhatsApp(config.contact.whatsapp)}</p>
+          <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-clay mb-2 sm:mb-3">Call Us</h4>
+          <p className="text-sm sm:text-base md:text-xl font-serif font-bold text-forest group-hover:text-clay transition-colors">{formatWhatsApp(config.contact.whatsapp)}</p>
         </div>
       </a>
     </div>
 
-    <div className="mt-12 p-10 bg-forest text-white rounded-3xl text-center">
-      <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-        <span className="text-3xl">📍</span>
+    <div className="mt-8 sm:mt-10 md:mt-12 p-5 sm:p-7 md:p-10 bg-forest text-white rounded-2xl sm:rounded-3xl text-center">
+      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+        <span className="text-2xl sm:text-3xl">📍</span>
       </div>
-      <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-sand/50 mb-3">Location</h4>
-      <p className="text-2xl font-serif font-bold italic">{config.town.name}, {config.town.region}</p>
-      <p className="text-sand/70 mt-2 font-light">{config.town.region} Province, South Africa</p>
+      <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-sand/50 mb-2 sm:mb-3">Location</h4>
+      <p className="text-xl sm:text-2xl font-serif font-bold italic">{config.town.name}, {config.town.region}</p>
+      <p className="text-sand/70 mt-2 font-light text-sm sm:text-base">{config.town.region} Province, South Africa</p>
     </div>
   </div>
 );
@@ -3462,13 +3457,13 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="mb-16 text-center">
-        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">💼</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="mb-10 sm:mb-12 md:mb-16 text-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <span className="text-3xl sm:text-4xl">💼</span>
         </div>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Jobs Board</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Find local employment opportunities in {config.town.name}.</p>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Jobs Board</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto">Find local employment opportunities in {config.town.name}.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -3720,13 +3715,13 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="mb-16 text-center">
-        <div className="w-20 h-20 bg-clay/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">📅</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="mb-10 sm:mb-12 md:mb-16 text-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-clay/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <span className="text-3xl sm:text-4xl">📅</span>
         </div>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Events Calendar</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover what's happening in {config.town.name}.</p>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Events Calendar</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto">Discover what's happening in {config.town.name}.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -3993,13 +3988,13 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="mb-16 text-center">
-        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">🏷️</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="mb-10 sm:mb-12 md:mb-16 text-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <span className="text-3xl sm:text-4xl">🏷️</span>
         </div>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Classifieds</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Buy, sell, and find services in the {config.town.name} community.</p>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Classifieds</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto">Buy, sell, and find services in the {config.town.name} community.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -4583,13 +4578,13 @@ const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => vo
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24 animate-fade">
-      <div className="mb-16 text-center">
-        <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">📢</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 animate-fade">
+      <div className="mb-10 sm:mb-12 md:mb-16 text-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <span className="text-3xl sm:text-4xl">📢</span>
         </div>
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-forest italic mb-6">Announcements</h1>
-        <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">Stay informed about community news, alerts, and lost & found.</p>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-bold text-forest italic mb-4 sm:mb-6">Announcements</h1>
+        <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto">Stay informed about community news, alerts, and lost & found.</p>
       </div>
 
       <div className="mb-12 flex flex-wrap gap-4 justify-center">
@@ -4767,22 +4762,26 @@ const AnnouncementDetailView: React.FC<{ announcementId: string, onNavigate: (pa
   );
 };
 
-const FloatingWhatsApp: React.FC = () => (
-  <a
-    href={`https://wa.me/${waLinkNum}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group"
-    aria-label="Chat on WhatsApp"
-  >
-    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-    <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-white text-forest px-4 py-2 rounded-lg shadow-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-      Chat with us
-    </span>
-  </a>
-);
+// Floating Bot Button - links to WhatsApp Bot for instant search
+const FloatingBotButton: React.FC = () => {
+  // Only show if bot is configured
+  if (!config.contact.botWhatsApp) return null;
+
+  return (
+    <a
+      href={`https://wa.me/${config.contact.botWhatsApp}?text=Hi`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group animate-pulse hover:animate-none"
+      aria-label="Ask the WhatsApp Bot"
+    >
+      <BotIcon className="w-7 h-7 sm:w-8 sm:h-8" color="white" />
+      <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-white text-forest px-4 py-2 rounded-lg shadow-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+        Ask the Bot
+      </span>
+    </a>
+  );
+};
 
 export default function App() {
   const [navigation, setNavigation] = useState<{ page: Page, params: any }>({ page: 'home', params: {} });
@@ -4865,6 +4864,7 @@ export default function App() {
       <Navbar onNavigate={navigateTo} />
       <main className="flex-grow">{renderContent()}</main>
       <Footer onNavigate={navigateTo} />
+      <FloatingBotButton />
     </div>
   );
 }

@@ -41,6 +41,7 @@ export const garsfonteinConfig: TownConfig = {
     whatsapp: '',
     email: 'hello@garsfonteinconnect.co.za',
     phone: '',
+    botWhatsApp: '27836669298', // Shared WhatsApp bot for directory search
   },
 
   location: {

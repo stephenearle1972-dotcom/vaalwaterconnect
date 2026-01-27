@@ -72,6 +72,7 @@ export const menlynConfig: TownConfig = {
     whatsapp: '27688986081',
     email: 'hello@menlynconnect.co.za',
     phone: '068 898 6081',
+    botWhatsApp: '27836669298', // Shared WhatsApp bot for directory search
   },
 
   location: {
