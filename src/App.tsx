@@ -847,11 +847,24 @@ const TIER_NAMES: Record<string, string> = {
 
 // Submission pricing for community listings
 const SUBMISSION_PRICES: Record<SubmissionType, { price: number; duration: string; label: string }> = {
-  event: { price: 0, duration: 'Until event date', label: 'Event Listing' },
-  job: { price: 99, duration: '30 days', label: 'Job Posting' },
-  classified: { price: 49, duration: '30 days', label: 'Classified Ad' },
-  property: { price: 199, duration: '60 days', label: 'Property Listing' },
+  event: { price: 99, duration: 'Until event date', label: 'Event Listing' },
+  job: { price: 149, duration: '30 days', label: 'Job Posting' },
+  classified: { price: 29, duration: '30 days', label: 'Classified Ad' }, // Base price, varies by category
+  property: { price: 299, duration: '60 days', label: 'Property Listing' },
   notice: { price: 0, duration: '14 days', label: 'Community Notice' },
+};
+
+// Classified category-specific pricing
+const CLASSIFIED_PRICES: Record<ClassifiedCategory, number> = {
+  'for-sale': 29,
+  'wanted': 29,
+  'services': 49,
+  'other': 29,
+};
+
+// Helper to get classified price based on category
+const getClassifiedPrice = (category: ClassifiedCategory): number => {
+  return CLASSIFIED_PRICES[category] || 29;
 };
 
 // ============ COMMUNITY SUBMISSION FORM ============
@@ -959,7 +972,12 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
     e.preventDefault();
     if (!submissionType || !formData.popiaConsent) return;
 
-    const pricing = SUBMISSION_PRICES[submissionType];
+    const basePricing = SUBMISSION_PRICES[submissionType];
+    // Get actual price (classified price varies by category)
+    const actualPrice = submissionType === 'classified'
+      ? getClassifiedPrice(formData.classifiedCategory)
+      : basePricing.price;
+
     const form = e.target as HTMLFormElement;
     const formDataToSend = new FormData(form);
     formDataToSend.append('photos', uploadedImages.join(', '));
@@ -974,7 +992,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
       });
 
       // If free submission, redirect to inquiry page
-      if (pricing.price === 0) {
+      if (actualPrice === 0) {
         onNavigate('submit-inquiry', { type: submissionType });
         return;
       }
@@ -996,9 +1014,9 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
         name_last: formData.contactName.split(' ').slice(1).join(' ') || 'Submission',
         email_address: formData.contactEmail,
         m_payment_id: paymentId,
-        amount: pricing.price.toString(),
-        item_name: `${siteName} - ${pricing.label}`,
-        item_description: `${formData.title} - ${pricing.duration}`,
+        amount: actualPrice.toString(),
+        item_name: `${siteName} - ${basePricing.label}`,
+        item_description: `${formData.title} - ${basePricing.duration}`,
         custom_str1: formData.title,
         custom_str2: submissionType,
         custom_str3: config.town.name,
@@ -1037,6 +1055,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
           {(Object.keys(submissionTypeInfo) as SubmissionType[]).map((type) => {
             const info = submissionTypeInfo[type];
             const pricing = SUBMISSION_PRICES[type];
+            const priceDisplay = type === 'classified' ? 'From R29' : pricing.price === 0 ? null : `R${pricing.price}`;
             return (
               <button
                 key={type}
@@ -1048,7 +1067,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
                   {pricing.price === 0 ? (
                     <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[9px] font-black uppercase tracking-widest">Free</span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full bg-clay/10 text-clay text-[9px] font-black uppercase tracking-widest">R{pricing.price}</span>
+                    <span className="px-3 py-1 rounded-full bg-clay/10 text-clay text-[9px] font-black uppercase tracking-widest">{priceDisplay}</span>
                   )}
                 </div>
                 <h3 className="text-xl sm:text-2xl font-serif font-bold text-forest italic mb-2 group-hover:text-clay transition-colors">{info.title}</h3>
@@ -1078,8 +1097,12 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
     );
   }
 
-  const pricing = SUBMISSION_PRICES[submissionType];
+  const basePricing = SUBMISSION_PRICES[submissionType];
   const maxImages = submissionType === 'property' ? 10 : 3;
+  // Dynamic price for classifieds based on category
+  const displayPrice = submissionType === 'classified'
+    ? getClassifiedPrice(formData.classifiedCategory)
+    : basePricing.price;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-24 animate-fade">
@@ -1096,12 +1119,12 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
           <h1 className="text-3xl sm:text-5xl font-serif font-bold text-forest italic">{submissionTypeInfo[submissionType].title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-sm">
-          {pricing.price === 0 ? (
+          {displayPrice === 0 ? (
             <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-bold">Free Submission</span>
           ) : (
-            <span className="px-4 py-2 rounded-full bg-clay/10 text-clay font-bold">R{pricing.price}</span>
+            <span className="px-4 py-2 rounded-full bg-clay/10 text-clay font-bold">R{displayPrice}</span>
           )}
-          <span className="text-gray-500">• {pricing.duration}</span>
+          <span className="text-gray-500">• {basePricing.duration}</span>
         </div>
       </div>
 
@@ -1414,7 +1437,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
               onChange={e => setFormData({ ...formData, popiaConsent: e.target.checked })}
             />
             <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">
-              I confirm the above information is accurate and agree to the processing of my data according to POPIA. I understand that {pricing.price === 0 ? 'free submissions are subject to review' : `this is a paid listing (R${pricing.price})`}.
+              I confirm the above information is accurate and agree to the processing of my data according to POPIA. I understand that {displayPrice === 0 ? 'free submissions are subject to review' : `this is a paid listing (R${displayPrice})`}.
             </span>
           </label>
         </div>
@@ -1424,7 +1447,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
           type="submit"
           className="w-full bg-forest text-white py-6 sm:py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3"
         >
-          {pricing.price === 0 ? (
+          {displayPrice === 0 ? (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
               Submit for Review
@@ -1432,7 +1455,7 @@ const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; ini
           ) : (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-              Submit & Pay R{pricing.price}
+              Submit & Pay R{displayPrice}
             </>
           )}
         </button>
@@ -3143,7 +3166,7 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
               onClick={() => onNavigate('submit', { type: 'job' })}
               className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
             >
-              Post a Job - R99
+              Post a Job - R149
             </button>
           </div>
         )}
@@ -3157,7 +3180,7 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
           className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          Post a Job - R99
+          Post a Job - R149
         </button>
       </div>
     </div>
@@ -3373,7 +3396,7 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
               onClick={() => onNavigate('submit', { type: 'event' })}
               className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
             >
-              Post an Event - Free
+              Post an Event - R99
             </button>
           </div>
         )}
@@ -3387,7 +3410,7 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
           className="inline-flex items-center gap-3 bg-forest text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-all"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          Post an Event - Free
+          Post an Event - R99
         </button>
       </div>
     </div>
@@ -3570,7 +3593,7 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
               onClick={() => onNavigate('submit', { type: 'classified' })}
               className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
             >
-              Post a Classified - R49
+              Post a Classified - From R29
             </button>
           </div>
         )}
@@ -3584,7 +3607,7 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
           className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          Post a Classified - R49
+          Post a Classified - From R29
         </button>
       </div>
     </div>
@@ -3813,7 +3836,7 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
               onClick={() => onNavigate('submit', { type: 'property' })}
               className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
             >
-              List Property - R199
+              List Property - R299
             </button>
           </div>
         )}
@@ -3827,7 +3850,7 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
           className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          List Property - R199
+          List Property - R299
         </button>
       </div>
     </div>
