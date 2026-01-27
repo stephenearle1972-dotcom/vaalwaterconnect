@@ -27,12 +27,34 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   const handleNavClick = (page: Page, params?: any) => {
     setMobileMenuOpen(false);
     setOpenDropdown(null);
     setMobileAccordion(null);
     onNavigate(page, params);
+  };
+
+  const toggleDropdown = (key: string) => {
+    setOpenDropdown(openDropdown === key ? null : key);
   };
 
   const toggleMobileAccordion = (section: string) => {
@@ -86,18 +108,19 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
             <button onClick={() => handleNavClick('home')} className="nav-link px-3 py-2">Home</button>
 
-            {/* Dropdown Menus */}
+            {/* Dropdown Menus - Click to open */}
             {Object.entries(menuItems).map(([key, menu]) => (
               <div
                 key={key}
                 className="relative"
-                onMouseEnter={() => setOpenDropdown(key)}
-                onMouseLeave={() => setOpenDropdown(null)}
               >
-                <button className="nav-link px-3 py-2 flex items-center gap-1">
+                <button
+                  onClick={() => toggleDropdown(key)}
+                  className={`nav-link px-3 py-2 flex items-center gap-1 ${openDropdown === key ? 'text-forest' : ''}`}
+                >
                   {menu.label}
                   <svg className={`w-3 h-3 transition-transform ${openDropdown === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -105,17 +128,19 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
                 </button>
 
                 {openDropdown === key && (
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-2xl shadow-xl border border-[#e5e0d8] py-2 animate-fade">
-                    {menu.items.map((item) => (
-                      <button
-                        key={item.page}
-                        onClick={() => handleNavClick(item.page)}
-                        className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-sand/50 transition-colors"
-                      >
-                        <span className="text-lg">{item.icon}</span>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600 hover:text-forest">{item.label}</span>
-                      </button>
-                    ))}
+                  <div className="absolute top-full left-0 pt-1 w-56">
+                    <div className="bg-white rounded-2xl shadow-xl border border-[#e5e0d8] py-2 animate-fade">
+                      {menu.items.map((item) => (
+                        <button
+                          key={item.page}
+                          onClick={() => handleNavClick(item.page)}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-sand/50 transition-colors"
+                        >
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600 hover:text-forest">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
