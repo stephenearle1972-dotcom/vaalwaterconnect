@@ -230,19 +230,39 @@ async function handleQuery({ text, from, source }) {
         })
       : businessData.rows;
 
+    // Helper function to check if a token matches a whole word in text
+    const matchesWholeWord = (text, token) => {
+      if (!text || !token) return false;
+      const words = text.toLowerCase().split(/\s+/);
+      return words.some(word => {
+        // Exact match or word starts with token (for plurals like "gas" matching "gas-related")
+        return word === token || word.startsWith(token + '-') || word.startsWith(token + 's');
+      });
+    };
+
     businessResults = townFiltered
       .map((row) => {
-        const hay = [
-          row[subIdx], row[nameIdx], row[descIdx], row[areaIdx], row[tagsIdx]
-        ].filter(Boolean).join(" ").toLowerCase();
+        const name = (row[nameIdx] || "").toLowerCase();
+        const tags = (row[tagsIdx] || "").toLowerCase();
+        const sector = (row[subIdx] || "").toLowerCase();
+        const desc = (row[descIdx] || "").toLowerCase();
+        const area = (row[areaIdx] || "").toLowerCase();
 
-        // Calculate keyword match score first
+        // Calculate weighted keyword match score
+        // Prioritize name and tags, weight description lower
         let keywordScore = 0;
         for (const t of tokens) {
-          if (hay.includes(t)) keywordScore += 2;
+          // Name match - highest priority (10 points)
+          if (matchesWholeWord(name, t)) keywordScore += 10;
+          // Tags match - high priority (8 points)
+          if (matchesWholeWord(tags, t)) keywordScore += 8;
+          // Sector/subcategory match - high priority (8 points)
+          if (matchesWholeWord(sector, t)) keywordScore += 8;
+          // Area match - medium priority (5 points)
+          if (matchesWholeWord(area, t)) keywordScore += 5;
+          // Description match - lower priority (3 points)
+          if (matchesWholeWord(desc, t)) keywordScore += 3;
         }
-        const sub = (row[subIdx] || "").toLowerCase();
-        if (sub && tokens.some((t) => sub.includes(t))) keywordScore += 2;
 
         // Only apply boosts if there's a keyword match
         let score = keywordScore;
@@ -301,18 +321,37 @@ async function handleQuery({ text, from, source }) {
       return townMatch && isActive;
     });
 
+    // Helper function to check if a token matches a whole word in text
+    const matchesWholeWordEmergency = (text, token) => {
+      if (!text || !token) return false;
+      const words = text.toLowerCase().split(/\s+/);
+      return words.some(word => {
+        return word === token || word.startsWith(token + '-') || word.startsWith(token + 's');
+      });
+    };
+
     emergencyResults = townFiltered
       .map((row) => {
-        const hay = [
-          row[nameIdx], row[catIdx], row[keywordsIdx], row[notesIdx], row[areaIdx]
-        ].filter(Boolean).join(" ").toLowerCase();
+        const name = (row[nameIdx] || "").toLowerCase();
+        const cat = (row[catIdx] || "").toLowerCase();
+        const keywords = (row[keywordsIdx] || "").toLowerCase();
+        const notes = (row[notesIdx] || "").toLowerCase();
+        const area = (row[areaIdx] || "").toLowerCase();
 
+        // Calculate weighted keyword match score using whole-word matching
         let score = 0;
         for (const t of tokens) {
-          if (hay.includes(t)) score += 3; // Boost emergency matches
+          // Name match - highest priority
+          if (matchesWholeWordEmergency(name, t)) score += 10;
+          // Category match - high priority
+          if (matchesWholeWordEmergency(cat, t)) score += 8;
+          // Keywords match - high priority
+          if (matchesWholeWordEmergency(keywords, t)) score += 8;
+          // Area match - medium priority
+          if (matchesWholeWordEmergency(area, t)) score += 5;
+          // Notes/description match - lower priority
+          if (matchesWholeWordEmergency(notes, t)) score += 3;
         }
-        const cat = (row[catIdx] || "").toLowerCase();
-        if (cat && tokens.some((t) => cat.includes(t))) score += 3;
 
         // Build phone string (primary + secondary)
         let phone = row[phoneIdx] || "";
