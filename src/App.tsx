@@ -621,7 +621,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         'Unlimited photos',
         'Unlimited Specials posts',
         'Custom profile page',
-        'Booking link integration',
+        'Book Now button linked to your booking platform',
         'Priority support'
       ],
       icon: '🏨',
