@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory, EmergencyService } from './types';
+import { Business, SectorId, Page, Sector, Job, Event, Classified, Property, Announcement, JobType, EventType, ClassifiedCategory, ListingType, PropertyType, AnnouncementCategory, EmergencyService, SubmissionType } from './types';
 import config from './configs';
 import L from 'leaflet';
 
@@ -25,10 +25,48 @@ const siteName = `${config.town.name} Connect`;
 
 const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
 
   const handleNavClick = (page: Page, params?: any) => {
     setMobileMenuOpen(false);
+    setOpenDropdown(null);
+    setMobileAccordion(null);
     onNavigate(page, params);
+  };
+
+  const toggleMobileAccordion = (section: string) => {
+    setMobileAccordion(mobileAccordion === section ? null : section);
+  };
+
+  // Dropdown menu structure
+  const menuItems = {
+    directory: {
+      label: 'Directory',
+      items: [
+        { label: 'Business Directory', page: 'directory' as Page, icon: '🏪' },
+        { label: 'Interactive Map', page: 'map' as Page, icon: '📍' },
+        { label: 'Current Specials', page: 'specials' as Page, icon: '🏷️' },
+      ]
+    },
+    community: {
+      label: 'Community',
+      items: [
+        { label: 'Jobs Board', page: 'jobs' as Page, icon: '💼' },
+        { label: 'Events Calendar', page: 'events' as Page, icon: '📅' },
+        { label: 'Classifieds', page: 'classifieds' as Page, icon: '🛒' },
+        { label: 'Property', page: 'property' as Page, icon: '🏠' },
+        { label: 'Notices', page: 'announcements' as Page, icon: '📢' },
+      ]
+    },
+    more: {
+      label: 'More',
+      items: [
+        { label: 'Pricing & Plans', page: 'pricing' as Page, icon: '💳' },
+        { label: 'Contact Us', page: 'contact' as Page, icon: '✉️' },
+        { label: 'About Us', page: 'about' as Page, icon: '📖' },
+      ]
+    }
   };
 
   return (
@@ -48,24 +86,56 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden lg:flex space-x-4 xl:space-x-5 items-center">
-            <button onClick={() => handleNavClick('home')} className="nav-link">Home</button>
-            <button onClick={() => handleNavClick('directory')} className="nav-link">Directory</button>
-            <button onClick={() => handleNavClick('specials')} className="nav-link">Specials</button>
-            <button onClick={() => handleNavClick('map')} className="nav-link">Map</button>
-            <button onClick={() => handleNavClick('jobs')} className="nav-link">Jobs</button>
-            <button onClick={() => handleNavClick('events')} className="nav-link">Events</button>
-            <button onClick={() => handleNavClick('classifieds')} className="nav-link">Classifieds</button>
-            <button onClick={() => handleNavClick('property')} className="nav-link">Property</button>
-            <button onClick={() => handleNavClick('announcements')} className="nav-link">Notices</button>
-            <button onClick={() => handleNavClick('pricing')} className="nav-link">Pricing</button>
-            <button onClick={() => handleNavClick('contact')} className="nav-link">Contact</button>
-            <button
-              onClick={() => handleNavClick('add-business')}
-              className="btn-primary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest ml-2"
-            >
-              Add Business
-            </button>
+          <div className="hidden lg:flex items-center gap-1">
+            <button onClick={() => handleNavClick('home')} className="nav-link px-3 py-2">Home</button>
+
+            {/* Dropdown Menus */}
+            {Object.entries(menuItems).map(([key, menu]) => (
+              <div
+                key={key}
+                className="relative"
+                onMouseEnter={() => setOpenDropdown(key)}
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
+                <button className="nav-link px-3 py-2 flex items-center gap-1">
+                  {menu.label}
+                  <svg className={`w-3 h-3 transition-transform ${openDropdown === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {openDropdown === key && (
+                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-2xl shadow-xl border border-[#e5e0d8] py-2 animate-fade">
+                    {menu.items.map((item) => (
+                      <button
+                        key={item.page}
+                        onClick={() => handleNavClick(item.page)}
+                        className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-sand/50 transition-colors"
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600 hover:text-forest">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                onClick={() => handleNavClick('submit')}
+                className="px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border-2 border-clay text-clay hover:bg-clay hover:text-white transition-colors"
+              >
+                Post Listing
+              </button>
+              <button
+                onClick={() => handleNavClick('add-business')}
+                className="btn-primary px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest"
+              >
+                Add Business
+              </button>
+            </div>
           </div>
 
           {/* Mobile Hamburger Button */}
@@ -86,27 +156,59 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
           </button>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#e5e0d8] py-4 animate-fade">
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => handleNavClick('home')} className="mobile-nav-link">Home</button>
-              <button onClick={() => handleNavClick('directory')} className="mobile-nav-link">Directory</button>
-              <button onClick={() => handleNavClick('specials')} className="mobile-nav-link">Specials</button>
-              <button onClick={() => handleNavClick('map')} className="mobile-nav-link">Map</button>
-              <button onClick={() => handleNavClick('jobs')} className="mobile-nav-link">Jobs</button>
-              <button onClick={() => handleNavClick('events')} className="mobile-nav-link">Events</button>
-              <button onClick={() => handleNavClick('classifieds')} className="mobile-nav-link">Classifieds</button>
-              <button onClick={() => handleNavClick('property')} className="mobile-nav-link">Property</button>
-              <button onClick={() => handleNavClick('announcements')} className="mobile-nav-link">Notices</button>
-              <button onClick={() => handleNavClick('pricing')} className="mobile-nav-link">Pricing</button>
-              <button onClick={() => handleNavClick('contact')} className="mobile-nav-link">Contact</button>
-              <button
-                onClick={() => handleNavClick('add-business')}
-                className="col-span-2 btn-primary py-3 rounded-lg text-[10px] font-black uppercase tracking-widest mt-2"
-              >
-                Add Business
+          <div className="lg:hidden border-t border-[#e5e0d8] py-4 animate-fade max-h-[80vh] overflow-y-auto">
+            <div className="space-y-2">
+              {/* Home */}
+              <button onClick={() => handleNavClick('home')} className="mobile-nav-link w-full">
+                <span className="text-lg mr-2">🏠</span> Home
               </button>
+
+              {/* Accordion Sections */}
+              {Object.entries(menuItems).map(([key, menu]) => (
+                <div key={key} className="border border-[#e5e0d8] rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => toggleMobileAccordion(key)}
+                    className="w-full px-4 py-3 flex items-center justify-between bg-sand/30 text-[11px] font-black uppercase tracking-widest text-forest"
+                  >
+                    <span>{menu.label}</span>
+                    <svg className={`w-4 h-4 transition-transform ${mobileAccordion === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {mobileAccordion === key && (
+                    <div className="bg-white">
+                      {menu.items.map((item) => (
+                        <button
+                          key={item.page}
+                          onClick={() => handleNavClick(item.page)}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 border-t border-[#e5e0d8] hover:bg-sand/30 transition-colors"
+                        >
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* CTA Buttons */}
+              <div className="pt-4 space-y-2">
+                <button
+                  onClick={() => handleNavClick('submit')}
+                  className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-clay text-clay hover:bg-clay hover:text-white transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>📝</span> Post a Listing
+                </button>
+                <button
+                  onClick={() => handleNavClick('add-business')}
+                  className="w-full btn-primary py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  <span>🏪</span> Add Your Business
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -116,23 +218,26 @@ const Navbar: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ 
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.12em;
             color: #6b7280;
             transition: color 0.2s;
             white-space: nowrap;
+            border-radius: 8px;
           }
-          .nav-link:hover { color: var(--color-forest); }
+          .nav-link:hover { color: var(--color-forest); background: rgba(0,0,0,0.02); }
           .mobile-nav-link {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: #374151;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background: #f9fafb;
             border-radius: 12px;
             transition: all 0.2s;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
           .mobile-nav-link:hover, .mobile-nav-link:active {
             background: var(--color-forest);
@@ -739,6 +844,696 @@ const TIER_NAMES: Record<string, string> = {
   premium: 'Premium',
   enterprise: 'Enterprise / Lodge',
 };
+
+// Submission pricing for community listings
+const SUBMISSION_PRICES: Record<SubmissionType, { price: number; duration: string; label: string }> = {
+  event: { price: 0, duration: 'Until event date', label: 'Event Listing' },
+  job: { price: 99, duration: '30 days', label: 'Job Posting' },
+  classified: { price: 49, duration: '30 days', label: 'Classified Ad' },
+  property: { price: 199, duration: '60 days', label: 'Property Listing' },
+  notice: { price: 0, duration: '14 days', label: 'Community Notice' },
+};
+
+// ============ COMMUNITY SUBMISSION FORM ============
+const SubmitView: React.FC<{ onNavigate: (page: Page, params?: any) => void; initialType?: SubmissionType }> = ({ onNavigate, initialType }) => {
+  const [submissionType, setSubmissionType] = useState<SubmissionType | ''>(initialType || '');
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    // Common fields
+    title: '',
+    description: '',
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+    location: '',
+    popiaConsent: false,
+    // Event-specific
+    eventDate: '',
+    eventStartTime: '',
+    eventEndTime: '',
+    eventType: 'community' as EventType,
+    ticketPrice: '',
+    bookingLink: '',
+    // Job-specific
+    businessName: '',
+    jobType: 'full-time' as JobType,
+    sectorId: '' as SectorId | '',
+    salaryRange: '',
+    requirements: '',
+    applicationMethod: 'whatsapp' as 'email' | 'phone' | 'whatsapp' | 'website',
+    // Classified-specific
+    classifiedCategory: 'for-sale' as ClassifiedCategory,
+    classifiedSubcategory: '',
+    price: '',
+    condition: 'used' as 'new' | 'used' | 'other',
+    // Property-specific
+    listingType: 'sale' as ListingType,
+    propertyType: 'house' as PropertyType,
+    bedrooms: '',
+    bathrooms: '',
+    propertySize: '',
+    propertyPrice: '',
+    propertyFeatures: '',
+    // Notice-specific
+    noticeCategory: 'community-notice' as AnnouncementCategory,
+    expiryDate: '',
+  });
+
+  const submissionTypeInfo: Record<SubmissionType, { icon: string; title: string; description: string }> = {
+    event: { icon: '📅', title: 'Event', description: 'Markets, festivals, workshops, community gatherings' },
+    job: { icon: '💼', title: 'Job Vacancy', description: 'Full-time, part-time, contract, or casual positions' },
+    classified: { icon: '🏷️', title: 'Classified Ad', description: 'Items for sale, wanted ads, services offered' },
+    property: { icon: '🏠', title: 'Property Listing', description: 'Houses, apartments, land, commercial property' },
+    notice: { icon: '📢', title: 'Community Notice', description: 'Lost & found, alerts, community announcements' },
+  };
+
+  const openCloudinaryWidget = () => {
+    const maxImages = submissionType === 'property' ? 10 : 3;
+    if (uploadedImages.length >= maxImages) {
+      alert(`Maximum ${maxImages} photos allowed. Remove one to add another.`);
+      return;
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: 'dkn6tnxao',
+        uploadPreset: 'vaalwater_unsigned',
+        sources: ['local', 'camera'],
+        multiple: true,
+        maxFiles: maxImages - uploadedImages.length,
+        resourceType: 'image',
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000,
+        styles: {
+          palette: {
+            window: '#FDFBF7',
+            windowBorder: config.branding.colors.primary,
+            tabIcon: config.branding.colors.primary,
+            menuIcons: config.branding.colors.secondary,
+            textDark: config.branding.colors.primary,
+            textLight: '#FFFFFF',
+            link: config.branding.colors.secondary,
+            action: config.branding.colors.primary,
+            inactiveTabIcon: '#6b7280',
+            error: '#EF4444',
+            inProgress: config.branding.colors.secondary,
+            complete: config.branding.colors.primary,
+            sourceBg: '#FDFBF7'
+          }
+        }
+      },
+      (error: any, result: any) => {
+        if (!error && result && result.event === 'success') {
+          setUploadedImages(prev => [...prev, result.info.secure_url]);
+        }
+      }
+    );
+    widget.open();
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!submissionType || !formData.popiaConsent) return;
+
+    const pricing = SUBMISSION_PRICES[submissionType];
+    const form = e.target as HTMLFormElement;
+    const formDataToSend = new FormData(form);
+    formDataToSend.append('photos', uploadedImages.join(', '));
+    formDataToSend.append('submissionType', submissionType);
+
+    try {
+      // Submit to Netlify Forms first
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formDataToSend as any).toString()
+      });
+
+      // If free submission, redirect to inquiry page
+      if (pricing.price === 0) {
+        onNavigate('submit-inquiry', { type: submissionType });
+        return;
+      }
+
+      // Paid submission - redirect to PayFast
+      const paymentId = `${config.town.name.toUpperCase()}-${submissionType.toUpperCase()}-${Date.now()}`;
+
+      const payFastForm = document.createElement('form');
+      payFastForm.method = 'POST';
+      payFastForm.action = PAYFAST_URL;
+
+      const fields: Record<string, string> = {
+        merchant_id: PAYFAST_MERCHANT_ID,
+        merchant_key: PAYFAST_MERCHANT_KEY,
+        return_url: `${window.location.origin}/#payment-success?type=${submissionType}`,
+        cancel_url: `${window.location.origin}/#payment-cancelled?type=${submissionType}`,
+        notify_url: `${window.location.origin}/.netlify/functions/payfast-itn`,
+        name_first: formData.contactName.split(' ')[0] || formData.contactName,
+        name_last: formData.contactName.split(' ').slice(1).join(' ') || 'Submission',
+        email_address: formData.contactEmail,
+        m_payment_id: paymentId,
+        amount: pricing.price.toString(),
+        item_name: `${siteName} - ${pricing.label}`,
+        item_description: `${formData.title} - ${pricing.duration}`,
+        custom_str1: formData.title,
+        custom_str2: submissionType,
+        custom_str3: config.town.name,
+        custom_str4: formData.contactPhone,
+        custom_str5: formData.contactEmail,
+      };
+
+      for (const [key, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        payFastForm.appendChild(input);
+      }
+
+      document.body.appendChild(payFastForm);
+      payFastForm.submit();
+
+    } catch (error) {
+      console.error('Form submission error:', error);
+      alert('There was an error submitting your listing. Please try again.');
+    }
+  };
+
+  // Type selection screen
+  if (!submissionType) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-24 animate-fade">
+        <div className="mb-12 sm:mb-16 text-center">
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-clay mb-4 block">Community Submissions</span>
+          <h1 className="text-4xl sm:text-6xl font-serif font-bold text-forest mb-4 sm:mb-6 italic">What would you like to post?</h1>
+          <p className="text-lg sm:text-xl text-gray-500 font-light">Choose a listing type to get started</p>
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {(Object.keys(submissionTypeInfo) as SubmissionType[]).map((type) => {
+            const info = submissionTypeInfo[type];
+            const pricing = SUBMISSION_PRICES[type];
+            return (
+              <button
+                key={type}
+                onClick={() => setSubmissionType(type)}
+                className="card-classy p-6 sm:p-8 rounded-2xl sm:rounded-3xl text-left group transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-3xl sm:text-4xl">{info.icon}</span>
+                  {pricing.price === 0 ? (
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[9px] font-black uppercase tracking-widest">Free</span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-clay/10 text-clay text-[9px] font-black uppercase tracking-widest">R{pricing.price}</span>
+                  )}
+                </div>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-forest italic mb-2 group-hover:text-clay transition-colors">{info.title}</h3>
+                <p className="text-sm text-gray-500 font-light mb-4">{info.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{pricing.duration}</span>
+                  <span className="text-clay text-sm font-bold group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-12 sm:mt-16 bg-sand/30 rounded-2xl sm:rounded-[3rem] p-8 sm:p-12 text-center border border-sand">
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-forest italic mb-4">Want to list your business?</h2>
+          <p className="text-gray-500 max-w-xl mx-auto mb-6 sm:mb-8 font-light">
+            Get a permanent listing in our business directory with monthly subscription plans starting from R50/month.
+          </p>
+          <button
+            onClick={() => onNavigate('add-business')}
+            className="bg-forest text-white px-8 sm:px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105"
+          >
+            Add Your Business
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const pricing = SUBMISSION_PRICES[submissionType];
+  const maxImages = submissionType === 'property' ? 10 : 3;
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-24 animate-fade">
+      {/* Header */}
+      <div className="mb-8 sm:mb-12">
+        <button
+          onClick={() => setSubmissionType('')}
+          className="text-clay font-black text-[10px] uppercase tracking-widest mb-6 flex items-center gap-2 hover:gap-3 transition-all"
+        >
+          ← Back to options
+        </button>
+        <div className="flex flex-wrap items-center gap-4 mb-4">
+          <span className="text-4xl">{submissionTypeInfo[submissionType].icon}</span>
+          <h1 className="text-3xl sm:text-5xl font-serif font-bold text-forest italic">{submissionTypeInfo[submissionType].title}</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          {pricing.price === 0 ? (
+            <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-bold">Free Submission</span>
+          ) : (
+            <span className="px-4 py-2 rounded-full bg-clay/10 text-clay font-bold">R{pricing.price}</span>
+          )}
+          <span className="text-gray-500">• {pricing.duration}</span>
+        </div>
+      </div>
+
+      {/* Form */}
+      <form
+        name={`community-${submissionType}`}
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        onSubmit={handleSubmit}
+        className="bg-white p-8 sm:p-12 md:p-16 rounded-2xl sm:rounded-[3rem] border border-[#e5e0d8] shadow-xl space-y-8"
+      >
+        <input type="hidden" name="form-name" value={`community-${submissionType}`} />
+        <input type="hidden" name="bot-field" />
+
+        {/* Common Fields */}
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Title / Heading *</label>
+          <input
+            required
+            type="text"
+            name="title"
+            className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl sm:text-2xl font-serif italic"
+            placeholder={submissionType === 'job' ? 'e.g., Receptionist Needed' : submissionType === 'event' ? 'e.g., Saturday Morning Market' : 'Give your listing a clear title'}
+            value={formData.title}
+            onChange={e => setFormData({ ...formData, title: e.target.value })}
+          />
+        </div>
+
+        {/* Event-specific fields */}
+        {submissionType === 'event' && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Event Date *</label>
+                <input required type="date" name="eventDate" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.eventDate} onChange={e => setFormData({ ...formData, eventDate: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Event Type *</label>
+                <select required name="eventType" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.eventType} onChange={e => setFormData({ ...formData, eventType: e.target.value as EventType })}>
+                  <option value="market">Market</option>
+                  <option value="festival">Festival</option>
+                  <option value="workshop">Workshop</option>
+                  <option value="community">Community Event</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Start Time *</label>
+                <input required type="time" name="eventStartTime" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.eventStartTime} onChange={e => setFormData({ ...formData, eventStartTime: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">End Time</label>
+                <input type="time" name="eventEndTime" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.eventEndTime} onChange={e => setFormData({ ...formData, eventEndTime: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Ticket Price (if applicable)</label>
+                <input type="text" name="ticketPrice" placeholder="e.g., R50 or Free" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.ticketPrice} onChange={e => setFormData({ ...formData, ticketPrice: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking Link (optional)</label>
+                <input type="url" name="bookingLink" placeholder="https://..." className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.bookingLink} onChange={e => setFormData({ ...formData, bookingLink: e.target.value })} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Job-specific fields */}
+        {submissionType === 'job' && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business / Employer Name *</label>
+                <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif italic" value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Job Type *</label>
+                <select required name="jobType" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.jobType} onChange={e => setFormData({ ...formData, jobType: e.target.value as JobType })}>
+                  <option value="full-time">Full-Time</option>
+                  <option value="part-time">Part-Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="casual">Casual</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector / Industry *</label>
+                <select required name="sectorId" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.sectorId} onChange={e => setFormData({ ...formData, sectorId: e.target.value as SectorId })}>
+                  <option value="">Select a sector</option>
+                  {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Salary Range (optional)</label>
+                <input type="text" name="salaryRange" placeholder="e.g., R8,000 - R12,000/month" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.salaryRange} onChange={e => setFormData({ ...formData, salaryRange: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Requirements (one per line)</label>
+              <textarea name="requirements" rows={4} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg font-serif resize-none" placeholder="e.g.,&#10;Grade 12 certificate&#10;Valid driver's license&#10;2 years experience" value={formData.requirements} onChange={e => setFormData({ ...formData, requirements: e.target.value })} />
+            </div>
+            <div className="space-y-4">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Application Method *</label>
+              <select required name="applicationMethod" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.applicationMethod} onChange={e => setFormData({ ...formData, applicationMethod: e.target.value as 'email' | 'phone' | 'whatsapp' | 'website' })}>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone Call</option>
+                <option value="website">Website / Link</option>
+              </select>
+            </div>
+          </>
+        )}
+
+        {/* Classified-specific fields */}
+        {submissionType === 'classified' && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Category *</label>
+                <select required name="classifiedCategory" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.classifiedCategory} onChange={e => setFormData({ ...formData, classifiedCategory: e.target.value as ClassifiedCategory })}>
+                  <option value="for-sale">For Sale</option>
+                  <option value="wanted">Wanted</option>
+                  <option value="services">Services Offered</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Subcategory</label>
+                <input type="text" name="classifiedSubcategory" placeholder="e.g., Electronics, Furniture, Vehicles" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.classifiedSubcategory} onChange={e => setFormData({ ...formData, classifiedSubcategory: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</label>
+                <input type="text" name="price" placeholder="e.g., R2,500 or Negotiable" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Condition</label>
+                <select name="condition" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.condition} onChange={e => setFormData({ ...formData, condition: e.target.value as 'new' | 'used' | 'other' })}>
+                  <option value="new">New</option>
+                  <option value="used">Used</option>
+                  <option value="other">N/A</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Property-specific fields */}
+        {submissionType === 'property' && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Listing Type *</label>
+                <select required name="listingType" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.listingType} onChange={e => setFormData({ ...formData, listingType: e.target.value as ListingType })}>
+                  <option value="sale">For Sale</option>
+                  <option value="rent">To Rent</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Property Type *</label>
+                <select required name="propertyType" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.propertyType} onChange={e => setFormData({ ...formData, propertyType: e.target.value as PropertyType })}>
+                  <option value="house">House</option>
+                  <option value="apartment">Apartment / Flat</option>
+                  <option value="land">Land / Plot</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="farm">Farm / Smallholding</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Bedrooms</label>
+                <input type="number" name="bedrooms" min="0" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.bedrooms} onChange={e => setFormData({ ...formData, bedrooms: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Bathrooms</label>
+                <input type="number" name="bathrooms" min="0" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.bathrooms} onChange={e => setFormData({ ...formData, bathrooms: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Size (m²)</label>
+                <input type="number" name="propertySize" min="0" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.propertySize} onChange={e => setFormData({ ...formData, propertySize: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Price *</label>
+                <input required type="text" name="propertyPrice" placeholder={formData.listingType === 'rent' ? 'e.g., R8,500/month' : 'e.g., R1,850,000'} className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.propertyPrice} onChange={e => setFormData({ ...formData, propertyPrice: e.target.value })} />
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Features (comma-separated)</label>
+                <input type="text" name="propertyFeatures" placeholder="e.g., Pool, Garage, Garden, Security" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.propertyFeatures} onChange={e => setFormData({ ...formData, propertyFeatures: e.target.value })} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Notice-specific fields */}
+        {submissionType === 'notice' && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Category *</label>
+                <select required name="noticeCategory" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl bg-transparent font-serif" value={formData.noticeCategory} onChange={e => setFormData({ ...formData, noticeCategory: e.target.value as AnnouncementCategory })}>
+                  <option value="lost-found">Lost & Found</option>
+                  <option value="community-notice">Community Notice</option>
+                  <option value="alert">Alert / Warning</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Expiry Date</label>
+                <input type="date" name="expiryDate" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.expiryDate} onChange={e => setFormData({ ...formData, expiryDate: e.target.value })} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Common description field */}
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Description *</label>
+          <textarea
+            required
+            name="description"
+            rows={5}
+            className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg font-serif resize-none"
+            placeholder="Provide all the important details..."
+            value={formData.description}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+
+        {/* Location */}
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Location / Area *</label>
+          <input
+            required
+            type="text"
+            name="location"
+            className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif"
+            placeholder={`e.g., ${config.town.name} Town, Farm Name, etc.`}
+            value={formData.location}
+            onChange={e => setFormData({ ...formData, location: e.target.value })}
+          />
+        </div>
+
+        {/* Contact Details */}
+        <div className="pt-8 border-t border-[#e5e0d8]">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-6">Your Contact Details</h3>
+          <div className="grid sm:grid-cols-2 gap-6 sm:gap-10">
+            <div className="space-y-4">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Name *</label>
+              <input required type="text" name="contactName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.contactName} onChange={e => setFormData({ ...formData, contactName: e.target.value })} />
+            </div>
+            <div className="space-y-4">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Email *</label>
+              <input required type="email" name="contactEmail" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} />
+            </div>
+          </div>
+          <div className="space-y-4 mt-6 sm:mt-10">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone / WhatsApp *</label>
+            <input required type="tel" name="contactPhone" placeholder="+27..." className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-lg sm:text-xl font-serif" value={formData.contactPhone} onChange={e => setFormData({ ...formData, contactPhone: e.target.value })} />
+          </div>
+        </div>
+
+        {/* Photo Upload */}
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Photos (up to {maxImages})</label>
+          <div className="flex flex-wrap gap-4">
+            {uploadedImages.map((url, index) => (
+              <div key={index} className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-sand">
+                <img src={url} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold hover:bg-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {uploadedImages.length < maxImages && (
+              <button
+                type="button"
+                onClick={openCloudinaryWidget}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl border-2 border-dashed border-sand hover:border-clay flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-clay transition-colors"
+              >
+                <span className="text-2xl sm:text-3xl">📷</span>
+                <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider">Add Photo</span>
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-gray-400">Click to upload photos (max 5MB each)</p>
+        </div>
+
+        {/* POPIA Consent */}
+        <div className="pt-8 border-t border-[#e5e0d8]">
+          <label className="flex items-start gap-4 cursor-pointer group">
+            <input
+              required
+              type="checkbox"
+              name="popiaConsent"
+              className="w-6 h-6 mt-1 rounded border-sand text-forest focus:ring-clay flex-shrink-0"
+              checked={formData.popiaConsent}
+              onChange={e => setFormData({ ...formData, popiaConsent: e.target.checked })}
+            />
+            <span className="text-sm text-gray-500 group-hover:text-forest transition-colors">
+              I confirm the above information is accurate and agree to the processing of my data according to POPIA. I understand that {pricing.price === 0 ? 'free submissions are subject to review' : `this is a paid listing (R${pricing.price})`}.
+            </span>
+          </label>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="w-full bg-forest text-white py-6 sm:py-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3"
+        >
+          {pricing.price === 0 ? (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+              Submit for Review
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+              Submit & Pay R{pricing.price}
+            </>
+          )}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// ============ PAYMENT RESULT PAGES ============
+const PaymentSuccessView: React.FC<{ onNavigate: (page: Page) => void; submissionType?: string }> = ({ onNavigate, submissionType }) => (
+  <div className="max-w-2xl mx-auto px-6 py-24 sm:py-40 text-center animate-fade">
+    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-10">
+      <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    <h1 className="text-4xl sm:text-6xl font-serif font-bold text-forest italic mb-6">Payment Successful!</h1>
+    <p className="text-xl text-gray-500 font-light mb-4">
+      Thank you for your {submissionType ? SUBMISSION_PRICES[submissionType as SubmissionType]?.label || 'submission' : 'payment'}.
+    </p>
+    <p className="text-gray-400 mb-12">
+      We'll review your submission and publish it within 24-48 hours. You'll receive a confirmation email shortly.
+    </p>
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <button
+        onClick={() => onNavigate('home')}
+        className="bg-forest text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-colors"
+      >
+        Back to Home
+      </button>
+      <button
+        onClick={() => onNavigate('submit')}
+        className="border-2 border-forest text-forest px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-forest hover:text-white transition-colors"
+      >
+        Submit Another
+      </button>
+    </div>
+  </div>
+);
+
+const PaymentCancelledView: React.FC<{ onNavigate: (page: Page, params?: any) => void; submissionType?: string }> = ({ onNavigate, submissionType }) => (
+  <div className="max-w-2xl mx-auto px-6 py-24 sm:py-40 text-center animate-fade">
+    <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-10">
+      <svg className="w-12 h-12 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+    <h1 className="text-4xl sm:text-6xl font-serif font-bold text-forest italic mb-6">Payment Cancelled</h1>
+    <p className="text-xl text-gray-500 font-light mb-4">
+      Your payment was not completed.
+    </p>
+    <p className="text-gray-400 mb-12">
+      No worries - your submission details have been saved. You can try again or contact us if you need help.
+    </p>
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <button
+        onClick={() => onNavigate('submit', submissionType ? { type: submissionType } : undefined)}
+        className="bg-forest text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-colors"
+      >
+        Try Again
+      </button>
+      <a
+        href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I had trouble completing my payment on ' + siteName)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="border-2 border-[#25D366] text-[#25D366] px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-[#25D366] hover:text-white transition-colors"
+      >
+        Contact Support
+      </a>
+    </div>
+  </div>
+);
+
+const SubmitInquiryView: React.FC<{ onNavigate: (page: Page) => void; submissionType?: string }> = ({ onNavigate, submissionType }) => (
+  <div className="max-w-2xl mx-auto px-6 py-24 sm:py-40 text-center animate-fade">
+    <div className="w-24 h-24 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">
+      {submissionType === 'event' ? '📅' : submissionType === 'notice' ? '📢' : '✉️'}
+    </div>
+    <h1 className="text-4xl sm:text-6xl font-serif font-bold text-forest italic mb-6">Submission Received!</h1>
+    <p className="text-xl text-gray-500 font-light mb-4">
+      Thank you for your {submissionType ? SUBMISSION_PRICES[submissionType as SubmissionType]?.label || 'submission' : 'submission'}.
+    </p>
+    <p className="text-gray-400 mb-12">
+      We'll review your submission and publish it within 24-48 hours. We may contact you if we need any additional information.
+    </p>
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <button
+        onClick={() => onNavigate('home')}
+        className="bg-forest text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-colors"
+      >
+        Back to Home
+      </button>
+      <button
+        onClick={() => onNavigate('submit')}
+        className="border-2 border-forest text-forest px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-forest hover:text-white transition-colors"
+      >
+        Submit Another
+      </button>
+    </div>
+  </div>
+);
 
 const AddBusinessView: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -2341,7 +3136,15 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No jobs found in this sector.</p>
+            <span className="text-5xl mb-4 block">💼</span>
+            <p className="text-2xl font-serif text-gray-400 italic mb-6">No jobs found in this sector.</p>
+            <p className="text-gray-500 mb-6">Be the first to post a job opportunity!</p>
+            <button
+              onClick={() => onNavigate('submit', { type: 'job' })}
+              className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
+            >
+              Post a Job - R99
+            </button>
           </div>
         )}
       </div>
@@ -2349,15 +3152,13 @@ const JobsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
       <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
         <h2 className="text-3xl font-serif font-bold italic mb-4">Have a Job to Post?</h2>
         <p className="text-sand/70 mb-8 font-light">Reach local talent by posting your vacancy on {siteName}.</p>
-        <a
-          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a job vacancy on the Jobs Board.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        <button
+          onClick={() => onNavigate('submit', { type: 'job' })}
+          className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Post a Job via WhatsApp
-        </a>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Post a Job - R99
+        </button>
       </div>
     </div>
   );
@@ -2565,7 +3366,15 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No upcoming events in this category.</p>
+            <span className="text-5xl mb-4 block">📅</span>
+            <p className="text-2xl font-serif text-gray-400 italic mb-6">No upcoming events in this category.</p>
+            <p className="text-gray-500 mb-6">Be the first to share an upcoming event!</p>
+            <button
+              onClick={() => onNavigate('submit', { type: 'event' })}
+              className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
+            >
+              Post an Event - Free
+            </button>
           </div>
         )}
       </div>
@@ -2573,15 +3382,13 @@ const EventsView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> =
       <div className="mt-20 bg-clay/10 border border-clay/20 rounded-[3rem] p-12 text-center">
         <h2 className="text-3xl font-serif font-bold text-forest italic mb-4">Hosting an Event?</h2>
         <p className="text-gray-500 mb-8 font-light max-w-xl mx-auto">Get your event listed on {siteName} and reach the local community.</p>
-        <a
-          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post an event on the Events Calendar.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-forest transition-all"
+        <button
+          onClick={() => onNavigate('submit', { type: 'event' })}
+          className="inline-flex items-center gap-3 bg-forest text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-all"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Post an Event via WhatsApp
-        </a>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Post an Event - Free
+        </button>
       </div>
     </div>
   );
@@ -2756,7 +3563,15 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No classifieds found in this category.</p>
+            <span className="text-5xl mb-4 block">🏷️</span>
+            <p className="text-2xl font-serif text-gray-400 italic mb-6">No classifieds found in this category.</p>
+            <p className="text-gray-500 mb-6">Be the first to post a classified ad!</p>
+            <button
+              onClick={() => onNavigate('submit', { type: 'classified' })}
+              className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
+            >
+              Post a Classified - R49
+            </button>
           </div>
         )}
       </div>
@@ -2764,15 +3579,13 @@ const ClassifiedsView: React.FC<{ onNavigate: (page: Page, params?: any) => void
       <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
         <h2 className="text-3xl font-serif font-bold italic mb-4">Post Your Ad</h2>
         <p className="text-sand/70 mb-8 font-light">Have something to sell, looking for something, or offering a service?</p>
-        <a
-          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a classified ad.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        <button
+          onClick={() => onNavigate('submit', { type: 'classified' })}
+          className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Post an Ad via WhatsApp
-        </a>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Post a Classified - R49
+        </button>
       </div>
     </div>
   );
@@ -2993,7 +3806,15 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No properties found matching your criteria.</p>
+            <span className="text-5xl mb-4 block">🏠</span>
+            <p className="text-2xl font-serif text-gray-400 italic mb-6">No properties found matching your criteria.</p>
+            <p className="text-gray-500 mb-6">Be the first to list a property!</p>
+            <button
+              onClick={() => onNavigate('submit', { type: 'property' })}
+              className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
+            >
+              List Property - R199
+            </button>
           </div>
         )}
       </div>
@@ -3001,15 +3822,13 @@ const PropertyView: React.FC<{ onNavigate: (page: Page, params?: any) => void }>
       <div className="mt-20 bg-forest rounded-[3rem] p-12 text-center text-white">
         <h2 className="text-3xl font-serif font-bold italic mb-4">List Your Property</h2>
         <p className="text-sand/70 mb-8 font-light">Selling or renting property in {config.town.name}? Get it listed on {siteName}.</p>
-        <a
-          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to list a property.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-[#075e54] transition-all"
+        <button
+          onClick={() => onNavigate('submit', { type: 'property' })}
+          className="inline-flex items-center gap-3 bg-clay text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-white hover:text-clay transition-all"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          List Property via WhatsApp
-        </a>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          List Property - R199
+        </button>
       </div>
     </div>
   );
@@ -3220,7 +4039,15 @@ const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => vo
           </div>
         )) : (
           <div className="py-20 text-center bg-sand/10 rounded-[3rem] border border-dashed border-[#e5e0d8]">
-            <p className="text-2xl font-serif text-gray-400 italic">No announcements in this category.</p>
+            <span className="text-5xl mb-4 block">📢</span>
+            <p className="text-2xl font-serif text-gray-400 italic mb-6">No announcements in this category.</p>
+            <p className="text-gray-500 mb-6">Be the first to share a community notice!</p>
+            <button
+              onClick={() => onNavigate('submit', { type: 'notice' })}
+              className="inline-flex items-center gap-2 bg-forest text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-clay transition-colors"
+            >
+              Post a Notice - Free
+            </button>
           </div>
         )}
       </div>
@@ -3228,15 +4055,13 @@ const AnnouncementsView: React.FC<{ onNavigate: (page: Page, params?: any) => vo
       <div className="mt-20 bg-clay/10 border border-clay/20 rounded-[3rem] p-12 text-center">
         <h2 className="text-3xl font-serif font-bold text-forest italic mb-4">Have an Announcement?</h2>
         <p className="text-gray-500 mb-8 font-light max-w-xl mx-auto">Lost something? Found something? Have a community notice to share?</p>
-        <a
-          href={`https://wa.me/${waLinkNum}?text=${encodeURIComponent('Hi, I would like to post a community announcement.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-forest transition-all"
+        <button
+          onClick={() => onNavigate('submit', { type: 'notice' })}
+          className="inline-flex items-center gap-3 bg-forest text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-clay transition-all"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Post Announcement via WhatsApp
-        </a>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Post a Notice - Free
+        </button>
       </div>
     </div>
   );
@@ -3400,6 +4225,11 @@ export default function App() {
       case 'property-detail': return <PropertyDetailView propertyId={navigation.params.id} onNavigate={navigateTo} />;
       case 'announcements': return <AnnouncementsView onNavigate={navigateTo} />;
       case 'announcement-detail': return <AnnouncementDetailView announcementId={navigation.params.id} onNavigate={navigateTo} />;
+      // Submission System
+      case 'submit': return <SubmitView onNavigate={navigateTo} initialType={navigation.params.type as SubmissionType | undefined} />;
+      case 'payment-success': return <PaymentSuccessView onNavigate={navigateTo} submissionType={navigation.params.type} />;
+      case 'payment-cancelled': return <PaymentCancelledView onNavigate={navigateTo} submissionType={navigation.params.type} />;
+      case 'submit-inquiry': return <SubmitInquiryView onNavigate={navigateTo} submissionType={navigation.params.type} />;
       default: return <HomeView onNavigate={navigateTo} />;
     }
   };

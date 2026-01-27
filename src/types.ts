@@ -78,7 +78,13 @@ export type Page =
   | 'property'
   | 'property-detail'
   | 'announcements'
-  | 'announcement-detail';
+  | 'announcement-detail'
+  | 'submit'
+  | 'payment-success'
+  | 'payment-cancelled'
+  | 'submit-inquiry';
+
+export type SubmissionType = 'event' | 'job' | 'classified' | 'property' | 'notice';
 
 export type JobType = 'full-time' | 'part-time' | 'contract' | 'casual';
 export type ApplicationMethod = 'email' | 'phone' | 'whatsapp' | 'website';
