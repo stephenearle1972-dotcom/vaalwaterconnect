@@ -866,8 +866,8 @@ const AddBusinessView: React.FC = () => {
   if (submitted) return (
     <div className="max-w-2xl mx-auto px-6 py-40 text-center animate-fade">
       <div className="w-24 h-24 bg-forest/5 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">🏛️</div>
-      <h1 className="text-6xl font-serif font-bold text-forest italic mb-6">Registration Received</h1>
-      <p className="text-xl text-gray-500 font-light mb-12">Our team will review your application and contact you within 48 hours to finalize your listing and verification.</p>
+      <h1 className="text-6xl font-serif font-bold text-forest italic mb-6">Application Received</h1>
+      <p className="text-xl text-gray-500 font-light mb-12">Thank you! We'll review your submission and contact you within 48 hours to finalize your listing.</p>
       <button onClick={() => { setSubmitted(false); setUploadedImages([]); }} className="text-clay font-black text-[10px] uppercase tracking-widest underline decoration-2 underline-offset-8">Add Another Business</button>
     </div>
   );
@@ -875,8 +875,8 @@ const AddBusinessView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-6 py-24 animate-fade">
       <div className="mb-16">
-        <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">Partner Registration</h1>
-        <p className="text-xl text-gray-500 font-light">Join the {siteName} registry and reach your local audience with professional clarity.</p>
+        <h1 className="text-6xl font-serif font-bold text-forest mb-6 italic">List Your Business</h1>
+        <p className="text-xl text-gray-500 font-light">Join the {siteName} directory and reach your local audience.</p>
       </div>
       <form
         name="business-application"
