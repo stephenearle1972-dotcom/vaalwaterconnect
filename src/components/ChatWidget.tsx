@@ -28,7 +28,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       {/* Chat Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/50">
-          <div className="relative w-full max-w-lg h-[85vh] sm:h-[600px] bg-white rounded-xl shadow-2xl overflow-hidden">
+          <div className="relative w-full max-w-2xl h-[90vh] sm:h-[700px] bg-white rounded-xl shadow-2xl overflow-hidden">
             {/* Close Button */}
             <button
               onClick={() => setIsOpen(false)}
