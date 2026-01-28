@@ -324,17 +324,17 @@ async function handleQuery({ text, from, source }) {
   // 1) Detect language (fast heuristic)
   let lang = detectLanguage(raw); // "af" | "en"
 
-  // 2) Optional Gemini intent extraction (only if enabled)
-  const aiEnabled = (process.env.AI_INTENT_ENABLED || "").toLowerCase() === "true";
+  // 2) Gemini AI intent extraction (enabled by default if API key exists)
   const geminiKey = process.env.GEMINI_API_KEY || "";
-  const geminiModel = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
   let searchTerm = "";
 
-  if (aiEnabled && geminiKey) {
+  if (geminiKey) {
     const ai = await geminiExtract({ text: raw, model: geminiModel, key: geminiKey });
     if (ai?.language === "af" || ai?.language === "en") lang = ai.language;
     if (ai?.searchTerm) searchTerm = ai.searchTerm;
+    console.log("GEMINI_EXTRACT:", raw, "→", searchTerm);
   }
 
   // 3) Fallback extraction (no AI, or AI failed)
@@ -673,17 +673,22 @@ async function geminiExtract({ text, model, key }) {
       model
     )}:generateContent?key=${encodeURIComponent(key)}`;
 
-    const prompt = `
-You are a tiny intent parser for a local directory bot in South Africa.
-Task:
-- Determine language: "af" for Afrikaans, "en" for English.
-- Extract the user's directory search term as a short keyword or 2-3 word phrase.
-- If the user asks a question like "wat is die haarkapper se nommer", return searchTerm: "haarkapper" (or "hairdresser").
-- If the user says "my geyser is leaking and i need someone today", return searchTerm: "plumber" (or "loodgieter").
-Return ONLY valid JSON with keys: language, searchTerm.
+    const prompt = `Extract the business type or service being searched for from this message.
+Return ONLY valid JSON with keys: language ("af" or "en"), searchTerm (lowercase keyword).
+If the message is in Afrikaans, return the English equivalent for searchTerm.
+If you can't determine a service, use the original message as searchTerm.
 
-User text: ${JSON.stringify(text)}
-`;
+Examples:
+- "I need a plumber" → {"language":"en","searchTerm":"plumber"}
+- "my tap is leaking" → {"language":"en","searchTerm":"plumber"}
+- "my geyser is broken" → {"language":"en","searchTerm":"plumber"}
+- "waar kry ek petrol" → {"language":"af","searchTerm":"garage fuel"}
+- "ek soek n haarkapper" → {"language":"af","searchTerm":"hairdresser salon"}
+- "waar kan ek eet" → {"language":"af","searchTerm":"restaurant"}
+- "restaurant" → {"language":"en","searchTerm":"restaurant"}
+- "wat is die dokter se nommer" → {"language":"af","searchTerm":"doctor"}
+
+Message: ${JSON.stringify(text)}`;
 
     const payload = {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
