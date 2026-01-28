@@ -4765,18 +4765,22 @@ const AnnouncementDetailView: React.FC<{ announcementId: string, onNavigate: (pa
 
 // Floating Bot Button - links to WhatsApp Bot for instant search
 const FloatingBotButton: React.FC = () => {
-  // Only show if bot is configured
+  // Only show if bot is configured for this town
   if (!config.contact.botWhatsApp) return null;
+
+  // Position depends on whether assistant is also shown
+  const hasAssistant = config.features?.hasAssistant;
+  const bottomPosition = hasAssistant ? 'bottom-[104px]' : 'bottom-6'; // 56px button + 24px gap + 24px base
 
   return (
     <a
       href={`https://wa.me/${config.contact.botWhatsApp}?text=Hi`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group animate-pulse hover:animate-none"
+      className={`fixed ${bottomPosition} right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white w-14 h-14 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 group animate-pulse hover:animate-none flex items-center justify-center`}
       aria-label="Ask the WhatsApp Bot"
     >
-      <BotIcon className="w-7 h-7 sm:w-8 sm:h-8" color="white" />
+      <BotIcon className="w-7 h-7" color="white" />
       <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-white text-forest px-4 py-2 rounded-lg shadow-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
         Ask the Bot
       </span>
@@ -4868,7 +4872,8 @@ export default function App() {
       <FloatingBotButton />
       <ChatWidget
         assistantUrl="https://vaalwater-assistant.netlify.app"
-        brandColor={config.branding.colors.secondary}
+        brandColor="#0891b2"
+        enabled={config.features?.hasAssistant === true}
       />
     </div>
   );

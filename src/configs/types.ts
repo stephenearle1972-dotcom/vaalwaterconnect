@@ -41,6 +41,11 @@ export interface TownConfig {
     botWhatsApp?: string; // WhatsApp bot number for directory search (only if bot is available)
   };
 
+  // Features
+  features?: {
+    hasAssistant?: boolean; // Show AI chat assistant button (only if assistant is deployed for this town)
+  };
+
   // Map settings
   location: {
     center: { lat: number; lng: number };

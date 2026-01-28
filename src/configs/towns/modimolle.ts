@@ -41,7 +41,7 @@ export const modimolleConfig: TownConfig = {
     whatsapp: '',
     email: 'hello@modimolleconnect.co.za',
     phone: '',
-    botWhatsApp: '27836669298', // Shared WhatsApp bot for directory search
+    // botWhatsApp not set - WhatsApp bot only available for Vaalwater currently
   },
 
   location: {

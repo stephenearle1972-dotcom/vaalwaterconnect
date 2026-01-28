@@ -41,7 +41,7 @@ export const portAlfredConfig: TownConfig = {
     whatsapp: '',
     email: 'hello@portalfredconnect.co.za',
     phone: '',
-    botWhatsApp: '27836669298', // Shared WhatsApp bot for directory search
+    // botWhatsApp not configured - WhatsApp bot only available for Vaalwater currently
   },
 
   location: {

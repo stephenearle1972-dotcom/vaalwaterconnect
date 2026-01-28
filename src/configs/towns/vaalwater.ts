@@ -55,6 +55,10 @@ export const vaalwaterConfig: TownConfig = {
     botWhatsApp: '27836669298', // WhatsApp bot for directory search
   },
 
+  features: {
+    hasAssistant: true, // Vaalwater has the AI chat assistant deployed
+  },
+
   location: {
     center: { lat: -24.296, lng: 28.113 },
     zoom: 12,
