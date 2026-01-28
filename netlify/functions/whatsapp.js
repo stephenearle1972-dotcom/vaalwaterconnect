@@ -1,5 +1,178 @@
 // netlify/functions/whatsapp.js
 
+// ======================================================
+// Analytics logging to Google Sheets (async, non-blocking)
+// ======================================================
+
+/**
+ * Log search query to Google Sheets for analytics.
+ * Runs async and fails silently - never blocks or breaks the bot.
+ *
+ * Env vars required:
+ * - GOOGLE_SERVICE_ACCOUNT_CREDENTIALS: Full JSON credentials string
+ * - ANALYTICS_SPREADSHEET_ID: The spreadsheet ID to log to
+ * - ANALYTICS_SHEET_NAME: Tab name (defaults to "Analytics")
+ */
+async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, source }) {
+  try {
+    const credsJson = process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS;
+    const spreadsheetId = process.env.ANALYTICS_SPREADSHEET_ID;
+    const sheetName = process.env.ANALYTICS_SHEET_NAME || "Analytics";
+
+    if (!credsJson || !spreadsheetId) {
+      // Analytics not configured - skip silently
+      return;
+    }
+
+    const credentials = JSON.parse(credsJson);
+    const accessToken = await getGoogleAccessToken(credentials);
+
+    if (!accessToken) {
+      console.log("ANALYTICS: Failed to get access token");
+      return;
+    }
+
+    // Prepare row data
+    const timestamp = new Date().toISOString();
+    const row = [
+      timestamp,
+      searchTerm || "",
+      String(resultsCount),
+      businessesShown || "",
+      town || "",
+      source || "whatsapp",
+    ];
+
+    // Append row to sheet
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${encodeURIComponent(sheetName)}'!A:F:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        values: [row],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.log("ANALYTICS_WRITE_FAILED:", res.status, errText);
+    } else {
+      console.log("ANALYTICS_LOGGED:", searchTerm, resultsCount, "results");
+    }
+  } catch (err) {
+    // Fail silently - never break the bot
+    console.log("ANALYTICS_ERROR:", err.message);
+  }
+}
+
+/**
+ * Get Google OAuth2 access token using service account JWT
+ */
+async function getGoogleAccessToken(credentials) {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const expiry = now + 3600; // 1 hour
+
+    // Create JWT header and payload
+    const header = {
+      alg: "RS256",
+      typ: "JWT",
+    };
+
+    const payload = {
+      iss: credentials.client_email,
+      scope: "https://www.googleapis.com/auth/spreadsheets",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: expiry,
+    };
+
+    // Sign the JWT
+    const jwt = await signJWT(header, payload, credentials.private_key);
+
+    // Exchange JWT for access token
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.log("TOKEN_EXCHANGE_FAILED:", tokenRes.status, errText);
+      return null;
+    }
+
+    const tokenData = await tokenRes.json();
+    return tokenData.access_token;
+  } catch (err) {
+    console.log("GET_ACCESS_TOKEN_ERROR:", err.message);
+    return null;
+  }
+}
+
+/**
+ * Sign a JWT using RS256 (required for Google service accounts)
+ */
+async function signJWT(header, payload, privateKeyPem) {
+  // Base64url encode header and payload
+  const encodedHeader = base64urlEncode(JSON.stringify(header));
+  const encodedPayload = base64urlEncode(JSON.stringify(payload));
+  const signingInput = `${encodedHeader}.${encodedPayload}`;
+
+  // Import the private key
+  const privateKey = await importPrivateKey(privateKeyPem);
+
+  // Sign with RS256
+  const signature = await crypto.subtle.sign(
+    { name: "RSASSA-PKCS1-v1_5" },
+    privateKey,
+    new TextEncoder().encode(signingInput)
+  );
+
+  const encodedSignature = base64urlEncode(signature);
+  return `${signingInput}.${encodedSignature}`;
+}
+
+/**
+ * Import PEM private key for Web Crypto API
+ */
+async function importPrivateKey(pem) {
+  // Remove PEM headers and decode
+  const pemContents = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s/g, "");
+
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  return crypto.subtle.importKey(
+    "pkcs8",
+    binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+}
+
+/**
+ * Base64url encode (for JWT)
+ */
+function base64urlEncode(data) {
+  let base64;
+  if (typeof data === "string") {
+    base64 = btoa(data);
+  } else {
+    // ArrayBuffer
+    base64 = btoa(String.fromCharCode(...new Uint8Array(data)));
+  }
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 export async function handler(event) {
   try {
     // -----------------------------
@@ -23,12 +196,19 @@ export async function handler(event) {
       // Simple browser test:
       // /.netlify/functions/whatsapp?q=my geyser is leaking and i need someone today
       const q = qp.q || "";
-      const reply = await handleQuery({
+      const result = await handleQuery({
         text: q,
         from: null,
         source: "web",
       });
+
+      // Log analytics async (fire-and-forget)
+      if (result.analytics) {
+        logAnalytics(result.analytics).catch(() => {});
+      }
+
       // Handle structured response (text + location)
+      const reply = result.reply;
       const textBody = reply && typeof reply === "object" ? reply.text : reply;
       return textResponse(textBody);
     }
@@ -54,16 +234,24 @@ export async function handler(event) {
     const from = msg.from; // user MSISDN
     const incomingText = msg.text.body;
 
-    const reply = await handleQuery({
+    const result = await handleQuery({
       text: incomingText,
       from,
       source: "whatsapp",
     });
 
+    // Log analytics async (fire-and-forget) - don't await
+    if (result.analytics) {
+      logAnalytics(result.analytics).catch(() => {});
+    }
+
     // -----------------------------
     // 2) Send message back to WhatsApp
     // -----------------------------
     const sendUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
+    // Extract the actual reply
+    const reply = result.reply;
 
     // Check if reply is an object with location data
     const hasLocation = reply && typeof reply === "object" && reply.location;
@@ -130,7 +318,7 @@ export async function handler(event) {
 
 async function handleQuery({ text, from, source }) {
   const raw = (text || "").trim();
-  if (!raw) return "OK";
+  if (!raw) return { reply: "OK", analytics: null };
 
   // 1) Detect language (fast heuristic)
   let lang = detectLanguage(raw); // "af" | "en"
@@ -155,9 +343,10 @@ async function handleQuery({ text, from, source }) {
 
   // 4) If we still have nothing usable
   if (!searchTerm) {
-    return lang === "af"
-      ? "Stuur asseblief net ’n sleutelwoord, bv: loodgieter, haarkapper, dokter, apteek."
+    const noTermReply = lang === "af"
+      ? "Stuur asseblief net 'n sleutelwoord, bv: loodgieter, haarkapper, dokter, apteek."
       : "Please send a single keyword, e.g. plumber, hairdresser, doctor, pharmacy.";
+    return { reply: noTermReply, analytics: null };
   }
 
   // 5) Load BOTH CSV sheets and search
@@ -185,9 +374,13 @@ async function handleQuery({ text, from, source }) {
 
   // Check if we have any data
   if (!businessData.rows.length && !emergencyData.rows.length) {
-    return lang === "af"
+    const unavailableReply = lang === "af"
       ? "Jammer — die lys is tydelik onbeskikbaar. Probeer weer later."
       : "Sorry — the directory is temporarily unavailable. Please try again later.";
+    return {
+      reply: unavailableReply,
+      analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+    };
   }
 
   // Search tokens
@@ -386,9 +579,13 @@ async function handleQuery({ text, from, source }) {
   const allResults = allSorted.slice(0, 3); // Top 3 results only
 
   if (allResults.length === 0) {
-    return lang === "af"
+    const noResultsReply = lang === "af"
       ? `Jammer — geen lysinskrywing gevind vir "${searchTerm}" in ${townDisplay}.\nAntwoord ADD om 'n besigheid by te voeg.`
       : `Sorry — no listing found for "${searchTerm}" in ${townDisplay}.\nReply ADD to submit a business.`;
+    return {
+      reply: noResultsReply,
+      analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+    };
   }
 
   // Build reply (language-aware header)
@@ -432,21 +629,36 @@ async function handleQuery({ text, from, source }) {
 
   const textReply = `${title}\n\n${cards.join("\n\n")}${hint}${footer}`;
 
+  // Build list of business names shown for analytics
+  const businessesShown = allResults.map((r) => r.name).join(", ");
+
+  // Analytics data to log
+  const analytics = {
+    searchTerm,
+    resultsCount: totalCount,
+    businessesShown,
+    town: townDisplay,
+    source,
+  };
+
   // Check if the top result has location data for tappable map pin
   const topResult = allResults[0];
   if (topResult && topResult.lat && topResult.lng && !isNaN(topResult.lat) && !isNaN(topResult.lng)) {
     return {
-      text: textReply,
-      location: {
-        latitude: topResult.lat,
-        longitude: topResult.lng,
-        name: topResult.name,
-        address: topResult.area || "",
+      reply: {
+        text: textReply,
+        location: {
+          latitude: topResult.lat,
+          longitude: topResult.lng,
+          name: topResult.name,
+          address: topResult.area || "",
+        },
       },
+      analytics,
     };
   }
 
-  return textReply;
+  return { reply: textReply, analytics };
 }
 
 // ======================================================
