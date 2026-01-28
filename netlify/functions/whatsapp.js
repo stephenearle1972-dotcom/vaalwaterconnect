@@ -426,12 +426,21 @@ Message: "${raw}"`;
     ? "Respond in Sepedi only."
     : "Respond in English only.";
 
+  // Use original user message for not-found display (preserves their language)
+  const userSearchTerm = raw.toLowerCase().replace(/[^a-zA-Z\s]/g, "").trim().split(" ").slice(0, 3).join(" ");
+
   const responsePrompt = `You are a directory bot. Search these listings for "${keyword}" and show matching results.
 
 ${langInstruction}
 
 LISTINGS:
 ${JSON.stringify(listings, null, 0)}
+
+CATEGORY MATCHING (important):
+- "elektrisien" / "electrician" = someone who FIXES electrical problems (wiring, plugs, lights) - NOT Eskom or electricity utilities
+- "loodgieter" / "plumber" = someone who FIXES plumbing (pipes, taps, geysers) - NOT water utilities
+- Only show emergency services (Eskom, MMLM, ambulance, police) if user specifically asks for "emergency", "noodgeval", "power outage", or "kragonderbreking"
+- Match the SERVICE TYPE, not just any word in the business name
 
 RULES:
 - Show 1-3 matching listings MAX
@@ -447,24 +456,17 @@ Business Name
 💬 WhatsApp: wa.me/27828552627
 🗺️ Directions: maps.google.com/?q=Address+Encoded
 
-EXAMPLE OUTPUT:
-Dr Emmarentia van Jaarsveld
-
-📞 Call: 0828552627
-💬 WhatsApp: wa.me/27828552627
-🗺️ Directions: maps.google.com/?q=244+Sandrift+Road+Vaalwater
-
 For emergency services without WhatsApp (like 10177), just show:
-🚨 Ambulance
+🚨 Service Name
 
 📞 Call: 10177
 
-If NO match for "${keyword}", respond EXACTLY:
+If NO match for "${keyword}", respond EXACTLY (use the user's original words "${userSearchTerm}"):
 ${userLang === "af"
-  ? `Geen "${keyword}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 0688986081`
+  ? `Geen "${userSearchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 0688986081`
   : userLang === "se"
-  ? `Ga go na "${keyword}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 0688986081`
-  : `No "${keyword}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 0688986081`
+  ? `Ga go na "${userSearchTerm}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 0688986081`
+  : `No "${userSearchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 0688986081`
 }`;
 
   try {
