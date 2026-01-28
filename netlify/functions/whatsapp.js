@@ -581,8 +581,8 @@ async function handleQuery({ text, from, source }) {
 
   if (allResults.length === 0) {
     const noResultsReply = lang === "af"
-      ? `Geen "${searchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap — lys hulle:\nvaalwaterconnect.co.za/#add-business`
-      : `No "${searchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community — add them:\nvaalwaterconnect.co.za/#add-business`;
+      ? `Geen "${searchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 068 898 6081`
+      : `No "${searchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 068 898 6081`;
     return {
       reply: noResultsReply,
       analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
