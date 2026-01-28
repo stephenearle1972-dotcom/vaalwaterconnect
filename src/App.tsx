@@ -2020,13 +2020,24 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpe
 
           {/* Secondary Buttons */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-            <button onClick={() => onNavigate('directory')} className="bg-sand/80 hover:bg-sand text-forest px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
+            <button
+              onClick={() => onNavigate('directory')}
+              className="text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 hover:opacity-90 shadow-lg"
+              style={{ backgroundColor: config.branding.colors.primary }}
+            >
               Browse Directory
             </button>
-            <button onClick={() => onNavigate('map')} className="bg-forest/80 hover:bg-forest text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
+            <button
+              onClick={() => onNavigate('map')}
+              className="text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 hover:opacity-90 shadow-lg"
+              style={{ backgroundColor: config.branding.colors.secondary }}
+            >
               Live Map
             </button>
-            <button onClick={() => onNavigate('category', { sector: 'emergency-services' })} className="bg-clay/80 hover:bg-clay text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
+            <button
+              onClick={() => onNavigate('category', { sector: 'emergency-services' })}
+              className="bg-red-600 hover:bg-red-700 text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg"
+            >
               Emergency Services
             </button>
           </div>
