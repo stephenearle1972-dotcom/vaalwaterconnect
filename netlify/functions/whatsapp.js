@@ -436,19 +436,28 @@ ${JSON.stringify(listings, null, 0)}
 RULES:
 - Show 1-3 matching listings MAX
 - NO greetings, NO follow-up questions
-- Emergency services get 🚨 prefix
+- Emergency services get 🚨 prefix before the name
+- Phone numbers must have NO SPACES (for auto-linking)
+- ONLY show fields that have data (skip WhatsApp if none, skip Directions if no address)
 
-CRITICAL FORMAT - use line breaks (\\n) between each line:
-*Name*\\n📞 phone\\n💬 wa.me/27...\\n🗺️ maps link\\n📍 address
+FORMAT (blank line after name, each field on own line):
+Business Name
 
-EXACT EXAMPLE OUTPUT:
-*Dr Smith*
-📞 082 555 1234
-💬 wa.me/27825551234
-🗺️ maps.google.com/?q=123+Main+Road+Vaalwater
-📍 123 Main Road, Vaalwater
+📞 Call: 0828552627
+💬 WhatsApp: wa.me/27828552627
+🗺️ Directions: maps.google.com/?q=Address+Encoded
 
-DO NOT use + or commas to join. Each line MUST be separate.
+EXAMPLE OUTPUT:
+Dr Emmarentia van Jaarsveld
+
+📞 Call: 0828552627
+💬 WhatsApp: wa.me/27828552627
+🗺️ Directions: maps.google.com/?q=244+Sandrift+Road+Vaalwater
+
+For emergency services without WhatsApp (like 10177), just show:
+🚨 Ambulance
+
+📞 Call: 10177
 
 If NO match for "${keyword}", respond EXACTLY:
 ${userLang === "af"
