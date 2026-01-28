@@ -581,8 +581,8 @@ async function handleQuery({ text, from, source }) {
 
   if (allResults.length === 0) {
     const noResultsReply = lang === "af"
-      ? `Jammer — geen lysinskrywing gevind vir "${searchTerm}" in ${townDisplay}.\nAntwoord ADD om 'n besigheid by te voeg.`
-      : `Sorry — no listing found for "${searchTerm}" in ${townDisplay}.\nReply ADD to submit a business.`;
+      ? `Geen "${searchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap — lys hulle:\nvaalwaterconnect.co.za/#add-business`
+      : `No "${searchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community — add them:\nvaalwaterconnect.co.za/#add-business`;
     return {
       reply: noResultsReply,
       analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
