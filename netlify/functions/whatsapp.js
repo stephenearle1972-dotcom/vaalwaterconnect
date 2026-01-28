@@ -15,16 +15,17 @@
  */
 async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, source }) {
   try {
-    const credsJson = process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS;
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
     const spreadsheetId = process.env.ANALYTICS_SPREADSHEET_ID;
     const sheetName = process.env.ANALYTICS_SHEET_NAME || "Analytics";
 
-    if (!credsJson || !spreadsheetId) {
+    if (!clientEmail || !privateKey || !spreadsheetId) {
       // Analytics not configured - skip silently
       return;
     }
 
-    const credentials = JSON.parse(credsJson);
+    const credentials = { client_email: clientEmail, private_key: privateKey };
     const accessToken = await getGoogleAccessToken(credentials);
 
     if (!accessToken) {
