@@ -22,10 +22,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   return (
     <>
-      {/* Floating Button - Teal color, positioned at bottom-20 (80px from bottom) */}
+      {/* Floating Button - Teal color, positioned at bottom-28 (112px from bottom) */}
       <button
         onClick={onOpen}
-        className={`fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 group ${isOpen ? 'hidden' : ''}`}
+        className={`fixed bottom-28 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 group ${isOpen ? 'hidden' : ''}`}
         style={{ backgroundColor: brandColor }}
         aria-label="Open chat assistant"
       >

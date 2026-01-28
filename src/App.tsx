@@ -4780,9 +4780,9 @@ const FloatingBotButton: React.FC = () => {
   if (!config.contact.botWhatsApp) return null;
 
   // Position depends on whether assistant is also shown
-  // Base position is bottom-20 (80px), with assistant adds another 72px (56px button + 16px gap)
+  // Base position is bottom-28 (112px), with assistant adds another 72px (56px button + 16px gap)
   const hasAssistant = config.features?.hasAssistant;
-  const bottomPosition = hasAssistant ? 'bottom-[152px]' : 'bottom-20';
+  const bottomPosition = hasAssistant ? 'bottom-[184px]' : 'bottom-28';
 
   return (
     <a
