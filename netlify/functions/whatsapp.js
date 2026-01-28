@@ -314,387 +314,112 @@ export async function handler(event) {
 }
 
 // ======================================================
-// Core logic: sentence -> intent keyword -> directory search
+// Core logic: Full AI assistant with listings context
 // ======================================================
 
 async function handleQuery({ text, from, source }) {
   const raw = (text || "").trim();
   if (!raw) return { reply: "OK", analytics: null };
 
-  // 1) Detect language (fast heuristic)
-  let lang = detectLanguage(raw); // "af" | "en"
-
-  // 2) Gemini AI intent extraction (enabled by default if API key exists)
   const geminiKey = process.env.GEMINI_API_KEY || "";
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
-  let searchTerm = "";
+  // Town config
+  const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
+  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
 
-  if (geminiKey) {
-    const ai = await geminiExtract({ text: raw, model: geminiModel, key: geminiKey });
-    if (ai?.language === "af" || ai?.language === "en") lang = ai.language;
-    if (ai?.searchTerm) searchTerm = ai.searchTerm;
-    console.log("GEMINI_EXTRACT:", raw, "→", searchTerm);
-  }
-
-  // 3) Fallback extraction (no AI, or AI failed)
-  if (!searchTerm) {
-    searchTerm = extractSearchTerm(raw, lang);
-  }
-
-  // 4) If we still have nothing usable
-  if (!searchTerm) {
-    const noTermReply = lang === "af"
-      ? "Stuur asseblief net 'n sleutelwoord, bv: loodgieter, haarkapper, dokter, apteek."
-      : "Please send a single keyword, e.g. plumber, hairdresser, doctor, pharmacy.";
-    return { reply: noTermReply, analytics: null };
-  }
-
-  // 5) Load BOTH CSV sheets and search
+  // 1) Load business listings from CSV
   const BUSINESS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv";
   const EMERGENCY_CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaY65eKywzkOD7O_-3RYXbe3lWShkASeR7EuK2lcv8E0ktarGhFsfYuv7tfvf6aSpbY8BHvM54Yy-t/pub?gid=1137836387&single=true&output=csv";
 
-  // Town filtering - defaults to Vaalwater, can be overridden via env var
-  const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
-  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
+  let listings = [];
 
-  // Fetch both sheets in parallel
-  const [businessRes, emergencyRes] = await Promise.all([
-    fetch(BUSINESS_CSV_URL),
-    fetch(EMERGENCY_CSV_URL),
-  ]);
-
-  const businessCsv = await businessRes.text();
-  const emergencyCsv = await emergencyRes.text();
-
-  // Parse both CSVs
-  const businessData = parseCSV(businessCsv);
-  const emergencyData = parseCSV(emergencyCsv);
-
-  // Check if we have any data
-  if (!businessData.rows.length && !emergencyData.rows.length) {
-    const unavailableReply = lang === "af"
-      ? "Jammer — die lys is tydelik onbeskikbaar. Probeer weer later."
-      : "Sorry — the directory is temporarily unavailable. Please try again later.";
-    return {
-      reply: unavailableReply,
-      analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
-    };
-  }
-
-  // Search tokens
-  const tokens = normalize(searchTerm).split(" ").filter(Boolean);
-
-  // Helper to find column index
-  const idxAny = (headers, ...names) => {
-    for (const n of names) {
-      const i = headers.indexOf(n);
-      if (i !== -1) return i;
-    }
-    return -1;
-  };
-
-  // =====================
-  // Search Business Sheet
-  // =====================
-  let businessResults = [];
-  if (businessData.headers.length && businessData.rows.length) {
-    const bh = businessData.headers;
-    const subIdx = idxAny(bh, "subcategory", "category", "type");
-    const nameIdx = idxAny(bh, "name", "business_name");
-    const phoneIdx = idxAny(bh, "phone", "telephone");
-    const waIdx = idxAny(bh, "whatsapp", "wa");
-    const emailIdx = idxAny(bh, "email");
-    const descIdx = idxAny(bh, "description", "desc");
-    const areaIdx = idxAny(bh, "address", "location", "area");
-    const townIdx = idxAny(bh, "town", "city", "region");
-    const tagsIdx = idxAny(bh, "tags", "keywords");
-    const latIdx = idxAny(bh, "lat", "latitude");
-    const lngIdx = idxAny(bh, "lng", "longitude", "lon");
-    const featuredIdx = idxAny(bh, "isFeatured", "featured");
-    const tierIdx = idxAny(bh, "tier");
-
-    // Filter by town
-    const townFiltered = townIdx !== -1
-      ? businessData.rows.filter((row) => {
-          const rowTown = (row[townIdx] || "").toLowerCase().trim();
-          return !rowTown || rowTown === CURRENT_TOWN;
-        })
-      : businessData.rows;
-
-    // Helper function to check if a token matches a whole word in text
-    const matchesWholeWord = (text, token) => {
-      if (!text || !token) return false;
-      const words = text.toLowerCase().split(/\s+/);
-      return words.some(word => {
-        // Exact match or word starts with token (for plurals like "gas" matching "gas-related")
-        return word === token || word.startsWith(token + '-') || word.startsWith(token + 's');
-      });
-    };
-
-    businessResults = townFiltered
-      .map((row) => {
-        const name = (row[nameIdx] || "").toLowerCase();
-        const tags = (row[tagsIdx] || "").toLowerCase();
-        const sector = (row[subIdx] || "").toLowerCase();
-        const desc = (row[descIdx] || "").toLowerCase();
-        const area = (row[areaIdx] || "").toLowerCase();
-
-        // Calculate weighted keyword match score
-        // Prioritize name and tags, weight description lower
-        let keywordScore = 0;
-        for (const t of tokens) {
-          // Name match - highest priority (10 points)
-          if (matchesWholeWord(name, t)) keywordScore += 10;
-          // Tags match - high priority (8 points)
-          if (matchesWholeWord(tags, t)) keywordScore += 8;
-          // Sector/subcategory match - high priority (8 points)
-          if (matchesWholeWord(sector, t)) keywordScore += 8;
-          // Area match - medium priority (5 points)
-          if (matchesWholeWord(area, t)) keywordScore += 5;
-          // Description match - lower priority (3 points)
-          if (matchesWholeWord(desc, t)) keywordScore += 3;
-        }
-
-        // Only apply boosts if there's a keyword match
-        let score = keywordScore;
-        if (keywordScore > 0) {
-          // Boost for featured businesses
-          const isFeatured = featuredIdx !== -1 &&
-            (row[featuredIdx] || "").toLowerCase() === "true";
-          if (isFeatured) score += 10;
-
-          // Boost for premium/hospitality tier
-          const tier = tierIdx !== -1 ? (row[tierIdx] || "").toLowerCase() : "";
-          if (tier === "premium" || tier === "hospitality") score += 5;
-        }
-
-        return {
-          score,
-          source: "business",
-          name: row[nameIdx] || "Unnamed",
-          desc: row[descIdx] || "",
-          phone: row[phoneIdx] || "",
-          wa: row[waIdx] || "",
-          email: row[emailIdx] || "",
-          area: row[areaIdx] || "",
-          lat: latIdx !== -1 && row[latIdx] ? parseFloat(row[latIdx]) : null,
-          lng: lngIdx !== -1 && row[lngIdx] ? parseFloat(row[lngIdx]) : null,
-        };
-      })
-      .filter((x) => x.score > 0);
-  }
-
-  // ======================
-  // Search Emergency Sheet
-  // ======================
-  let emergencyResults = [];
-  if (emergencyData.headers.length && emergencyData.rows.length) {
-    const eh = emergencyData.headers;
-    const nameIdx = idxAny(eh, "service_name", "name");
-    const catIdx = idxAny(eh, "category", "subcategory");
-    const phoneIdx = idxAny(eh, "primary_phone", "phone");
-    const phone2Idx = idxAny(eh, "secondary_phone");
-    const waIdx = idxAny(eh, "whatsapp", "wa");
-    const emailIdx = idxAny(eh, "email");
-    const hoursIdx = idxAny(eh, "hours");
-    const areaIdx = idxAny(eh, "coverage_area", "address", "area");
-    const townIdx = idxAny(eh, "town", "city");
-    const keywordsIdx = idxAny(eh, "keywords", "tags");
-    const notesIdx = idxAny(eh, "notes", "description");
-    const statusIdx = idxAny(eh, "status");
-
-    // Filter by town and active status
-    const townFiltered = emergencyData.rows.filter((row) => {
-      const rowTown = (row[townIdx] || "").toLowerCase().trim();
-      const status = (row[statusIdx] || "").toLowerCase().trim();
-      const townMatch = !rowTown || rowTown === CURRENT_TOWN;
-      const isActive = !status || status === "active";
-      return townMatch && isActive;
-    });
-
-    // Helper function to check if a token matches a whole word in text
-    const matchesWholeWordEmergency = (text, token) => {
-      if (!text || !token) return false;
-      const words = text.toLowerCase().split(/\s+/);
-      return words.some(word => {
-        return word === token || word.startsWith(token + '-') || word.startsWith(token + 's');
-      });
-    };
-
-    emergencyResults = townFiltered
-      .map((row) => {
-        const name = (row[nameIdx] || "").toLowerCase();
-        const cat = (row[catIdx] || "").toLowerCase();
-        const keywords = (row[keywordsIdx] || "").toLowerCase();
-        const notes = (row[notesIdx] || "").toLowerCase();
-        const area = (row[areaIdx] || "").toLowerCase();
-
-        // Calculate weighted keyword match score using whole-word matching
-        let score = 0;
-        for (const t of tokens) {
-          // Name match - highest priority
-          if (matchesWholeWordEmergency(name, t)) score += 10;
-          // Category match - high priority
-          if (matchesWholeWordEmergency(cat, t)) score += 8;
-          // Keywords match - high priority
-          if (matchesWholeWordEmergency(keywords, t)) score += 8;
-          // Area match - medium priority
-          if (matchesWholeWordEmergency(area, t)) score += 5;
-          // Notes/description match - lower priority
-          if (matchesWholeWordEmergency(notes, t)) score += 3;
-        }
-
-        // Build phone string (primary + secondary)
-        let phone = row[phoneIdx] || "";
-        if (row[phone2Idx]) phone += ` / ${row[phone2Idx]}`;
-
-        // Build description from notes + hours
-        let desc = row[notesIdx] || "";
-        if (row[hoursIdx]) desc = desc ? `${desc} (${row[hoursIdx]})` : `Hours: ${row[hoursIdx]}`;
-
-        return {
-          score,
-          source: "emergency",
-          name: row[nameIdx] || "Unnamed",
-          desc,
-          phone,
-          wa: row[waIdx] || "",
-          email: row[emailIdx] || "",
-          area: row[areaIdx] || "",
-          category: row[catIdx] || "",
-        };
-      })
-      .filter((x) => x.score > 0);
-  }
-
-  // =====================
-  // Merge & Rank Results
-  // =====================
-  const allSorted = [...emergencyResults, ...businessResults]
-    .sort((a, b) => b.score - a.score);
-
-  const totalCount = allSorted.length;
-  const allResults = allSorted.slice(0, 3); // Top 3 results only
-
-  if (allResults.length === 0) {
-    const noResultsReply = lang === "af"
-      ? `Geen "${searchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 068 898 6081`
-      : `No "${searchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 068 898 6081`;
-    return {
-      reply: noResultsReply,
-      analytics: { searchTerm, resultsCount: 0, businessesShown: "", town: townDisplay, source },
-    };
-  }
-
-  // Build reply (language-aware header)
-  const title =
-    lang === "af"
-      ? `🔎 ${capitalizeAf(searchTerm)} in ${townDisplay}:`
-      : `🔎 ${capitalize(searchTerm)} in ${townDisplay}:`;
-
-  const cards = allResults.map((r) => {
-    const lines = [];
-    // Add emoji prefix for emergency services
-    const prefix = r.source === "emergency" ? "🚨 " : "• ";
-    lines.push(`${prefix}*${r.name}*`);
-    if (r.desc) lines.push(r.desc);
-
-    // Format phone number(s) - clean format for easy copy/dial
-    if (r.phone) {
-      const formatted = formatPhone(r.phone);
-      lines.push(`📞 ${formatted}`);
-    }
-
-    if (r.wa) lines.push(`💬 wa.me/${formatPhone(r.wa).replace(/\D/g, "")}`);
-    if (r.email) lines.push(`✉️ ${r.email}`);
-    if (r.area) {
-      lines.push(`📍 ${r.area}`);
-    }
-    return lines.join("\n");
-  });
-
-  // Add dialing hint
-  const hint = lang === "af"
-    ? "\n\n_Kopieer nommer → plak in Dialer om te bel_"
-    : "\n\n_Copy number → paste in Dialer to call_";
-
-  // Add footer if more results exist
-  const footer = totalCount > 3
-    ? (lang === "af"
-        ? `\n\n_Wys top 3 van ${totalCount} resultate. Besoek vaalwaterconnect.co.za vir volledige gids_`
-        : `\n\n_Showing top 3 of ${totalCount} results. Visit vaalwaterconnect.co.za for full directory_`)
-    : "";
-
-  const textReply = `${title}\n\n${cards.join("\n\n")}${hint}${footer}`;
-
-  // Build list of business names shown for analytics
-  const businessesShown = allResults.map((r) => r.name).join(", ");
-
-  // Analytics data to log
-  const analytics = {
-    searchTerm,
-    resultsCount: totalCount,
-    businessesShown,
-    town: townDisplay,
-    source,
-  };
-
-  // Check if the top result has location data for tappable map pin
-  const topResult = allResults[0];
-  if (topResult && topResult.lat && topResult.lng && !isNaN(topResult.lat) && !isNaN(topResult.lng)) {
-    return {
-      reply: {
-        text: textReply,
-        location: {
-          latitude: topResult.lat,
-          longitude: topResult.lng,
-          name: topResult.name,
-          address: topResult.area || "",
-        },
-      },
-      analytics,
-    };
-  }
-
-  return { reply: textReply, analytics };
-}
-
-// ======================================================
-// Gemini intent (optional)
-// Returns { language: "af"|"en", searchTerm: string } or null
-// ======================================================
-
-async function geminiExtract({ text, model, key }) {
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      model
-    )}:generateContent?key=${encodeURIComponent(key)}`;
+    const [businessRes, emergencyRes] = await Promise.all([
+      fetch(BUSINESS_CSV_URL),
+      fetch(EMERGENCY_CSV_URL),
+    ]);
 
-    const prompt = `Extract the business type or service being searched for from this message.
-Return ONLY valid JSON with keys: language ("af" or "en"), searchTerm (lowercase keyword).
-If the message is in Afrikaans, return the English equivalent for searchTerm.
-If you can't determine a service, use the original message as searchTerm.
+    const businessCsv = await businessRes.text();
+    const emergencyCsv = await emergencyRes.text();
 
-Examples:
-- "I need a plumber" → {"language":"en","searchTerm":"plumber"}
-- "my tap is leaking" → {"language":"en","searchTerm":"plumber"}
-- "my geyser is broken" → {"language":"en","searchTerm":"plumber"}
-- "waar kry ek petrol" → {"language":"af","searchTerm":"garage fuel"}
-- "ek soek n haarkapper" → {"language":"af","searchTerm":"hairdresser salon"}
-- "waar kan ek eet" → {"language":"af","searchTerm":"restaurant"}
-- "restaurant" → {"language":"en","searchTerm":"restaurant"}
-- "wat is die dokter se nommer" → {"language":"af","searchTerm":"doctor"}
+    // Parse and convert to simple listing objects
+    listings = [
+      ...parseListingsFromCSV(businessCsv, CURRENT_TOWN, "business"),
+      ...parseListingsFromCSV(emergencyCsv, CURRENT_TOWN, "emergency"),
+    ];
+  } catch (err) {
+    console.log("CSV_FETCH_ERROR:", err.message);
+  }
 
-Message: ${JSON.stringify(text)}`;
+  // 2) If no Gemini key, fall back to error message
+  if (!geminiKey) {
+    return {
+      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 068 898 6081",
+      analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+    };
+  }
+
+  // 3) Build system prompt with all listings
+  const systemPrompt = `You are ${townDisplay}Connect's WhatsApp directory assistant. You help people find local businesses in ${townDisplay}, South Africa.
+
+You speak English, Afrikaans, and Sepedi. Reply in the SAME language the user writes in.
+
+AVAILABLE LISTINGS (${listings.length} total):
+${JSON.stringify(listings, null, 0)}
+
+RULES:
+- Keep responses SHORT (WhatsApp style, max 500 chars)
+- For EACH business you recommend, ALWAYS include:
+  • Name (bold with *)
+  • Phone number with 📞
+  • WhatsApp link: wa.me/27[number without leading 0]
+  • Address with 📍 if available
+- Show 1-3 most relevant matches only
+- If the query is vague, ask a clarifying question
+- Be friendly but concise
+- Emergency services get 🚨 prefix
+
+RESPONSE FORMAT for found listings:
+*Business Name*
+📞 0XX-XXX-XXXX
+💬 wa.me/27XXXXXXXXX
+📍 Address
+
+If NO relevant listing found, respond EXACTLY like this (in the user's language):
+For English: "No [search term] listed in ${townDisplay} yet.
+
+Know one? Help the community:
+📝 Add them: vaalwaterconnect.co.za/#add-business
+💬 Or WhatsApp us: 068 898 6081"
+
+For Afrikaans: "Geen [soekterm] in ${townDisplay} gelys nie.
+
+Ken jy een? Help die gemeenskap:
+📝 Lys hulle: vaalwaterconnect.co.za/#add-business
+💬 Of WhatsApp ons: 068 898 6081"
+
+For Sepedi: "Ga go na [search term] yeo e ngwadilwego go ${townDisplay}.
+
+O tseba yo mongwe? Thuša setšhaba:
+📝 Ba lokele: vaalwaterconnect.co.za/#add-business
+💬 Goba WhatsApp rena: 068 898 6081"`;
+
+  // 4) Call Gemini
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
 
     const payload = {
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      contents: [
+        { role: "user", parts: [{ text: systemPrompt }] },
+        { role: "model", parts: [{ text: "Understood. I'll help users find businesses in " + townDisplay + " using the listings provided. I'll respond in their language and keep it short for WhatsApp." }] },
+        { role: "user", parts: [{ text: raw }] },
+      ],
       generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 60,
+        temperature: 0.3,
+        maxOutputTokens: 500,
       },
     };
 
@@ -705,36 +430,85 @@ Message: ${JSON.stringify(text)}`;
     });
 
     const data = await res.json();
-    const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const parsed = safeJson(out);
+    const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    if (!parsed) return null;
-    if (!parsed.searchTerm || typeof parsed.searchTerm !== "string") return null;
+    console.log("GEMINI_FULL_AI:", raw, "→", aiReply.substring(0, 100) + "...");
 
-    return {
-      language: parsed.language === "af" ? "af" : "en",
-      searchTerm: String(parsed.searchTerm).trim(),
-    };
-  } catch (e) {
-    console.log("GEMINI_EXTRACT_FAILED", e);
-    return null;
-  }
-}
+    if (aiReply) {
+      // Extract business names mentioned for analytics
+      const mentionedBusinesses = listings
+        .filter(l => aiReply.includes(l.name))
+        .map(l => l.name)
+        .join(", ");
 
-function safeJson(s) {
-  try {
-    return JSON.parse(s);
-  } catch {
-    // try to salvage if model adds stray text
-    const m = s.match(/\{[\s\S]*\}/);
-    if (!m) return null;
-    try {
-      return JSON.parse(m[0]);
-    } catch {
-      return null;
+      return {
+        reply: aiReply,
+        analytics: {
+          searchTerm: raw,
+          resultsCount: mentionedBusinesses ? mentionedBusinesses.split(",").length : 0,
+          businessesShown: mentionedBusinesses,
+          town: townDisplay,
+          source,
+        },
+      };
     }
+  } catch (err) {
+    console.log("GEMINI_FULL_AI_ERROR:", err.message);
   }
+
+  // 5) Fallback if Gemini fails
+  return {
+    reply: "Sorry, something went wrong. WhatsApp us directly: 068 898 6081",
+    analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+  };
 }
+
+// Parse CSV to simple listing objects for AI context
+function parseListingsFromCSV(csvText, townFilter, type) {
+  const data = parseCSV(csvText);
+  if (!data.headers.length || !data.rows.length) return [];
+
+  const h = data.headers;
+  const idxAny = (headers, ...names) => {
+    for (const n of names) {
+      const i = headers.indexOf(n);
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+
+  const nameIdx = idxAny(h, "name", "service_name", "business_name");
+  const phoneIdx = idxAny(h, "phone", "primary_phone", "telephone");
+  const waIdx = idxAny(h, "whatsapp", "wa");
+  const descIdx = idxAny(h, "description", "desc", "notes");
+  const areaIdx = idxAny(h, "address", "location", "area", "coverage_area");
+  const townIdx = idxAny(h, "town", "city", "region");
+  const catIdx = idxAny(h, "subcategory", "category", "type");
+  const tagsIdx = idxAny(h, "tags", "keywords");
+  const statusIdx = idxAny(h, "status");
+
+  return data.rows
+    .filter(row => {
+      const rowTown = (row[townIdx] || "").toLowerCase().trim();
+      const status = (row[statusIdx] || "").toLowerCase().trim();
+      const townMatch = !rowTown || rowTown === townFilter;
+      const isActive = !status || status === "active";
+      return townMatch && isActive;
+    })
+    .map(row => ({
+      type,
+      name: row[nameIdx] || "",
+      category: row[catIdx] || "",
+      phone: row[phoneIdx] || "",
+      whatsapp: row[waIdx] || row[phoneIdx] || "",
+      address: row[areaIdx] || "",
+      description: row[descIdx] || "",
+      tags: row[tagsIdx] || "",
+    }))
+    .filter(l => l.name); // Only include listings with names
+}
+
+
 
 // ======================================================
 // CSV parsing (robust quoted fields)
@@ -777,148 +551,8 @@ function parseCSVLine(text) {
 }
 
 // ======================================================
-// Language + intent extraction (fallback, no AI)
-// ======================================================
-
-function detectLanguage(text) {
-  const t = normalize(text);
-  const afHints = [
-    "wat",
-    "waar",
-    "wie",
-    "hoe",
-    "wanneer",
-    "watter",
-    "asseblief",
-    "nommer",
-    "se",
-    "vir",
-    "ek",
-    "my",
-    "nodig",
-    "vandag",
-    "loodgieter",
-    "haarkapper",
-    "dokter",
-    "apteek",
-  ];
-  let hits = 0;
-  for (const w of afHints) if (t.includes(` ${w} `) || t.startsWith(w + " ")) hits++;
-  return hits >= 2 ? "af" : "en";
-}
-
-function extractSearchTerm(text, lang) {
-  // normalize
-  let t = normalize(text);
-
-  // common phrase -> category mapping (expand anytime)
-  const phraseMap = [
-    { match: ["geyser", "geiser", "geysers"], term: "plumber" },
-    { match: ["loodgieter"], term: "plumber" },
-    { match: ["haarkapper", "hairdresser", "hair dresser"], term: "hairdresser" },
-    { match: ["barber", "barbershop", "barber shop"], term: "barber" },
-    { match: ["dokter", "doctor", "gp", "general practitioner"], term: "doctor" },
-    { match: ["tandarts", "dentist"], term: "dentist" },
-    { match: ["apteek", "pharmacy"], term: "pharmacy" },
-  ];
-
-  for (const item of phraseMap) {
-    for (const m of item.match) {
-      if (t.includes(m)) return item.term;
-    }
-  }
-
-  // remove question fluff
-  const stopwordsAf = new Set([
-    "wat",
-    "waar",
-    "wie",
-    "hoe",
-    "wanneer",
-    "watter",
-    "is",
-    "die",
-    "n",
-    "’n",
-    "se",
-    "vir",
-    "asb",
-    "asseblief",
-    "nommer",
-    "nommers",
-    "kontak",
-    "contact",
-    "ek",
-    "my",
-    "nodig",
-    "vandag",
-    "nou",
-    "in",
-    "by",
-    "van",
-  ]);
-
-  const stopwordsEn = new Set([
-    "what",
-    "where",
-    "who",
-    "how",
-    "when",
-    "which",
-    "is",
-    "the",
-    "a",
-    "an",
-    "please",
-    "number",
-    "contact",
-    "need",
-    "someone",
-    "today",
-    "now",
-    "in",
-    "at",
-    "for",
-    "of",
-    "to",
-    "me",
-    "my",
-  ]);
-
-  const stop = lang === "af" ? stopwordsAf : stopwordsEn;
-
-  const words = t.split(" ").filter(Boolean).filter((w) => !stop.has(w));
-
-  // If user typed a clean keyword already, it survives here
-  // If it was a sentence, the “real” keyword usually survives too
-  if (words.length === 0) return "";
-
-  // choose last meaningful word if it looks like a noun
-  // (because Afrikaans questions often end with the noun)
-  const chosen = words[words.length - 1];
-
-  // but if there are 2-3 words, keep them (e.g. "chimney sweep", "car wash")
-  if (words.length >= 2) {
-    const last2 = words.slice(-2).join(" ");
-    // allow short phrases
-    if (last2.length <= 24) return last2;
-  }
-
-  return chosen;
-}
-
-// ======================================================
 // Helpers
 // ======================================================
-
-function normalize(s) {
-  return String(s || "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .padStart(1, " ");
-}
 
 /**
  * Format phone number for WhatsApp display
@@ -982,17 +616,6 @@ function formatLocalWithDashes(digits) {
     return digits.replace(/(\d{4})(\d{3})(\d{4})/, "$1-$2-$3");
   }
   return digits;
-}
-
-function capitalize(str) {
-  str = String(str || "").trim();
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function capitalizeAf(str) {
-  // Same as capitalize, but kept separate if you later want Afrikaans-specific tweaks
-  return capitalize(str);
 }
 
 function textResponse(message) {
