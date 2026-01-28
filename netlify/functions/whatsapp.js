@@ -331,7 +331,7 @@ async function handleQuery({ text, from, source }) {
   // If no Gemini key, fall back to error message
   if (!geminiKey) {
     return {
-      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 068 898 6081",
+      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 0688986081",
       analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
     };
   }
@@ -461,10 +461,10 @@ For emergency services without WhatsApp (like 10177), just show:
 
 If NO match for "${keyword}", respond EXACTLY:
 ${userLang === "af"
-  ? `Geen "${keyword}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 068 898 6081`
+  ? `Geen "${keyword}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 0688986081`
   : userLang === "se"
-  ? `Ga go na "${keyword}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 068 898 6081`
-  : `No "${keyword}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 068 898 6081`
+  ? `Ga go na "${keyword}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 0688986081`
+  : `No "${keyword}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 0688986081`
 }`;
 
   try {
@@ -506,7 +506,7 @@ ${userLang === "af"
 
   // Fallback if Gemini fails
   return {
-    reply: "Sorry, something went wrong. WhatsApp us directly: 068 898 6081",
+    reply: "Sorry, something went wrong. WhatsApp us directly: 0688986081",
     analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
   };
 }
