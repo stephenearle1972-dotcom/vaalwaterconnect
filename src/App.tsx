@@ -562,28 +562,14 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
 
   const tiers = [
     {
-      name: 'Micro',
-      monthlyPrice: config.pricing.micro.monthly,
-      annualPrice: config.pricing.micro.annual,
-      period: isAnnual ? '/ year' : '/ month',
-      badge: 'First Month Free!',
-      features: [
-        'Basic listing (name, phone, area)',
-        'Visible in directory',
-        'Perfect for gardeners, handymen, domestic workers'
-      ],
-      icon: '🌱',
-      tierName: 'MICRO',
-      savingsNote: isAnnual ? '(2 months free)' : null
-    },
-    {
       name: 'Standard',
       monthlyPrice: config.pricing.standard.monthly,
       annualPrice: config.pricing.standard.annual,
       period: isAnnual ? '/ year' : '/ month',
       badge: isAnnual ? '1 Month Free!' : null,
       features: [
-        'Everything in Micro',
+        'Business name & description',
+        'Phone number',
         'WhatsApp link',
         'Email link',
         'Website link',
@@ -660,7 +646,7 @@ const PricingView: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigat
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {tiers.map((tier) => (
           <div key={tier.name} className={`relative p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] card-classy flex flex-col h-full ${tier.highlighted ? 'border-clay shadow-3xl md:scale-105 z-10 bg-[#fdfbf7]' : 'bg-white'}`}>
             {tier.badge && (
@@ -859,14 +845,12 @@ declare global {
 
 // Tier prices for PayFast payment
 const TIER_PRICES: Record<string, number> = {
-  micro: 50,
   standard: 199,
   premium: 349,
   enterprise: 599,
 };
 
 const TIER_NAMES: Record<string, string> = {
-  micro: 'Micro',
   standard: 'Standard',
   premium: 'Premium',
   enterprise: 'Enterprise / Lodge',
@@ -1590,8 +1574,9 @@ const AddBusinessView: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     businessName: '',
+    contactName: '',
     sectorId: '',
-    tier: 'micro',
+    tier: 'standard',
     phone: '',
     email: '',
     description: '',
@@ -1599,9 +1584,19 @@ const AddBusinessView: React.FC = () => {
     popiaConsent: false
   });
 
+  // Photo limits by tier
+  const TIER_PHOTO_LIMITS: Record<string, number> = {
+    standard: 3,
+    premium: 10,
+    enterprise: 20,
+  };
+
+  const getPhotoLimit = () => TIER_PHOTO_LIMITS[formData.tier] || 3;
+
   const openCloudinaryWidget = () => {
-    if (uploadedImages.length >= 3) {
-      alert('Maximum 3 photos allowed. Remove one to add another.');
+    const photoLimit = getPhotoLimit();
+    if (uploadedImages.length >= photoLimit) {
+      alert(`Maximum ${photoLimit} photos allowed for ${TIER_NAMES[formData.tier] || 'Standard'} plan. Remove one to add another.`);
       return;
     }
 
@@ -1611,7 +1606,7 @@ const AddBusinessView: React.FC = () => {
         uploadPreset: 'vaalwater_unsigned',
         sources: ['local', 'camera'],
         multiple: true,
-        maxFiles: 3 - uploadedImages.length,
+        maxFiles: photoLimit - uploadedImages.length,
         resourceType: 'image',
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
         maxFileSize: 5000000,
@@ -1648,7 +1643,7 @@ const AddBusinessView: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.popiaConsent || !formData.tier || !formData.phone || !formData.address) return;
+    if (!formData.popiaConsent || !formData.tier || !formData.phone || !formData.address || !formData.contactName) return;
 
     const form = e.target as HTMLFormElement;
     const formDataToSend = new FormData(form);
@@ -1664,8 +1659,8 @@ const AddBusinessView: React.FC = () => {
 
       // Then redirect to PayFast
       const paymentId = `${config.town.name.toUpperCase()}-${Date.now()}`;
-      const amount = TIER_PRICES[formData.tier] || 50;
-      const tierName = TIER_NAMES[formData.tier] || 'Micro';
+      const amount = TIER_PRICES[formData.tier] || 199;
+      const tierName = TIER_NAMES[formData.tier] || 'Standard';
 
       const payFastForm = document.createElement('form');
       payFastForm.method = 'POST';
@@ -1740,37 +1735,40 @@ const AddBusinessView: React.FC = () => {
             <input required type="text" name="businessName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-2xl font-serif italic" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
           </div>
           <div className="space-y-4">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Person *</label>
+            <input required type="text" name="contactName" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Your name" value={formData.contactName} onChange={e => setFormData({...formData, contactName: e.target.value})} />
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-10">
+          <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sector *</label>
             <select required name="sector" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.sectorId} onChange={e => setFormData({...formData, sectorId: e.target.value as SectorId})}>
               <option value="">Select a Sector</option>
               {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
-        </div>
-        <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan *</label>
             <select required name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
-              <option value="micro">Micro (R50/month) - First month free!</option>
               <option value="standard">Standard (R199/month)</option>
               <option value="premium">Premium (R349/month)</option>
               <option value="enterprise">Enterprise / Lodge (R599/month)</option>
             </select>
           </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Email *</label>
             <input required type="email" name="email" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
           </div>
-        </div>
-        <div className="grid md:grid-cols-2 gap-10">
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number *</label>
             <input required type="tel" name="phone" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="+27 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
           </div>
-          <div className="space-y-4">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address *</label>
-            <input required type="text" name="address" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Street, Town" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-          </div>
+        </div>
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address *</label>
+          <input required type="text" name="address" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl font-serif" placeholder="Street, Town" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
         </div>
         <div className="space-y-4">
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Description</label>
@@ -1778,7 +1776,7 @@ const AddBusinessView: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Photos (up to 3)</label>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Photos (up to {getPhotoLimit()})</label>
           <div className="flex flex-wrap gap-4">
             {uploadedImages.map((url, index) => (
               <div key={index} className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-sand">
