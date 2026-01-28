@@ -314,7 +314,7 @@ export async function handler(event) {
 }
 
 // ======================================================
-// Core logic: Full AI assistant with listings context
+// Core logic: Two-step AI (extract keyword → search listings)
 // ======================================================
 
 async function handleQuery({ text, from, source }) {
@@ -328,7 +328,71 @@ async function handleQuery({ text, from, source }) {
   const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
   const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
 
-  // 1) Load business listings from CSV
+  // If no Gemini key, fall back to error message
+  if (!geminiKey) {
+    return {
+      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 068 898 6081",
+      analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+    };
+  }
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
+
+  // =====================================================
+  // STEP 1: Extract keyword from user message
+  // =====================================================
+  let keyword = raw; // Default to raw message
+  let userLang = "en"; // Default language
+
+  try {
+    const extractPrompt = `What service or business type does this person need?
+Reply with ONLY 1-2 words in English (the service type), nothing else.
+Also detect language: start your reply with "AF:" for Afrikaans, "SE:" for Sepedi, or "EN:" for English.
+
+Examples:
+- "my geyser is broken" → EN:plumber
+- "ek soek n loodgieter" → AF:plumber
+- "waar kan ek eet" → AF:restaurant
+- "garage" → EN:garage
+- "Ke nyaka ngaka" → SE:doctor
+- "I need a haircut" → EN:hairdresser
+
+Message: "${raw}"`;
+
+    const extractRes = await fetch(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: extractPrompt }] }],
+        generationConfig: { temperature: 0, maxOutputTokens: 20 },
+      }),
+    });
+
+    const extractData = await extractRes.json();
+    const extractedText = (extractData?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+
+    console.log("STEP1_EXTRACT:", raw, "→", extractedText);
+
+    // Parse language and keyword
+    if (extractedText.startsWith("AF:")) {
+      userLang = "af";
+      keyword = extractedText.slice(3).trim().toLowerCase();
+    } else if (extractedText.startsWith("SE:")) {
+      userLang = "se";
+      keyword = extractedText.slice(3).trim().toLowerCase();
+    } else if (extractedText.startsWith("EN:")) {
+      userLang = "en";
+      keyword = extractedText.slice(3).trim().toLowerCase();
+    } else {
+      keyword = extractedText.toLowerCase().replace(/[^a-z\s]/g, "").trim();
+    }
+  } catch (err) {
+    console.log("STEP1_ERROR:", err.message);
+  }
+
+  // =====================================================
+  // STEP 2: Load listings and search with keyword
+  // =====================================================
   const BUSINESS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv";
   const EMERGENCY_CSV_URL =
@@ -345,7 +409,6 @@ async function handleQuery({ text, from, source }) {
     const businessCsv = await businessRes.text();
     const emergencyCsv = await emergencyRes.text();
 
-    // Parse and convert to simple listing objects
     listings = [
       ...parseListingsFromCSV(businessCsv, CURRENT_TOWN, "business"),
       ...parseListingsFromCSV(emergencyCsv, CURRENT_TOWN, "emergency"),
@@ -354,89 +417,50 @@ async function handleQuery({ text, from, source }) {
     console.log("CSV_FETCH_ERROR:", err.message);
   }
 
-  // 2) If no Gemini key, fall back to error message
-  if (!geminiKey) {
-    return {
-      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 068 898 6081",
-      analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
-    };
-  }
+  // =====================================================
+  // STEP 3: Generate response with keyword + listings
+  // =====================================================
+  const langInstruction = userLang === "af"
+    ? "Respond in Afrikaans only."
+    : userLang === "se"
+    ? "Respond in Sepedi only."
+    : "Respond in English only.";
 
-  // 3) Build system prompt with all listings
-  const systemPrompt = `You are ${townDisplay}Connect's WhatsApp directory bot.
+  const responsePrompt = `You are a directory bot. Search these listings for "${keyword}" and show matching results.
 
-STRICT RULES:
-1. You are a DIRECTORY, not a chatbot — NO small talk, NO "how can I help", NO greetings
-2. ALWAYS search for a relevant business FIRST — NEVER ask clarifying questions
-3. Match the user's language EXACTLY (English → English, Afrikaans → Afrikaans, Sepedi → Sepedi)
-4. ONLY mention information from the listings data — NEVER invent features, offers, or comparisons
-5. Keep responses SHORT and direct (max 400 chars)
-6. NEVER ask follow-up questions like "want to compare?" or "need anything else?" or "can I help with anything else?"
-7. If no match found, show the not-found message IMMEDIATELY
-8. Emergency services get 🚨 prefix
+${langInstruction}
 
-AVAILABLE LISTINGS:
+LISTINGS:
 ${JSON.stringify(listings, null, 0)}
 
-RESPONSE FORMAT (when found):
-*Business Name*
-📞 0XX-XXX-XXXX
-💬 wa.me/27XXXXXXXXX
-📍 Address
+RULES:
+- Show 1-3 matching listings MAX
+- Format each as: *Name* + 📞 phone + 💬 wa.me/27... + 📍 address
+- NO greetings, NO follow-up questions, NO "anything else?"
+- Emergency services get 🚨 prefix
 
-RESPONSE FORMAT (not found - English):
-No "[search term]" listed in ${townDisplay} yet.
+If NO match for "${keyword}", respond EXACTLY:
+${userLang === "af"
+  ? `Geen "${keyword}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 068 898 6081`
+  : userLang === "se"
+  ? `Ga go na "${keyword}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 068 898 6081`
+  : `No "${keyword}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 068 898 6081`
+}`;
 
-Know one? Help the community:
-📝 Add them: vaalwaterconnect.co.za/#add-business
-💬 Or WhatsApp us: 068 898 6081
-
-RESPONSE FORMAT (not found - Afrikaans):
-Geen "[soekterm]" in ${townDisplay} gelys nie.
-
-Ken jy een? Help die gemeenskap:
-📝 Lys hulle: vaalwaterconnect.co.za/#add-business
-💬 Of WhatsApp ons: 068 898 6081
-
-WRONG (never do this):
-- "I'm sorry to hear that. Are you looking for someone to fix it?" ❌
-- "Want to compare options?" ❌
-- "Hoe kan ek jou help?" ❌
-- "Is there anything else you need?" ❌
-- Mixing languages in one response ❌
-- Inventing features not in the listing ❌
-
-RIGHT:
-- User: "garage" → Show listing, nothing else
-- User: "my geyser is broken" → Show plumber listing
-- User: "ek soek n loodgieter" → Show plumber listing (respond in Afrikaans)`;
-
-  // 4) Call Gemini
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
-
-    const payload = {
-      contents: [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        { role: "model", parts: [{ text: "Understood. I will only show listings. No chat. No questions. Match user's language exactly." }] },
-        { role: "user", parts: [{ text: raw }] },
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 400,
-      },
-    };
-
-    const res = await fetch(url, {
+    const res = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: responsePrompt }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
+      }),
     });
 
     const data = await res.json();
     const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    console.log("GEMINI_FULL_AI:", raw, "→", aiReply.substring(0, 100) + "...");
+    console.log("STEP3_RESPONSE:", keyword, "→", aiReply.substring(0, 100) + "...");
 
     if (aiReply) {
       // Extract business names mentioned for analytics
@@ -448,7 +472,7 @@ RIGHT:
       return {
         reply: aiReply,
         analytics: {
-          searchTerm: raw,
+          searchTerm: keyword, // Use extracted keyword for analytics
           resultsCount: mentionedBusinesses ? mentionedBusinesses.split(",").length : 0,
           businessesShown: mentionedBusinesses,
           town: townDisplay,
@@ -457,10 +481,10 @@ RIGHT:
       };
     }
   } catch (err) {
-    console.log("GEMINI_FULL_AI_ERROR:", err.message);
+    console.log("STEP3_ERROR:", err.message);
   }
 
-  // 5) Fallback if Gemini fails
+  // Fallback if Gemini fails
   return {
     reply: "Sorry, something went wrong. WhatsApp us directly: 068 898 6081",
     analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
