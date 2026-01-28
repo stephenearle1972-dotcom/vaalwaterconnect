@@ -1920,6 +1920,15 @@ const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: an
 };
 
 const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpenAssistant?: () => void }> = ({ onNavigate, onOpenAssistant }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onNavigate('search', { q: searchQuery });
+    }
+  };
+
   return (
     <div className="animate-fade">
       <section className="relative min-h-[600px] sm:min-h-[700px] md:min-h-[850px] flex items-center justify-center px-4 sm:px-6 overflow-hidden py-12 sm:py-16">
@@ -1983,6 +1992,25 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpe
             </button>
           </div>
 
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-8 sm:mb-10 px-2">
+            <form onSubmit={handleSearch} className="relative group">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`where can i find... in ${config.town.name}?`}
+                className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-full py-3 sm:py-4 pl-5 sm:pl-6 pr-12 sm:pr-16 text-sm sm:text-base font-serif italic text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-xl"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-forest p-2 sm:p-3 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </button>
+            </form>
+          </div>
+
           {/* Divider */}
           <div className="flex items-center justify-center gap-4 mb-6 sm:mb-8">
             <div className="h-px w-12 sm:w-20 bg-white/30"></div>
@@ -1992,13 +2020,13 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpe
 
           {/* Secondary Buttons */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-            <button onClick={() => onNavigate('directory')} className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/20 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium text-xs sm:text-sm transition-all hover:scale-105">
+            <button onClick={() => onNavigate('directory')} className="bg-sand/80 hover:bg-sand text-forest px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
               Browse Directory
             </button>
-            <button onClick={() => onNavigate('map')} className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/20 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium text-xs sm:text-sm transition-all hover:scale-105">
+            <button onClick={() => onNavigate('map')} className="bg-forest/80 hover:bg-forest text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
               Live Map
             </button>
-            <button onClick={() => onNavigate('category', { sector: 'emergency-services' })} className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/20 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium text-xs sm:text-sm transition-all hover:scale-105">
+            <button onClick={() => onNavigate('category', { sector: 'emergency-services' })} className="bg-clay/80 hover:bg-clay text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-lg">
               Emergency Services
             </button>
           </div>
