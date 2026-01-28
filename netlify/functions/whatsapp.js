@@ -435,9 +435,25 @@ ${JSON.stringify(listings, null, 0)}
 
 RULES:
 - Show 1-3 matching listings MAX
-- Format each as: *Name* + 📞 phone + 💬 wa.me/27... + 📍 address
+- Each item on its OWN LINE (important for WhatsApp formatting)
 - NO greetings, NO follow-up questions, NO "anything else?"
 - Emergency services get 🚨 prefix
+
+FORMAT (each on new line):
+*Business Name*
+📞 phone number
+💬 wa.me/27XXXXXXXXX
+🗺️ maps.google.com/?q=Address+With+Plus+Signs
+📍 Full address
+
+EXAMPLE:
+*Dr Smith*
+📞 082 555 1234
+💬 wa.me/27825551234
+🗺️ maps.google.com/?q=123+Main+Road+Vaalwater
+📍 123 Main Road, Vaalwater
+
+IMPORTANT: Put each emoji line on its own line. Never combine lines.
 
 If NO match for "${keyword}", respond EXACTLY:
 ${userLang === "af"
@@ -453,7 +469,7 @@ ${userLang === "af"
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: responsePrompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 500 },
       }),
     });
 
