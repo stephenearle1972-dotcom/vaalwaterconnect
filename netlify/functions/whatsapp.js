@@ -435,25 +435,20 @@ ${JSON.stringify(listings, null, 0)}
 
 RULES:
 - Show 1-3 matching listings MAX
-- Each item on its OWN LINE (important for WhatsApp formatting)
-- NO greetings, NO follow-up questions, NO "anything else?"
+- NO greetings, NO follow-up questions
 - Emergency services get 🚨 prefix
 
-FORMAT (each on new line):
-*Business Name*
-📞 phone number
-💬 wa.me/27XXXXXXXXX
-🗺️ maps.google.com/?q=Address+With+Plus+Signs
-📍 Full address
+CRITICAL FORMAT - use line breaks (\\n) between each line:
+*Name*\\n📞 phone\\n💬 wa.me/27...\\n🗺️ maps link\\n📍 address
 
-EXAMPLE:
+EXACT EXAMPLE OUTPUT:
 *Dr Smith*
 📞 082 555 1234
 💬 wa.me/27825551234
 🗺️ maps.google.com/?q=123+Main+Road+Vaalwater
 📍 123 Main Road, Vaalwater
 
-IMPORTANT: Put each emoji line on its own line. Never combine lines.
+DO NOT use + or commas to join. Each line MUST be separate.
 
 If NO match for "${keyword}", respond EXACTLY:
 ${userLang === "af"
