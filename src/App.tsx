@@ -1919,7 +1919,7 @@ const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: an
   );
 };
 
-const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = ({ onNavigate }) => {
+const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpenAssistant?: () => void }> = ({ onNavigate, onOpenAssistant }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -1975,6 +1975,17 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void }> = (
                 <BotIcon className="w-4 h-4 sm:w-5 sm:h-5" color="white" />
                 Ask the Bot
               </a>
+            )}
+            {config.features?.hasAssistant && onOpenAssistant && (
+              <button
+                onClick={onOpenAssistant}
+                className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-5 sm:px-7 md:px-10 py-3 sm:py-4 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-2xl transition-all hover:scale-105 flex items-center gap-1 sm:gap-2"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Ask AI
+              </button>
             )}
           </div>
         </div>
@@ -4769,8 +4780,9 @@ const FloatingBotButton: React.FC = () => {
   if (!config.contact.botWhatsApp) return null;
 
   // Position depends on whether assistant is also shown
+  // Base position is bottom-20 (80px), with assistant adds another 72px (56px button + 16px gap)
   const hasAssistant = config.features?.hasAssistant;
-  const bottomPosition = hasAssistant ? 'bottom-[104px]' : 'bottom-6'; // 56px button + 24px gap + 24px base
+  const bottomPosition = hasAssistant ? 'bottom-[152px]' : 'bottom-20';
 
   return (
     <a
@@ -4790,6 +4802,7 @@ const FloatingBotButton: React.FC = () => {
 
 export default function App() {
   const [navigation, setNavigation] = useState<{ page: Page, params: any }>({ page: 'home', params: {} });
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -4823,7 +4836,7 @@ export default function App() {
 
   const renderContent = () => {
     switch (navigation.page) {
-      case 'home': return <HomeView onNavigate={navigateTo} />;
+      case 'home': return <HomeView onNavigate={navigateTo} onOpenAssistant={() => setIsAssistantOpen(true)} />;
       case 'directory': return <DirectoryView onNavigate={navigateTo} />;
       case 'category':
         // Use specialized EmergencyServicesView for emergency-services sector
@@ -4874,6 +4887,9 @@ export default function App() {
         assistantUrl="https://vaalwater-assistant.netlify.app"
         brandColor="#0891b2"
         enabled={config.features?.hasAssistant === true}
+        isOpen={isAssistantOpen}
+        onOpen={() => setIsAssistantOpen(true)}
+        onClose={() => setIsAssistantOpen(false)}
       />
     </div>
   );
