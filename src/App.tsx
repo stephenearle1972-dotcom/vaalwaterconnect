@@ -5,6 +5,7 @@ import config from './configs';
 import L from 'leaflet';
 import { BotIcon } from './components/icons/BotIcon';
 import { ChatWidget } from './components/ChatWidget';
+import TownConnectBadge from './components/TownConnectBadge';
 
 // Get data from the current town's config
 const { sectors: SECTORS, businesses: BUSINESSES, jobs: JOBS, events: EVENTS, classifieds: CLASSIFIEDS, properties: PROPERTIES, announcements: ANNOUNCEMENTS } = config.data;
@@ -318,6 +319,7 @@ const Footer: React.FC<{ onNavigate: (page: Page) => void }> = ({ onNavigate }) 
         <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">&copy; {new Date().getFullYear()} {siteName}. All rights reserved.</p>
       </div>
     </div>
+    <TownConnectBadge />
   </footer>
 );
 
