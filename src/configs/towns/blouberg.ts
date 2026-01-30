@@ -32,7 +32,7 @@ export const bloubergConfig: TownConfig = {
       secondary: '#f4a261',  // Sandy gold
       accent: '#caf0f8',     // Pale blue (sea foam)
     },
-    heroImage: '', // Will use CSS gradient as placeholder
+    heroImage: 'https://res.cloudinary.com/dkn6tnxao/image/upload/v1768154086/EF8A1553-2_y0i9rc.jpg',
     faviconEmoji: 'B',
     faviconColor: '#0077b6', // Ocean blue for favicon
   },
