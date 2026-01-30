@@ -41,7 +41,7 @@ export const bloubergConfig: TownConfig = {
     whatsapp: '',
     email: 'hello@bloubergconnect.co.za',
     phone: '',
-    // botWhatsApp not set - WhatsApp bot only available for Vaalwater currently
+    botWhatsApp: '27632740406', // WhatsApp bot for directory search
   },
 
   location: {
