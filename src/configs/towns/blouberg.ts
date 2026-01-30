@@ -44,6 +44,11 @@ export const bloubergConfig: TownConfig = {
     botWhatsApp: '27632740406', // WhatsApp bot for directory search
   },
 
+  features: {
+    hasAssistant: true, // Blouberg has the AI chat assistant deployed
+    assistantUrl: 'https://blouberg-assistant.netlify.app',
+  },
+
   location: {
     center: { lat: -33.7972, lng: 18.4620 },
     zoom: 13,

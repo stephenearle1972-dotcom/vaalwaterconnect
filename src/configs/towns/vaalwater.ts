@@ -57,6 +57,7 @@ export const vaalwaterConfig: TownConfig = {
 
   features: {
     hasAssistant: true, // Vaalwater has the AI chat assistant deployed
+    assistantUrl: 'https://vaalwater-assistant.netlify.app',
   },
 
   location: {

@@ -4937,8 +4937,8 @@ export default function App() {
       <Footer onNavigate={navigateTo} />
       <FloatingBotButton />
       <ChatWidget
-        assistantUrl="https://vaalwater-assistant.netlify.app"
-        brandColor="#0891b2"
+        assistantUrl={config.features?.assistantUrl || "https://vaalwater-assistant.netlify.app"}
+        brandColor={config.branding.colors.primary}
         enabled={config.features?.hasAssistant === true}
         isOpen={isAssistantOpen}
         onOpen={() => setIsAssistantOpen(true)}

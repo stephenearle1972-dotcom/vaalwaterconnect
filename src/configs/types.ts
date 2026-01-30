@@ -44,6 +44,7 @@ export interface TownConfig {
   // Features
   features?: {
     hasAssistant?: boolean; // Show AI chat assistant button (only if assistant is deployed for this town)
+    assistantUrl?: string;  // URL for the AI assistant iframe (defaults to vaalwater-assistant if not set)
   };
 
   // Map settings
