@@ -1,4 +1,4 @@
-import { TownConfig, DEFAULT_PRICING } from '../types';
+import { TownConfig } from '../types';
 import { Special } from '../../types';
 import { VAALWATER_SECTORS } from '../../data';
 
@@ -54,7 +54,13 @@ export const bloubergConfig: TownConfig = {
     zoom: 13,
   },
 
-  pricing: DEFAULT_PRICING,
+  // Blouberg custom pricing (higher than Vaalwater)
+  pricing: {
+    micro: { monthly: 'R50', annual: 'R500' },
+    standard: { monthly: 'R299', annual: 'R3,289' },   // 11 months
+    premium: { monthly: 'R449', annual: 'R4,939' },    // 11 months
+    enterprise: { monthly: 'R699', annual: 'R7,689' }, // 11 months
+  },
 
   data: {
     sectors: VAALWATER_SECTORS, // Reuse sector definitions
