@@ -845,11 +845,16 @@ declare global {
   }
 }
 
-// Tier prices for PayFast payment
+// Helper to parse price string to number (e.g., "R299" -> 299, "R3,289" -> 3289)
+const parsePrice = (priceStr: string): number => {
+  return parseInt(priceStr.replace(/[R,\s]/g, ''), 10) || 0;
+};
+
+// Tier prices for PayFast payment - derived from town config
 const TIER_PRICES: Record<string, number> = {
-  standard: 199,
-  premium: 349,
-  enterprise: 599,
+  standard: parsePrice(config.pricing.standard.monthly),
+  premium: parsePrice(config.pricing.premium.monthly),
+  enterprise: parsePrice(config.pricing.enterprise.monthly),
 };
 
 const TIER_NAMES: Record<string, string> = {
@@ -1661,7 +1666,7 @@ const AddBusinessView: React.FC = () => {
 
       // Then redirect to PayFast
       const paymentId = `${config.town.name.toUpperCase()}-${Date.now()}`;
-      const amount = TIER_PRICES[formData.tier] || 199;
+      const amount = TIER_PRICES[formData.tier] || TIER_PRICES.standard;
       const tierName = TIER_NAMES[formData.tier] || 'Standard';
 
       const payFastForm = document.createElement('form');
@@ -1752,9 +1757,9 @@ const AddBusinessView: React.FC = () => {
           <div className="space-y-4">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferred Plan *</label>
             <select required name="tier" className="w-full px-0 py-4 border-b-2 border-sand focus:border-clay outline-none text-xl bg-transparent font-serif italic" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
-              <option value="standard">Standard (R199/month)</option>
-              <option value="premium">Premium (R349/month)</option>
-              <option value="enterprise">Enterprise / Lodge (R599/month)</option>
+              <option value="standard">Standard ({config.pricing.standard.monthly}/month)</option>
+              <option value="premium">Premium ({config.pricing.premium.monthly}/month)</option>
+              <option value="enterprise">Enterprise / Lodge ({config.pricing.enterprise.monthly}/month)</option>
             </select>
           </div>
         </div>
@@ -2057,7 +2062,7 @@ const HomeView: React.FC<{ onNavigate: (page: Page, params?: any) => void; onOpe
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
            <h3 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-clay mb-4 sm:mb-6">Partnership</h3>
            <h2 className="text-2xl sm:text-4xl md:text-6xl font-serif font-bold text-forest italic mb-6 sm:mb-10 leading-tight">Ready to elevate your visibility?</h2>
-           <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light mb-8 sm:mb-12 max-w-2xl mx-auto">Join the local registry starting from just R 300 per month. Get 2 months free when you go annual.</p>
+           <p className="text-base sm:text-lg md:text-xl text-gray-500 font-light mb-8 sm:mb-12 max-w-2xl mx-auto">Join the local registry starting from just {config.pricing.standard.monthly} per month. Get 2 months free when you go annual.</p>
            <button onClick={() => onNavigate('pricing')} className="bg-forest text-white px-6 sm:px-10 md:px-12 py-4 sm:py-5 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-xl transition-all hover:scale-105">View Partner Plans</button>
         </div>
       </section>
