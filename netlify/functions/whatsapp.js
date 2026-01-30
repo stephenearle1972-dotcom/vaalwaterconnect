@@ -1,6 +1,72 @@
 // netlify/functions/whatsapp.js
 
 // ======================================================
+// Multi-Town Configuration
+// ======================================================
+
+/**
+ * Get town configuration based on incoming phone number ID.
+ *
+ * Environment variables for phone mapping:
+ * - PHONE_MAP_{phone_number_id} = town_id (e.g., PHONE_MAP_1007102269151779=blouberg)
+ *
+ * Environment variables for town-specific data:
+ * - BUSINESS_CSV_URL_{TOWN_ID} (e.g., BUSINESS_CSV_URL_BLOUBERG)
+ * - WHATSAPP_NUMBER_{TOWN_ID} (e.g., WHATSAPP_NUMBER_BLOUBERG) - for display
+ * - SITE_URL_{TOWN_ID} (e.g., SITE_URL_BLOUBERG) - for "add business" links
+ *
+ * Falls back to TOWN_NAME/TOWN_ID env var if no phone mapping found.
+ */
+function getTownConfig(incomingPhoneNumberId) {
+  // Try to find town from phone number mapping
+  let townId = null;
+
+  if (incomingPhoneNumberId) {
+    // Check for PHONE_MAP_{phone_id} environment variable
+    const phoneMapKey = `PHONE_MAP_${incomingPhoneNumberId}`;
+    townId = process.env[phoneMapKey];
+
+    if (townId) {
+      console.log(`TOWN_ROUTING: Phone ${incomingPhoneNumberId} → ${townId}`);
+    }
+  }
+
+  // Fall back to TOWN_ID or TOWN_NAME env var
+  if (!townId) {
+    townId = process.env.TOWN_ID || process.env.TOWN_NAME || "vaalwater";
+    console.log(`TOWN_ROUTING: Using default town: ${townId}`);
+  }
+
+  townId = townId.toLowerCase();
+  const townIdUpper = townId.toUpperCase();
+  const townDisplay = townId.charAt(0).toUpperCase() + townId.slice(1);
+
+  // Get town-specific CSV URL (fall back to default Vaalwater URL)
+  const defaultBusinessCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv";
+  const businessCsvUrl = process.env[`BUSINESS_CSV_URL_${townIdUpper}`] || process.env.BUSINESS_CSV_URL || defaultBusinessCsvUrl;
+
+  // Emergency services CSV is shared across all towns (filtered by town column)
+  const emergencyCsvUrl = process.env.EMERGENCY_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaY65eKywzkOD7O_-3RYXbe3lWShkASeR7EuK2lcv8E0ktarGhFsfYuv7tfvf6aSpbY8BHvM54Yy-t/pub?gid=1137836387&single=true&output=csv";
+
+  // Get town-specific site URL for "add business" links
+  const defaultSiteUrl = "vaalwaterconnect.co.za";
+  const siteUrl = process.env[`SITE_URL_${townIdUpper}`] || process.env.SITE_URL || `${townId}connect.co.za`;
+
+  // Get town-specific WhatsApp number for display
+  const defaultWhatsApp = "0688986081";
+  const whatsappDisplay = process.env[`WHATSAPP_DISPLAY_${townIdUpper}`] || process.env.WHATSAPP_DISPLAY || defaultWhatsApp;
+
+  return {
+    townId,
+    townDisplay,
+    businessCsvUrl,
+    emergencyCsvUrl,
+    siteUrl,
+    whatsappDisplay,
+  };
+}
+
+// ======================================================
 // Analytics logging to Google Sheets (async, non-blocking)
 // ======================================================
 
@@ -195,12 +261,26 @@ export async function handler(event) {
       }
 
       // Simple browser test:
-      // /.netlify/functions/whatsapp?q=my geyser is leaking and i need someone today
+      // /.netlify/functions/whatsapp?q=my geyser is leaking&town=blouberg
       const q = qp.q || "";
+      const testTown = qp.town || null;
+
+      // Get town config (use query param for testing, otherwise default)
+      const townConfig = testTown
+        ? getTownConfig(null) // Will use TOWN_ID/TOWN_NAME fallback
+        : getTownConfig(null);
+
+      // Override town if specified in query
+      if (testTown) {
+        townConfig.townId = testTown.toLowerCase();
+        townConfig.townDisplay = testTown.charAt(0).toUpperCase() + testTown.slice(1).toLowerCase();
+      }
+
       const result = await handleQuery({
         text: q,
         from: null,
         source: "web",
+        townConfig,
       });
 
       // Log analytics async (fire-and-forget)
@@ -218,13 +298,23 @@ export async function handler(event) {
     // 1) Parse WhatsApp webhook POST
     // -----------------------------
     const token = process.env.WHATSAPP_TOKEN;
-    const phoneNumberId =
-      process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
 
     if (!token) return textResponse("Missing WHATSAPP_TOKEN env var.");
-    if (!phoneNumberId) return textResponse("Missing WHATSAPP_PHONE_NUMBER_ID env var.");
 
     const body = JSON.parse(event.body || "{}");
+
+    // Extract incoming phone_number_id from webhook metadata
+    const incomingPhoneNumberId = body?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
+    console.log("INCOMING_PHONE_NUMBER_ID:", incomingPhoneNumberId);
+
+    // Get town configuration based on incoming phone number
+    const townConfig = getTownConfig(incomingPhoneNumberId);
+
+    // Use the incoming phone number ID for sending replies (or fall back to env var)
+    const phoneNumberId = incomingPhoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+    if (!phoneNumberId) return textResponse("Missing phone_number_id.");
+
     const msg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
     // Ignore non-message events (statuses, etc.)
@@ -239,6 +329,7 @@ export async function handler(event) {
       text: incomingText,
       from,
       source: "whatsapp",
+      townConfig,
     });
 
     // Log analytics async (fire-and-forget) - don't await
@@ -317,21 +408,20 @@ export async function handler(event) {
 // Core logic: Two-step AI (extract keyword → search listings)
 // ======================================================
 
-async function handleQuery({ text, from, source }) {
+async function handleQuery({ text, from, source, townConfig }) {
   const raw = (text || "").trim();
   if (!raw) return { reply: "OK", analytics: null };
 
   const geminiKey = process.env.GEMINI_API_KEY || "";
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
-  // Town config
-  const CURRENT_TOWN = (process.env.TOWN_NAME || "Vaalwater").toLowerCase();
-  const townDisplay = CURRENT_TOWN.charAt(0).toUpperCase() + CURRENT_TOWN.slice(1);
+  // Use town config from routing
+  const { townId, townDisplay, businessCsvUrl, emergencyCsvUrl, siteUrl, whatsappDisplay } = townConfig;
 
   // If no Gemini key, fall back to error message
   if (!geminiKey) {
     return {
-      reply: "Sorry, the assistant is not configured. WhatsApp us directly: 0688986081",
+      reply: `Sorry, the assistant is not configured. WhatsApp us directly: ${whatsappDisplay}`,
       analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
     };
   }
@@ -393,26 +483,25 @@ Message: "${raw}"`;
   // =====================================================
   // STEP 2: Load listings and search with keyword
   // =====================================================
-  const BUSINESS_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vThi_KiXMZnzjFDN4dbCz8xPTlB8dJnal9NRMd-_8p2hg6000li5r1bhl5cRugFQyTopHCzHVtGc9VN/pub?gid=246270252&single=true&output=csv";
-  const EMERGENCY_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaY65eKywzkOD7O_-3RYXbe3lWShkASeR7EuK2lcv8E0ktarGhFsfYuv7tfvf6aSpbY8BHvM54Yy-t/pub?gid=1137836387&single=true&output=csv";
-
   let listings = [];
 
   try {
+    console.log(`LOADING_DATA: Town=${townId}, BusinessCSV=${businessCsvUrl.substring(0, 50)}...`);
+
     const [businessRes, emergencyRes] = await Promise.all([
-      fetch(BUSINESS_CSV_URL),
-      fetch(EMERGENCY_CSV_URL),
+      fetch(businessCsvUrl),
+      fetch(emergencyCsvUrl),
     ]);
 
     const businessCsv = await businessRes.text();
     const emergencyCsv = await emergencyRes.text();
 
     listings = [
-      ...parseListingsFromCSV(businessCsv, CURRENT_TOWN, "business"),
-      ...parseListingsFromCSV(emergencyCsv, CURRENT_TOWN, "emergency"),
+      ...parseListingsFromCSV(businessCsv, townId, "business"),
+      ...parseListingsFromCSV(emergencyCsv, townId, "emergency"),
     ];
+
+    console.log(`LISTINGS_LOADED: ${listings.length} total for ${townId}`);
   } catch (err) {
     console.log("CSV_FETCH_ERROR:", err.message);
   }
@@ -429,7 +518,7 @@ Message: "${raw}"`;
   // Use original user message for not-found display (preserves their language)
   const userSearchTerm = raw.toLowerCase().replace(/[^a-zA-Z\s]/g, "").trim().split(" ").slice(0, 3).join(" ");
 
-  const responsePrompt = `You are a directory bot. Search these listings for "${keyword}" and show matching results.
+  const responsePrompt = `You are a directory bot for ${townDisplay}. Search these listings for "${keyword}" and show matching results.
 
 ${langInstruction}
 
@@ -463,10 +552,10 @@ For emergency services without WhatsApp (like 10177), just show:
 
 If NO match for "${keyword}", respond EXACTLY (use the user's original words "${userSearchTerm}"):
 ${userLang === "af"
-  ? `Geen "${userSearchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: vaalwaterconnect.co.za/#add-business\n💬 Of WhatsApp ons: 0688986081`
+  ? `Geen "${userSearchTerm}" in ${townDisplay} gelys nie.\n\nKen jy een? Help die gemeenskap:\n📝 Lys hulle: ${siteUrl}/#add-business\n💬 Of WhatsApp ons: ${whatsappDisplay}`
   : userLang === "se"
-  ? `Ga go na "${userSearchTerm}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 vaalwaterconnect.co.za/#add-business\n💬 WhatsApp: 0688986081`
-  : `No "${userSearchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: vaalwaterconnect.co.za/#add-business\n💬 Or WhatsApp us: 0688986081`
+  ? `Ga go na "${userSearchTerm}" go ${townDisplay}.\n\nO tseba yo mongwe? Thuša setšhaba:\n📝 ${siteUrl}/#add-business\n💬 WhatsApp: ${whatsappDisplay}`
+  : `No "${userSearchTerm}" listed in ${townDisplay} yet.\n\nKnow one? Help the community:\n📝 Add them: ${siteUrl}/#add-business\n💬 Or WhatsApp us: ${whatsappDisplay}`
 }`;
 
   try {
@@ -508,7 +597,7 @@ ${userLang === "af"
 
   // Fallback if Gemini fails
   return {
-    reply: "Sorry, something went wrong. WhatsApp us directly: 0688986081",
+    reply: `Sorry, something went wrong. WhatsApp us directly: ${whatsappDisplay}`,
     analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
   };
 }
