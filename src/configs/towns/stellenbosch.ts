@@ -32,7 +32,7 @@ export const stellenboschConfig: TownConfig = {
       secondary: '#c9a962',  // Gold
       accent: '#f5f0e6',     // Cream
     },
-    heroImage: 'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=1600', // Stellenbosch placeholder
+    heroImage: 'https://res.cloudinary.com/dkn6tnxao/image/upload/v1769857174/nenad-gataric-2GZvGZh4dJc-unsplash_nvblen.jpg',
     faviconEmoji: 'S',
     faviconColor: '#722f37', // Burgundy for favicon
   },
