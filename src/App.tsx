@@ -1894,10 +1894,11 @@ const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: an
       <div className="grid md:grid-cols-2 gap-12">
         {results.length > 0 ? results.map(b => (
           <div key={b.id} onClick={() => onNavigate('business', { id: b.id })} className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8">
-            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl bg-white shadow-md">
+            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 shadow-lg" style={{ background: '#fff' }}>
               <img
                 src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
                 className="w-full h-full object-cover object-center"
+                style={{ opacity: 1, filter: 'none' }}
                 alt={b.name}
               />
             </div>
