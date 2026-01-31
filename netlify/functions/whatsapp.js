@@ -79,7 +79,7 @@ function getTownConfig(incomingPhoneNumberId) {
  * - ANALYTICS_SPREADSHEET_ID: The spreadsheet ID to log to
  * - ANALYTICS_SHEET_NAME: Tab name (defaults to "Analytics")
  */
-async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, source }) {
+async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, source, sessionId, isTest, responseTimeMs, languageDetected }) {
   try {
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -99,19 +99,23 @@ async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, s
       return;
     }
 
-    // Prepare row data
+    // Prepare row data (columns A-J)
     const timestamp = new Date().toISOString();
     const row = [
-      timestamp,
-      searchTerm || "",
-      String(resultsCount),
-      businessesShown || "",
-      town || "",
-      source || "whatsapp",
+      timestamp,                          // A: timestamp
+      searchTerm || "",                   // B: search_term
+      String(resultsCount),               // C: results_count
+      businessesShown || "",              // D: businesses_shown
+      town || "",                         // E: town
+      source || "whatsapp",               // F: source
+      sessionId || "",                    // G: session_id
+      isTest ? "TRUE" : "FALSE",          // H: is_test
+      responseTimeMs ? String(responseTimeMs) : "",  // I: response_time_ms
+      languageDetected || "",             // J: language_detected
     ];
 
     // Append row to sheet
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${encodeURIComponent(sheetName)}'!A:F:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${encodeURIComponent(sheetName)}'!A:J:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -128,12 +132,30 @@ async function logAnalytics({ searchTerm, resultsCount, businessesShown, town, s
       const errText = await res.text();
       console.log("ANALYTICS_WRITE_FAILED:", res.status, errText);
     } else {
-      console.log("ANALYTICS_LOGGED:", searchTerm, resultsCount, "results");
+      console.log("ANALYTICS_LOGGED:", searchTerm, resultsCount, "results", responseTimeMs ? `(${responseTimeMs}ms)` : "");
     }
   } catch (err) {
     // Fail silently - never break the bot
     console.log("ANALYTICS_ERROR:", err.message);
   }
+}
+
+/**
+ * Generate a simple session ID from phone number and date.
+ * Groups all searches from same user on same day.
+ */
+function generateSessionId(phoneNumber) {
+  if (!phoneNumber) return "";
+  const dateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const input = `${phoneNumber}-${dateStr}`;
+  // Simple hash - not cryptographic, just for grouping
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
 }
 
 /**
@@ -409,11 +431,16 @@ export async function handler(event) {
 // ======================================================
 
 async function handleQuery({ text, from, source, townConfig }) {
+  const startTime = Date.now(); // Track response time
   const raw = (text || "").trim();
   if (!raw) return { reply: "OK", analytics: null };
 
   const geminiKey = process.env.GEMINI_API_KEY || "";
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+
+  // Generate session ID for this user (groups searches by user per day)
+  const sessionId = generateSessionId(from);
+  const isTest = source === "web" || !from;
 
   // Use town config from routing
   const { townId, townDisplay, businessCsvUrl, emergencyCsvUrl, siteUrl, whatsappDisplay } = townConfig;
@@ -422,7 +449,17 @@ async function handleQuery({ text, from, source, townConfig }) {
   if (!geminiKey) {
     return {
       reply: `Sorry, the assistant is not configured. WhatsApp us directly: ${whatsappDisplay}`,
-      analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+      analytics: {
+        searchTerm: raw,
+        resultsCount: 0,
+        businessesShown: "",
+        town: townDisplay,
+        source,
+        sessionId,
+        isTest,
+        responseTimeMs: Date.now() - startTime,
+        languageDetected: "",
+      },
     };
   }
 
@@ -588,6 +625,10 @@ ${userLang === "af"
           businessesShown: mentionedBusinesses,
           town: townDisplay,
           source,
+          sessionId,
+          isTest,
+          responseTimeMs: Date.now() - startTime,
+          languageDetected: userLang,
         },
       };
     }
@@ -598,7 +639,17 @@ ${userLang === "af"
   // Fallback if Gemini fails
   return {
     reply: `Sorry, something went wrong. WhatsApp us directly: ${whatsappDisplay}`,
-    analytics: { searchTerm: raw, resultsCount: 0, businessesShown: "", town: townDisplay, source },
+    analytics: {
+      searchTerm: raw,
+      resultsCount: 0,
+      businessesShown: "",
+      town: townDisplay,
+      source,
+      sessionId,
+      isTest,
+      responseTimeMs: Date.now() - startTime,
+      languageDetected: userLang || "",
+    },
   };
 }
 
