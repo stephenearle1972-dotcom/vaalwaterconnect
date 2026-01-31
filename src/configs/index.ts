@@ -7,6 +7,7 @@ import { bloubergConfig } from './towns/blouberg';
 import { parklandsConfig } from './towns/parklands';
 import { garsfonteinConfig } from './towns/garsfontein';
 import { lephalaleConfig } from './towns/lephalale';
+import { stellenboschConfig } from './towns/stellenbosch';
 
 // Registry of all available town configs
 const townConfigs: Record<string, TownConfig> = {
@@ -18,6 +19,7 @@ const townConfigs: Record<string, TownConfig> = {
   parklands: parklandsConfig,
   garsfontein: garsfonteinConfig,
   lephalale: lephalaleConfig,
+  stellenbosch: stellenboschConfig,
 };
 
 // Domain to town mapping
@@ -39,6 +41,8 @@ const domainMap: Record<string, string> = {
   'www.garsfonteinconnect.co.za': 'garsfontein',
   'lephalaleconnect.co.za': 'lephalale',
   'www.lephalaleconnect.co.za': 'lephalale',
+  'stellenboschconnect.co.za': 'stellenbosch',
+  'www.stellenboschconnect.co.za': 'stellenbosch',
   // Netlify preview domains
   'vaalwaterconnect.netlify.app': 'vaalwater',
   'menlynconnect.netlify.app': 'menlyn',
@@ -48,6 +52,7 @@ const domainMap: Record<string, string> = {
   'parklandsconnect.netlify.app': 'parklands',
   'garsfonteinconnect.netlify.app': 'garsfontein',
   'lephalaleconnect.netlify.app': 'lephalale',
+  'stellenboschconnect.netlify.app': 'stellenbosch',
 };
 
 /**
