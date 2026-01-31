@@ -49,6 +49,7 @@ export type Business = {
   tier?: 'micro' | 'standard' | 'premium' | 'hospitality';
   isFeatured?: boolean;
   imageUrl?: string;
+  galleryUrls?: string[];
   reviews?: Review[];
 };
 

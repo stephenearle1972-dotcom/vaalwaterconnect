@@ -1894,11 +1894,10 @@ const SearchView: React.FC<{ query: string, onNavigate: (page: Page, params?: an
       <div className="grid md:grid-cols-2 gap-12">
         {results.length > 0 ? results.map(b => (
           <div key={b.id} onClick={() => onNavigate('business', { id: b.id })} className="card-classy p-8 rounded-[2.5rem] cursor-pointer group flex items-start gap-8">
-            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100" style={{ clipPath: 'inset(0 round 1rem)' }}>
+            <div className="w-40 h-40 flex-shrink-0 overflow-hidden rounded-2xl bg-white shadow-md">
               <img
                 src={b.imageUrl || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e'}
                 className="w-full h-full object-cover object-center"
-                style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
                 alt={b.name}
               />
             </div>
@@ -2229,6 +2228,7 @@ const parseBusinessCSV = (csvText: string): Business[] => {
   const featuredIdx = getIdx(['isfeatured', 'is_featured', 'featured']);
   const latIdx = getIdx(['lat', 'latitude']);
   const lngIdx = getIdx(['lng', 'longitude', 'lon']);
+  const galleryIdx = getIdx(['galleryurls', 'gallery_urls', 'gallery', 'additional_images']);
 
   return lines.slice(1).map((line, index) => {
     const values = parseCSVLine(line);
@@ -2269,6 +2269,7 @@ const parseBusinessCSV = (csvText: string): Business[] => {
       lat: values[latIdx] ? parseFloat(values[latIdx]) : undefined,
       lng: values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
       imageUrl: values[imageIdx] || '',
+      galleryUrls: values[galleryIdx] ? values[galleryIdx].split(/[;,]/).map(u => u.trim()).filter(Boolean) : [],
       tier: (values[tierIdx] as any) || 'standard',
       isFeatured: values[featuredIdx]?.toLowerCase() === 'true',
     } as Business;
@@ -3015,9 +3016,9 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
             <span className="bg-forest text-sand px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{business.tier || 'Standard'}</span>
           </div>
 
-          {/* Image container - shows COMPLETE image, no cropping */}
+          {/* Main Image container - shows COMPLETE image, no cropping */}
           <div
-            className="flex items-center justify-center rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-8 sm:mb-16 w-full bg-sand/30"
+            className="flex items-center justify-center rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl sm:shadow-2xl mb-4 sm:mb-8 w-full bg-white"
             style={{ minHeight: '200px' }}
           >
             <img
@@ -3034,6 +3035,25 @@ const BusinessDetailView: React.FC<{ businessId: string, onNavigate: (page: Page
               }}
             />
           </div>
+
+          {/* Gallery Images */}
+          {business.galleryUrls && business.galleryUrls.length > 0 && (
+            <div className="mb-8 sm:mb-16">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-4">Gallery</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                {business.galleryUrls.map((url, idx) => (
+                  <div key={idx} className="aspect-square rounded-xl sm:rounded-2xl overflow-hidden bg-white shadow-lg">
+                    <img
+                      src={url}
+                      alt={`${business.name} gallery ${idx + 1}`}
+                      loading="lazy"
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="prose prose-lg sm:prose-xl md:prose-2xl max-w-none text-gray-700 leading-relaxed mb-8 sm:mb-20">
             <div className="whitespace-pre-line font-light text-base sm:text-lg md:text-xl">
