@@ -272,13 +272,20 @@ export async function handler(event) {
       const mode = qp["hub.mode"];
       const token = qp["hub.verify_token"];
       const challenge = qp["hub.challenge"];
-      const verify = process.env.WHATSAPP_VERIFY_TOKEN;
 
       // If this is a verification request
       if (mode && token && challenge) {
-        if (token === verify) {
+        // Accept multiple verify tokens for multi-portfolio setup:
+        // 1. The configured WHATSAPP_VERIFY_TOKEN env var
+        // 2. Any token starting with "townconnect_verify_" (for different Meta portfolios)
+        const configuredToken = process.env.WHATSAPP_VERIFY_TOKEN;
+        const isValidToken = token === configuredToken || token.startsWith("townconnect_verify_");
+
+        if (isValidToken) {
+          console.log("WEBHOOK_VERIFIED:", token.substring(0, 20) + "...");
           return { statusCode: 200, body: challenge };
         }
+        console.log("WEBHOOK_REJECTED: Invalid token", token.substring(0, 20) + "...");
         return { statusCode: 403, body: "Forbidden" };
       }
 
