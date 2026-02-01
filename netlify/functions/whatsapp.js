@@ -5,18 +5,43 @@
 // ======================================================
 
 /**
- * Get town configuration based on incoming phone number ID.
+ * Multi-Town WhatsApp Bot Configuration
  *
  * Environment variables for phone mapping:
- * - PHONE_MAP_{phone_number_id} = town_id (e.g., PHONE_MAP_1007102269151779=blouberg)
+ * - PHONE_MAP_{phone_number_id} = town_id (e.g., PHONE_MAP_983678158158631=menlyn)
+ *
+ * Environment variables for town-specific WhatsApp tokens (for multi-portfolio setup):
+ * - WHATSAPP_TOKEN_{TOWN_ID} (e.g., WHATSAPP_TOKEN_MENLYN) - falls back to WHATSAPP_TOKEN
  *
  * Environment variables for town-specific data:
- * - BUSINESS_CSV_URL_{TOWN_ID} (e.g., BUSINESS_CSV_URL_BLOUBERG)
- * - WHATSAPP_NUMBER_{TOWN_ID} (e.g., WHATSAPP_NUMBER_BLOUBERG) - for display
- * - SITE_URL_{TOWN_ID} (e.g., SITE_URL_BLOUBERG) - for "add business" links
+ * - BUSINESS_CSV_URL_{TOWN_ID} (e.g., BUSINESS_CSV_URL_MENLYN)
+ * - WHATSAPP_DISPLAY_{TOWN_ID} (e.g., WHATSAPP_DISPLAY_MENLYN) - for display in messages
+ * - SITE_URL_{TOWN_ID} (e.g., SITE_URL_MENLYN) - for "add business" links
  *
  * Falls back to TOWN_NAME/TOWN_ID env var if no phone mapping found.
  */
+/**
+ * Get the WhatsApp API token for a specific town.
+ * Looks for WHATSAPP_TOKEN_{TOWNID} first, falls back to WHATSAPP_TOKEN.
+ * This allows different towns to use different Meta portfolios/apps.
+ */
+function getWhatsAppToken(townId) {
+  if (!townId) {
+    return process.env.WHATSAPP_TOKEN;
+  }
+
+  const townIdUpper = townId.toUpperCase();
+  const townSpecificToken = process.env[`WHATSAPP_TOKEN_${townIdUpper}`];
+
+  if (townSpecificToken) {
+    console.log(`TOKEN_ROUTING: Using WHATSAPP_TOKEN_${townIdUpper}`);
+    return townSpecificToken;
+  }
+
+  console.log(`TOKEN_ROUTING: Using default WHATSAPP_TOKEN`);
+  return process.env.WHATSAPP_TOKEN;
+}
+
 function getTownConfig(incomingPhoneNumberId) {
   // Try to find town from phone number mapping
   let townId = null;
@@ -326,10 +351,6 @@ export async function handler(event) {
     // -----------------------------
     // 1) Parse WhatsApp webhook POST
     // -----------------------------
-    const token = process.env.WHATSAPP_TOKEN;
-
-    if (!token) return textResponse("Missing WHATSAPP_TOKEN env var.");
-
     const body = JSON.parse(event.body || "{}");
 
     // Extract incoming phone_number_id from webhook metadata
@@ -338,6 +359,12 @@ export async function handler(event) {
 
     // Get town configuration based on incoming phone number
     const townConfig = getTownConfig(incomingPhoneNumberId);
+
+    // Get the appropriate WhatsApp token for this town
+    // (allows different towns to use different Meta portfolios/apps)
+    const token = getWhatsAppToken(townConfig.townId);
+
+    if (!token) return textResponse(`Missing WHATSAPP_TOKEN for ${townConfig.townId}.`);
 
     // Use the incoming phone number ID for sending replies (or fall back to env var)
     const phoneNumberId = incomingPhoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
